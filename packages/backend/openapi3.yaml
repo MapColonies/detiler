@@ -1,0 +1,231 @@
+openapi: 3.0.1
+info:
+  title: detiler
+  description: api for managing tiles' details
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+tags:
+  - name: detail
+    description: detail selected tile
+security: []
+paths:
+  /detail/{z}/{x}/{y}:
+    get:
+      operationId: getTileDetails
+      tags:
+        - detail
+      summary: return tiles' details in selected kits
+      parameters:
+        - in: path
+          name: z
+          description: zoom level
+          schema:
+            $ref: '#/components/schemas/z'
+          required: true
+        - in: path
+          name: x
+          description: x value
+          schema:
+            $ref: '#/components/schemas/x'
+          required: true
+        - in: path
+          name: y
+          description: y value
+          schema:
+            $ref: '#/components/schemas/y'
+          required: true
+        - in: query
+          name: kits
+          description: return tile details in specified kits
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/kit'
+            minItems: 1
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/tileDetails'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        5XX:
+          $ref: '#/components/responses/UnexpectedError'
+  /detail/{kit}/{z}/{x}/{y}:
+    get:
+      operationId: getTileDetailsByKit
+      tags:
+        - detail
+      summary: return tile details in a single kit
+      parameters:
+        - in: path
+          name: kit
+          description: kit name
+          schema:
+            $ref: '#/components/schemas/kit'
+          required: true
+        - in: path
+          name: z
+          description: zoom level
+          schema:
+            $ref: '#/components/schemas/z'
+          required: true
+        - in: path
+          name: x
+          description: x value
+          schema:
+            $ref: '#/components/schemas/x'
+          required: true
+        - in: path
+          name: y
+          description: y value
+          schema:
+            $ref: '#/components/schemas/y'
+          required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tileDetails'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        404:
+          $ref: '#/components/responses/NotFound'
+        5XX:
+          $ref: '#/components/responses/UnexpectedError'
+    put:
+      operationId: putTileDetails
+      tags:
+        - detail
+      summary: upsert a given tile details
+      parameters:
+        - in: path
+          name: kit
+          description: kit name
+          schema:
+            $ref: '#/components/schemas/kit'
+          required: true
+        - in: path
+          name: z
+          description: zoom level
+          schema:
+            $ref: '#/components/schemas/z'
+          required: true
+        - in: path
+          name: x
+          description: x value
+          schema:
+            $ref: '#/components/schemas/x'
+          required: true
+        - in: path
+          name: y
+          description: y value
+          schema:
+            $ref: '#/components/schemas/y'
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/updatableTileDetails'
+      responses:
+        201:
+          description: Created
+        204:
+          description: Updated
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+components:
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+    UnexpectedError:
+      description: Unexpected Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+  schemas:
+    error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    z:
+      type: number
+    x:
+      type: number
+    y:
+      type: number
+    kit:
+      type: string
+      minLength: 1
+    state:
+      type: integer
+      minimum: -1
+    unixTimestamp:
+      type: integer
+      minimum: 0
+    counter:
+      type: integer
+      minimum: 0
+    location:
+      type: string
+      pattern: '^(\d+(\.\d+)?),(\d+(\.\d+)?)$'
+      example: '34.114,35.123'
+    updatableTileDetails:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/unixTimestamp'
+        state:
+          $ref: '#/components/schemas/state'
+      required:
+        - timestamp
+      additionalProperties: false
+    tileDetails:
+      type: object
+      properties:
+        kit:
+          $ref: '#/components/schemas/kit'
+        state:
+          $ref: '#/components/schemas/state'
+        createdAt:
+          $ref: '#/components/schemas/unixTimestamp'
+        updatedAt:
+          $ref: '#/components/schemas/unixTimestamp'
+        updateCount:
+          $ref: '#/components/schemas/counter'
+        location:
+          $ref: '#/components/schemas/location'
+      required:
+        - kit
+        - state
+        - createdAt
+        - updatedAt
+        - updateCount
+        - location
