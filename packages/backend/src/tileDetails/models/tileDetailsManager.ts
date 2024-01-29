@@ -3,8 +3,8 @@ import { inject, injectable } from 'tsyringe';
 import { TileDetails, TileDetailsPayload, TileParams, TileParamsWithKit, UNSPECIFIED_STATE } from '@map-colonies/detiler-common';
 import { WatchError } from 'redis';
 import { RedisClient } from '../../redis';
-import { keyfy, UpsertStatus } from '../../common/util';
-import { SERVICES } from '../../common/constants';
+import { keyfy, stringifyCoordinates, tileToLonLat, UpsertStatus } from '../../common/util';
+import { METATILE_SIZE, SERVICES } from '../../common/constants';
 import { TileDetailsNotFoundError } from './errors';
 
 @injectable()
@@ -60,13 +60,15 @@ export class TileDetailsManager {
           return UpsertStatus.UPDATED;
         }
 
+        const tileCoordiantes = tileToLonLat({ z: params.z, x: params.x, y: params.y, metatile: METATILE_SIZE });
+
         const initialTileDetails: TileDetails = {
           kit: params.kit,
           state: payload.state ?? UNSPECIFIED_STATE,
           updatedAt: payload.timestamp,
           createdAt: payload.timestamp,
           updateCount: 1,
-          location: '31.3,32.4', //TODO: calc the location
+          location: stringifyCoordinates(tileCoordiantes),
         };
 
         transaction.json.set(key, '$', { ...initialTileDetails });

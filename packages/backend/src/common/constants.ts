@@ -18,3 +18,6 @@ export const SERVICES: Record<string, symbol> = {
 
 export const ON_SIGNAL = Symbol('onSignal');
 export const HEALTHCHECK = Symbol('healthcheck');
+
+export const METATILE_SIZE = 8;
+export const COORDINATES_FRACTION_DIGITS = 6;

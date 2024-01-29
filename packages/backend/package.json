@@ -41,6 +41,7 @@
     "@map-colonies/openapi-express-viewer": "^3.0.0",
     "@map-colonies/read-pkg": "0.0.1",
     "@map-colonies/telemetry": "^4.2.0",
+    "@map-colonies/tile-calc": "^0.1.5",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-metrics": "0.23.0",
     "@opentelemetry/instrumentation-express": "0.32.1",
