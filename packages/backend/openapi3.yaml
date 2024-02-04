@@ -176,11 +176,14 @@ components:
         message:
           type: string
     z:
-      type: number
+      type: integer
+      minimum: 0
     x:
-      type: number
+      type: integer
+      minimum: 0
     y:
-      type: number
+      type: integer
+      minimum: 0
     kit:
       type: string
       minLength: 1
@@ -210,6 +213,12 @@ components:
     tileDetails:
       type: object
       properties:
+        z:
+          $ref: '#/components/schemas/z'
+        x:
+          $ref: '#/components/schemas/x'
+        y:
+          $ref: '#/components/schemas/y'
         kit:
           $ref: '#/components/schemas/kit'
         state:
@@ -223,6 +232,9 @@ components:
         location:
           $ref: '#/components/schemas/location'
       required:
+        - z
+        - x
+        - y
         - kit
         - state
         - createdAt

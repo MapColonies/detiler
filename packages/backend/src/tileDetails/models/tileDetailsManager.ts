@@ -63,6 +63,9 @@ export class TileDetailsManager {
         const tileCoordiantes = tileToLonLat({ z: params.z, x: params.x, y: params.y, metatile: METATILE_SIZE });
 
         const initialTileDetails: TileDetails = {
+          z: params.z,
+          x: params.x,
+          y: params.y,
           kit: params.kit,
           state: payload.state ?? UNSPECIFIED_STATE,
           updatedAt: payload.timestamp,

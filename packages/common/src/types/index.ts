@@ -22,8 +22,7 @@ export interface TileParamsWithKit extends TileParams {
   kit: string;
 }
 
-export interface TileDetails {
-  kit: string;
+export interface TileDetails extends TileParamsWithKit {
   state: number;
   createdAt: number;
   updatedAt: number;
