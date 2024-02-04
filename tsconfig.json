@@ -9,8 +9,12 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "sourceMap": true,
+    "declarationMap": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["src", "tests"],
+  "exclude": ["dist", "node_modules"]
 }
