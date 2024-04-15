@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "es2022",
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": true,
+    "isolatedModules": true,
+    "jsx": "react",
+    "noImplicitAny": false,
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "vite/client"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["**/node_modules", "**/dist"]
+}

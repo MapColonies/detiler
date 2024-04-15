@@ -12,6 +12,7 @@ import { tracing } from './common/tracing';
 import { tileDetailsRouterFactory, TILE_DETAILS_ROUTER_SYMBOL } from './tileDetails/routes/tileDetailsRouter';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { healthCheckFunctionFactory, RedisClient, redisClientFactory } from './redis';
+import { kitRouterFactory, KIT_ROUTER_SYMBOL } from './kit/routes/kitRouter';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -43,6 +44,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       { token: SERVICES.TRACER, provider: { useValue: tracer } },
       { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
       { token: TILE_DETAILS_ROUTER_SYMBOL, provider: { useFactory: tileDetailsRouterFactory } },
+      { token: KIT_ROUTER_SYMBOL, provider: { useFactory: kitRouterFactory } },
       {
         token: SERVICES.REDIS,
         provider: { useFactory: instancePerContainerCachingFactory(redisClientFactory) },

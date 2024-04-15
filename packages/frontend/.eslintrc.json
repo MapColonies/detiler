@@ -1,0 +1,8 @@
+{
+  "root": true,
+  "ignorePatterns": ["**/*.js", "dist", "helm", "**/*.d.ts", "vite.config.ts"],
+  "extends": ["@map-colonies/eslint-config/ts-base"],
+  "parserOptions": {
+    "project": "./tsconfig.lint.json"
+  }
+}

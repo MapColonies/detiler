@@ -8,7 +8,8 @@ export const tileDetailsRouterFactory: FactoryFunction<Router> = (dependencyCont
   const router = Router();
   const controller = dependencyContainer.resolve(TileDetailController);
 
-  router.get('/:z/:x/:y', controller.getTilesDetails);
+  router.get('/', controller.getTilesDetails);
+  router.get('/:z/:x/:y', controller.getMultiKitsTilesDetails);
   router.get('/:kit/:z/:x/:y', controller.getTileDetailsByKit);
   router.put('/:kit/:z/:x/:y', controller.putTileDetails);
 

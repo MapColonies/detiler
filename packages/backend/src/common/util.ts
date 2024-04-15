@@ -1,7 +1,7 @@
 import { TileParams, TileParamsWithKit } from '@map-colonies/detiler-common';
-import { LonLat, Tile, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
+import { BoundingBox, LonLat } from '@map-colonies/tile-calc';
 import { TileRequestParams } from '../tileDetails/controllers/tileDetailsController';
-import { COORDINATES_FRACTION_DIGITS } from './constants';
+import { COORDINATES_FRACTION_DIGITS, TILE_DETAILS_KEY_PREFIX } from './constants';
 import { TimeoutError } from './errors';
 
 export enum UpsertStatus {
@@ -10,7 +10,7 @@ export enum UpsertStatus {
 }
 
 export const promiseTimeout = async <T>(ms: number, promise: Promise<T>): Promise<T> => {
-  // Create a promise that rejects in <ms> milliseconds
+  // create a promise that rejects in <ms> milliseconds
   const timeout = new Promise<T>((_, reject) => {
     const id = setTimeout(() => {
       clearTimeout(id);
@@ -18,7 +18,7 @@ export const promiseTimeout = async <T>(ms: number, promise: Promise<T>): Promis
     }, ms);
   });
 
-  // Returns a race between our timeout and the passed in promise
+  // returns a race between our timeout and the passed in promise
   return Promise.race([promise, timeout]);
 };
 
@@ -32,14 +32,18 @@ export const average = (args: number[]): number => {
   return sum / args.length;
 };
 
-export const tileToLonLat = (tile: Tile): LonLat => {
-  const bbox = tileToBoundingBox(tile, TILEGRID_WORLD_CRS84, true);
+export const bboxToLonLat = (bbox: BoundingBox): LonLat => {
   const lon = average([bbox.west, bbox.east]);
   const lat = average([bbox.north, bbox.south]);
   return { lon, lat };
 };
 
+export const bboxToWktPolygon = (bbox: BoundingBox): string => {
+  const { west, south, east, north } = bbox;
+  return `POLYGON ((${west} ${north}, ${west} ${south}, ${east} ${south}, ${east} ${north}, ${west} ${north}))`;
+};
+
 export const stringifyCoordinates = (coordinates: LonLat): string =>
   `${coordinates.lon.toFixed(COORDINATES_FRACTION_DIGITS)}, ${coordinates.lat.toFixed(COORDINATES_FRACTION_DIGITS)}`;
 
-export const keyfy = (params: TileParamsWithKit): string => `${params.kit}:${params.z}/${params.x}/${params.y}`;
+export const keyfy = (params: TileParamsWithKit): string => `${TILE_DETAILS_KEY_PREFIX}:${params.kit}:${params.z}/${params.x}/${params.y}`;

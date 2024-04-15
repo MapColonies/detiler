@@ -27,10 +27,23 @@ export interface TileDetails extends TileParamsWithKit {
   createdAt: number;
   updatedAt: number;
   updateCount: number;
-  location: string;
+  coordinates: string;
+  geoshape: string;
 }
 
 export interface TileDetailsPayload {
   timestamp: number;
   state?: number;
+}
+
+export interface BaseQueryParams {
+  from?: number;
+  size?: number;
+}
+
+export interface TileQueryParams extends BaseQueryParams {
+  minZoom: number;
+  maxZoom: number;
+  kits: string[];
+  bbox: number[];
 }

@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
+import cors from 'cors';
 import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
@@ -11,6 +12,7 @@ import { defaultMetricsMiddleware, getTraceContexHeaderMiddleware } from '@map-c
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
 import { TILE_DETAILS_ROUTER_SYMBOL } from './tileDetails/routes/tileDetailsRouter';
+import { KIT_ROUTER_SYMBOL } from './kit/routes/kitRouter';
 
 @injectable()
 export class ServerBuilder {
@@ -19,9 +21,13 @@ export class ServerBuilder {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(TILE_DETAILS_ROUTER_SYMBOL) private readonly tileDetailsRouter: Router
+    @inject(TILE_DETAILS_ROUTER_SYMBOL) private readonly tileDetailsRouter: Router,
+    @inject(KIT_ROUTER_SYMBOL) private readonly kitRouter: Router
   ) {
     this.serverInstance = express();
+
+    // TODO: remove
+    this.serverInstance.use(cors());
   }
 
   public build(): express.Application {
@@ -42,6 +48,7 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
+    this.serverInstance.use('/kits', this.kitRouter);
     this.serverInstance.use('/detail', this.tileDetailsRouter);
     this.buildDocsRoutes();
   }

@@ -1,40 +1,129 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
-import { TileDetails, TileDetailsPayload, TileParams, TileParamsWithKit, UNSPECIFIED_STATE } from '@map-colonies/detiler-common';
+import {
+  BaseQueryParams,
+  TileDetails,
+  TileDetailsPayload,
+  TileParams,
+  TileParamsWithKit,
+  TileQueryParams,
+  UNSPECIFIED_STATE,
+} from '@map-colonies/detiler-common';
 import { WatchError } from 'redis';
-import { RedisClient } from '../../redis';
-import { keyfy, stringifyCoordinates, tileToLonLat, UpsertStatus } from '../../common/util';
-import { METATILE_SIZE, SERVICES } from '../../common/constants';
-import { TileDetailsNotFoundError } from './errors';
+import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
+import { DEFAULT_LIMIT, RedisClient } from '../../redis';
+import { keyfy, stringifyCoordinates, bboxToWktPolygon, UpsertStatus, bboxToLonLat } from '../../common/util';
+import { REDIS_KITS_SET_KEY, METATILE_SIZE, SERVICES, REDIS_INDEX_NAME, SEARCHED_GEOSHAPE_NAME } from '../../common/constants';
+import { KitNotFoundError, TileDetailsNotFoundError } from './errors';
+
+export interface TilesDetailsQueryParams extends Required<Omit<TileQueryParams, 'bbox'>> {
+  bbox: BoundingBox;
+}
 
 @injectable()
 export class TileDetailsManager {
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.REDIS) private readonly redis: RedisClient) {}
 
+  public async queryTilesDetails(params: TilesDetailsQueryParams): Promise<TileDetails[]> {
+    this.logger.info({ msg: 'quering tile details', ...params });
+
+    const { minZoom, maxZoom, kits, bbox, from, size } = params;
+    const geoshape = bboxToWktPolygon(bbox);
+
+    /* eslint-disable @typescript-eslint/naming-convention */ // node-redis does not follow eslint nmaing convention
+    const result = await this.redis.ft.search(
+      REDIS_INDEX_NAME,
+      `@z:[${minZoom} ${maxZoom}] @kit:(${kits.join('|')}) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`,
+      {
+        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: geoshape },
+        DIALECT: 3,
+        LIMIT: { from, size },
+      }
+    );
+
+    this.logger.debug({
+      search: {
+        minZoom,
+        maxZoom,
+        kits,
+        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: geoshape },
+        DIALECT: 3,
+        LIMIT: { from, size },
+      },
+      result,
+    });
+    /* eslint-enable @typescript-eslint/naming-convention */
+
+    if (result.total === 0) {
+      return [];
+    }
+
+    const tilesDetails = result.documents.map((document) => document.value[0]);
+
+    return tilesDetails as unknown as TileDetails[];
+  }
+
   public async getTileDetailsByKit(params: TileParamsWithKit): Promise<TileDetails> {
     this.logger.info({ msg: 'getting tile details by kit', ...params });
 
-    const tileDetails = (await this.redis.json.get(keyfy(params))) as TileDetails | null;
+    const { kit, ...tileParams } = params;
+    const result = await this.getTilesDetailsByKits({ ...tileParams, kits: [kit] });
 
-    if (tileDetails === null) {
+    if (result.length === 0) {
       this.logger.error({ msg: 'tile details not found', ...params });
-      throw new TileDetailsNotFoundError(`kit's ${params.kit} tile ${params.z}/${params.x}/${params.y} details were not found`);
+      throw new TileDetailsNotFoundError(`kit's ${kit} tile ${params.z}/${params.x}/${params.y} details were not found`);
     }
 
-    return tileDetails;
+    return result[0];
   }
 
-  public async getTilesDetails(tileParams: TileParams, kits: string[]): Promise<[TileDetails | null]> {
-    this.logger.info({ msg: 'getting tile details on multiple kits', ...tileParams, kits, kitsCount: kits.length });
+  public async getTilesDetailsByKits(params: TileParams & { kits: string[] }): Promise<TileDetails[]> {
+    this.logger.info({ msg: 'getting tile details on selected kits', ...params, kitsCount: params.kits.length });
 
+    const { kits, ...tileParams } = params;
     const keys = kits.map((kit) => keyfy({ ...tileParams, kit }));
-    const tilesDetails = (await this.redis.json.mGet(keys, '$')).flat() as [TileDetails | null];
+    const result = (await this.redis.json.mGet(keys, '$')) as [null | TileDetails[]];
+    const tilesDetails = result.flat().filter((element) => element !== null);
 
-    return tilesDetails;
+    return tilesDetails as TileDetails[];
+  }
+
+  public async getTilesDetailsByZXY(tileParams: TileParams): Promise<TileDetails[]> {
+    this.logger.info({ msg: 'quering tile details', ...tileParams });
+    const { z, x, y } = tileParams;
+
+    /* eslint-disable @typescript-eslint/naming-convention */ // node-redis does not follow eslint nmaing convention
+    const result = await this.redis.ft.search(REDIS_INDEX_NAME, `@z:[${z} ${z}] @x:[${x} ${x}] @y:[${y} ${y}]`, {
+      LIMIT: DEFAULT_LIMIT,
+    });
+
+    this.logger.debug({
+      search: {
+        z,
+        x,
+        y,
+        LIMIT: DEFAULT_LIMIT,
+      },
+      result,
+    });
+    /* eslint-enable @typescript-eslint/naming-convention */
+
+    if (result.total === 0) {
+      return [];
+    }
+
+    const tilesDetails = result.documents.map((document) => document.value);
+
+    return tilesDetails as unknown as TileDetails[];
   }
 
   public async upsertTilesDetails(params: TileParamsWithKit, payload: TileDetailsPayload): Promise<UpsertStatus> {
     this.logger.info({ msg: 'upsterting tile details', params, payload });
+
+    const members = await this.redis.sMembers(REDIS_KITS_SET_KEY);
+    if (!members.includes(params.kit)) {
+      throw new KitNotFoundError(`kit ${params.kit} does not exists`);
+    }
 
     const key = keyfy(params);
 
@@ -60,7 +149,11 @@ export class TileDetailsManager {
           return UpsertStatus.UPDATED;
         }
 
-        const tileCoordiantes = tileToLonLat({ z: params.z, x: params.x, y: params.y, metatile: METATILE_SIZE });
+        const tile = { z: params.z, x: params.x, y: params.y, metatile: METATILE_SIZE };
+        const bbox = tileToBoundingBox(tile, TILEGRID_WORLD_CRS84, true);
+
+        const wkt = bboxToWktPolygon(bbox);
+        const tileCoordinates = bboxToLonLat(bbox);
 
         const initialTileDetails: TileDetails = {
           z: params.z,
@@ -71,7 +164,8 @@ export class TileDetailsManager {
           updatedAt: payload.timestamp,
           createdAt: payload.timestamp,
           updateCount: 1,
-          location: stringifyCoordinates(tileCoordiantes),
+          geoshape: wkt,
+          coordinates: stringifyCoordinates(tileCoordinates),
         };
 
         transaction.json.set(key, '$', { ...initialTileDetails });

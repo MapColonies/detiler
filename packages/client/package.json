@@ -1,6 +1,6 @@
 {
     "name": "@map-colonies/detiler-client",
-    "version": "1.0.0-rc1",
+    "version": "1.0.0-rc2",
     "description": "detiler client",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -28,15 +28,17 @@
         "dist"
     ],
     "dependencies": {
-        "@map-colonies/detiler-common": "^1.0.0-rc1",
+        "@map-colonies/detiler-common": "*",
         "axios": "^1.6.5",
         "axios-retry": "^3.9.1",
-        "http-status-codes": "^2.2.0"
+        "http-status-codes": "^2.2.0",
+        "qs": "^6.11.2"
     },
     "devDependencies": {
         "@map-colonies/eslint-config": "^4.0.0",
         "@map-colonies/prettier-config": "0.0.1",
         "@types/jest": "^29.5.2",
+        "@types/qs": "^6.9.11",
         "eslint": "^8.56.0",
         "jest": "^29.5.0",
         "jest-create-mock-instance": "^2.0.0",
