@@ -13,6 +13,7 @@ import { DetilerClient, DetilerClientConfig } from '@map-colonies/detiler-client
 import { TileDetails, TileParams, TileQueryParams } from '@map-colonies/detiler-common';
 import { LoggerOptions } from '@map-colonies/js-logger';
 import { ToastContainer, toast } from 'react-toastify';
+import { setIntervalAsync } from 'set-interval-async';
 import { compareQueries, parseDataToFeatures, timerify, querifyBounds, removeDummyFeature } from './utils/helpers';
 import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE, TOAST_AUTO_CLOSE_MS } from './utils/constants';
 import { colorFactory, ColorScale, colorScaleParser, ColorScaleFunc, DEFAULT_TILE_COLOR } from './utils/style';
@@ -131,9 +132,7 @@ export const App: React.FC = () => {
       }
     }
     void kitsFetch();
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    const kitFetchInterval = setInterval(kitsFetch, FETCH_KITS_INTERVAL);
-    return () => clearInterval(kitFetchInterval);
+    setIntervalAsync(kitsFetch, FETCH_KITS_INTERVAL);
   }, []);
 
   const fetchData = async (): Promise<Feature[] | undefined> => {
