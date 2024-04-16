@@ -13,7 +13,7 @@ interface PreferencesProps {
   selectedColorScale: { key: ColorScale; value: ColorScaleFunc };
   onKitChange: (event: TargetetEvent<string>) => void;
   onMetricChange: (event: TargetetEvent<string>) => void;
-  onColorScaleChange: (event: TargetetEvent<ColorScale>) => void;
+  onColorScaleChange: (event: TargetetEvent<string>) => void;
 }
 
 export const Preferences: React.FC<PreferencesProps> = ({

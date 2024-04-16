@@ -69,8 +69,9 @@ export const App: React.FC = () => {
     overrideComparator = true;
   };
 
-  const handleColorScaleChange = (event: TargetetEvent<ColorScale>): void => {
-    setSelectedColorScale({ key: event.target.value, value: colorScaleParser(event.target.value) });
+  const handleColorScaleChange = (event: TargetetEvent<string>): void => {
+    const colorScale = event.target.value as ColorScale;
+    setSelectedColorScale({ key: colorScale, value: colorScaleParser(colorScale) });
     overrideComparator = true;
   };
 
@@ -186,11 +187,8 @@ export const App: React.FC = () => {
 
   const layer = new GeoJsonLayer({
     ...CONSTANT_GEOJSON_LAYER_PROPERTIES,
-    // @ts-ignore
     data: fetchData(),
-    // @ts-ignore
     dataTransform: transformFuncWrapper(statsTable.metric),
-    // @ts-ignore
     dataComparator: (nextData: Feature[], prevData: Feature[]): boolean => {
       let shouldSkipRedering = false;
       // render if override flag is enabled or next data is greater than prev
@@ -234,7 +232,6 @@ export const App: React.FC = () => {
       return colorFactory(value, selectedColorScale.value);
     },
     onHover: (info) => setHoverInfo(info as PickingInfo),
-    // @ts-ignore // onClick should not be async
     onClick: async (info: PickingInfo<Feature<Geometry | null, Partial<TileDetails>>>): Promise<void> => {
       if (info.object === undefined) {
         return;

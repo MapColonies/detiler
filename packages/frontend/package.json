@@ -9,8 +9,9 @@
         "prelint": "npm run format",
         "lint": "eslint .",
         "lint:fix": "eslint --fix .",
-        "start": "vite --open --force",
-        "build": "vite build"
+        "typecheck": "./typecheck.mjs",
+        "start": "vite preview",
+        "build": "npm run typecheck && vite build"
     },
     "dependencies": {
         "@map-colonies/detiler-client": "*",
