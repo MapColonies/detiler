@@ -1,6 +1,6 @@
 {{- $releaseName := .Release.Name -}}
-{{- $chartName := include "ts-server-boilerplate.name" . -}}
-{{- $cloudProviderFlavor := include "ts-server-boilerplate.cloudProviderFlavor" . -}}
+{{- $chartName := include "detiler.name" . -}}
+{{- $cloudProviderFlavor := include "detiler.cloudProviderFlavor" . -}}
 {{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
 apiVersion: route.openshift.io/v1
 kind: Route
@@ -11,16 +11,13 @@ metadata:
     haproxy.router.openshift.io/rewrite-target: {{ .Values.route.rewriteTarget }}
     {{- end }}
     {{- if .Values.route.timeout.enabled }}
-    haproxy.router.openshift.io/timeout: {{ .Values.route.timeout.durationSeconds }}
+    haproxy.router.openshift.io/timeout: {{ .Values.route.timeout.duration }}
     {{- end }}
 spec:
-  {{- if .Values.route.host }}
-  host: {{ .Values.route.host }}
-  {{- end }}
   path: {{ .Values.route.path | default "/" }}
   to:
     kind: Service
-    name: {{ printf "%s-service" (include "ts-server-boilerplate.fullname" .) }}
+    name: {{ printf "%s-service" (include "detiler.fullname" .) }}
   {{- if .Values.route.tls.enabled }}
   tls:
     termination: {{ .Values.route.tls.termination | quote }}

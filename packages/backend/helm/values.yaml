@@ -11,8 +11,8 @@ revisionHistoryLimit: 5 # Amount of revisions we keep
 nodePort: 30030 #for minikube deployment only
 resetOnConfigChange: false
 
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: ''
+fullnameOverride: ''
 
 livenessProbe:
   enabled: true
@@ -44,8 +44,8 @@ args: []
 sidecars: []
 
 cloudProvider:
-  dockerRegistryUrl: 
-  imagePullSecretName: ''
+  dockerRegistryUrl: my-registry-url.io
+  imagePullSecretName: 'my-registry-secret'
   flavor: openshift
 
 caSecretName: ''
@@ -53,9 +53,9 @@ caPath: '/usr/local/share/ca-certificates'
 caKey: 'ca.crt'
 
 image:
-  repository: ts-server-boilerplate
-  tag: 'latest'
+  repository: detiler
   pullPolicy: IfNotPresent
+  # tag: 'latest'
 
 env:
   port: 8080
@@ -68,9 +68,23 @@ env:
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace
+    ratio: 1
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
+
+redisConfig:
+  host: localhost
+  username: redis
+  password: redis
+  database: 0
+  port: 6379
+  sslAuth:
+    enabled: false
+    secretName: secret-name
+    certFileName: postgresql.crt
+    keyFileName: postgresql.key
+    caFileName: root.crt
 
 resources:
   enabled: true
@@ -85,7 +99,7 @@ resources:
 route:
   enabled: true
   path: /
-  host: 
+  # host:
   timeout:
     enabled: false # defaults to 30s by openshift
     duration: 60s # supported units (us, ms, s, m, h, d)
