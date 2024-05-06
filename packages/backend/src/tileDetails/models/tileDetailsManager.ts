@@ -1,14 +1,6 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
-import {
-  BaseQueryParams,
-  TileDetails,
-  TileDetailsPayload,
-  TileParams,
-  TileParamsWithKit,
-  TileQueryParams,
-  UNSPECIFIED_STATE,
-} from '@map-colonies/detiler-common';
+import { TileDetails, TileDetailsPayload, TileParams, TileParamsWithKit, TileQueryParams, UNSPECIFIED_STATE } from '@map-colonies/detiler-common';
 import { WatchError } from 'redis';
 import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import { DEFAULT_LIMIT, RedisClient } from '../../redis';
