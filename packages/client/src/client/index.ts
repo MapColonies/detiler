@@ -72,14 +72,14 @@ export class DetilerClient implements IDetilerClient {
   }
 
   public async *queryTilesDetailsAsyncGenerator(params: TileQueryParams): AsyncGenerator<TileDetails[]> {
-    let currentPage = 0;
+    let currentPage = params.from ?? 0;
     const pageSize = params.size ?? DEFAULT_PAGE_SIZE;
 
     this.logger?.debug({ msg: `getting tile details`, url: this.config.url, pageSize, ...params });
 
     /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */ // get the next page unconditionally until done
     while (true) {
-      const pageParams = { ...params, from: currentPage * pageSize, size: pageSize };
+      const pageParams: TileQueryParams = { ...params, from: currentPage * pageSize, size: pageSize };
       try {
         const res = await this.axios.get<TileDetails[]>(`${this.config.url}/detail`, {
           params: pageParams,
