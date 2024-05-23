@@ -28,6 +28,8 @@ paths:
                 type: array
                 items:
                   type: string
+        4XX:
+          $ref: '#/components/responses/BadRequest'
         5XX:
           $ref: '#/components/responses/UnexpectedError'
     post:

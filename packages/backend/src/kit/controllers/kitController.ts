@@ -27,7 +27,7 @@ export class KitController {
     }
   };
 
-  public postSync: PostKitHandler = async (req, res, next) => {
+  public postKit: PostKitHandler = async (req, res, next) => {
     try {
       await this.manager.createKit(req.body);
       return res.status(httpStatus.CREATED).type(txtplain).send(httpStatus.getStatusText(httpStatus.CREATED));

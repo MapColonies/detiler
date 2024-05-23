@@ -112,8 +112,8 @@ export class TileDetailsManager {
   public async upsertTilesDetails(params: TileParamsWithKit, payload: TileDetailsPayload): Promise<UpsertStatus> {
     this.logger.info({ msg: 'upsterting tile details', params, payload });
 
-    const members = await this.redis.sMembers(REDIS_KITS_SET_KEY);
-    if (!members.includes(params.kit)) {
+    const exisingKits = await this.redis.sMembers(REDIS_KITS_SET_KEY);
+    if (!exisingKits.includes(params.kit)) {
       throw new KitNotFoundError(`kit ${params.kit} does not exists`);
     }
 

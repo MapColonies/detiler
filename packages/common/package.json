@@ -12,7 +12,6 @@
         "prelint": "npm run format",
         "lint": "eslint .",
         "lint:fix": "eslint --fix .",
-        "test": "npm run test:unit",
         "prebuild": "npm run clean",
         "build": "tsc --project tsconfig.build.json",
         "clean": "rimraf dist",
