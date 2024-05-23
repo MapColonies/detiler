@@ -4,22 +4,29 @@ on: [pull_request]
 
 jobs:
   eslint:
-    name: Run eslint
+    name: Run TS Project eslint
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node: [18.x, 20.x]
+
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v2
+      - name: Check out TS Project Git repository
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: ${{ matrix.node }}
 
-      - name: Install dependencies
+      - name: Install TS Project dependencies
         run: npm ci
 
-      - name: Run linters
+      - name: Build Lerna
+        run: npx lerna run build
+
+      - name: Run TS Project linters
         uses: wearerequired/lint-action@v1
         with:
           github_token: ${{ secrets.github_token }}
@@ -28,11 +35,34 @@ jobs:
           prettier: true
           eslint_extensions: ts
 
+  openapi-lint:
+    name: Run OpenAPI lint Check
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        package: [backend]
+
+    steps:
+      - name: Check out TS Project Git repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install TS Project dependencies
+        run: npm ci
+
+      - name: Build Lerna
+        run: npx lerna run build
+
       - name: OpenAPI Lint Checks
         uses: nwestfall/openapi-action@v1.0.2
         with:
          github_token: ${{ secrets.GITHUB_TOKEN }}
-         file: ./openapi3.yaml
+         file: ./packages/${{ matrix.package }}/openapi3.yaml
 
   security:
     runs-on: ubuntu-latest
@@ -56,28 +86,36 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
+          cache: npm
 
       - name: Install Node.js dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm run test
+      - name: Build Lerna
+        run: npx lerna run build
 
-      - uses: actions/upload-artifact@v2
+      - name: Run tests
+        run: npx lerna run test
+
+      - uses: actions/upload-artifact@v3
         with:
           name: Test Reporters
-          path: reports/**
+          path: packages/**/reports/**
 
   build_image:
     name: Build Image
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        package: [backend]
+
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: build Docker image
-        run: docker build -t test-build:latest .
+        run: docker build -f ./packages/${{ matrix.package }}/Dockerfile -t ${{ matrix.package }}:latest .
