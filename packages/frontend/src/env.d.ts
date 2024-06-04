@@ -22,7 +22,6 @@ interface AppConfig {
 interface ImportMetaEnv extends AppConfig, DetilerClientConfig {
   readonly CONFIG_LOG_LEVEL: string;
   readonly CONFIG_LOG_PRETTY_PRINT_ENABLED: string;
-  readonly CONFIG_SERVER_PORT: string;
 }
 
 interface ImportMeta {

@@ -40,7 +40,9 @@ export const redisClientFactory: FactoryFunction<RedisClient> = (container: Depe
   const connectionOptions = createConnectionOptions(dbConfig);
 
   const redisClient = createClient(connectionOptions)
-    .on('error', (...args) => logger.error({ msg: 'redis client errored', ...args }))
+    .on('error', (error: Error) => logger.error({ msg: 'redis client errored', err: error }))
+    .on('reconnecting', (...args) => logger.warn({ msg: 'redis client reconnecting', ...args }))
+    .on('end', (...args) => logger.info({ msg: 'redis client end', ...args }))
     .on('connect', (...args) => logger.debug({ msg: 'redis client connected', ...args }))
     .on('ready', (...args) => logger.debug({ msg: 'redis client is ready', ...args }));
 

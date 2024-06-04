@@ -1,7 +1,5 @@
 global:
   cloudProvider: {}
-  tracing: {}
-  metrics: {}
   environment: ''
 
 enabled: true
@@ -16,14 +14,14 @@ fullnameOverride: ''
 
 livenessProbe:
   enabled: true
-  initialDelaySeconds: 120
+  initialDelaySeconds: 600
   timeoutSeconds: 5
   failureThreshold: 6
   path: /liveness
 
 readinessProbe:
   enabled: true
-  initialDelaySeconds: 120
+  initialDelaySeconds: 600
   timeoutSeconds: 5
   failureThreshold: 6
   path: /liveness
@@ -63,28 +61,18 @@ env:
   protocol: TCP
   logLevel: info
   logPrettyPrintEnabled: false
-  responseCompressionEnabled: true
-  requestPayloadLimit: 1mb
-  tracing:
-    enabled: false
-    url: http://localhost:55681/v1/trace
-    ratio: 1
-  metrics:
-    enabled: false
-    url: http://localhost:55681/v1/metrics
-
-redisConfig:
-  host: localhost
-  username: ""
-  password: ""
-  database: 0
-  port: 6379
-  sslAuth:
-    enabled: false
-    secretName: secret-name
-    certFileName: postgresql.crt
-    keyFileName: postgresql.key
-    caFileName: root.crt
+  app:
+    basemapEnabled: true
+    basemapUrl: https://c.tile.openstreetmap.org/{z}/{x}/{y}.png
+    basemapTileSize: 256
+    basemapTileOffset: 0
+    basemapDesaturate: 0
+    dataAlphaChannel: 75
+  detilerClient:
+    url: http://detiler.com
+    timeout: 60000
+    retryStrategy:
+      enabled: false
 
 resources:
   enabled: true
@@ -99,7 +87,7 @@ resources:
 route:
   enabled: true
   path: /
-  # host:
+  host: some-host
   timeout:
     enabled: false # defaults to 30s by openshift
     duration: 60s # supported units (us, ms, s, m, h, d)
@@ -116,7 +104,7 @@ route:
 ingress:
   enabled: false
   path: /
-  host: localhost
+  host: 'localhost'
   cors:
     enabled: true
     origin: '*'

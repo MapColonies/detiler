@@ -26,6 +26,9 @@ jobs:
       - name: Build Lerna
         run: npx lerna run build
 
+      - name: Run typecheck
+        run: npx lerna run typecheck
+
       - name: Run TS Project linters
         uses: wearerequired/lint-action@v1
         with:
@@ -111,7 +114,7 @@ jobs:
 
     strategy:
       matrix:
-        package: [backend]
+        package: [backend, frontend]
 
     steps:
       - name: Check out Git repository

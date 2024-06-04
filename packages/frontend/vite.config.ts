@@ -7,7 +7,7 @@ export default defineConfig({
   envPrefix: 'CONFIG',
   envDir: '../config',
   build: {
-    outDir: './dist',
+    outDir: '../dist',
     commonjsOptions: {
       include: ['packages/client', 'packages/common', /node_modules/],
     },

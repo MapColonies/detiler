@@ -25,9 +25,6 @@ export class ServerBuilder {
     @inject(KIT_ROUTER_SYMBOL) private readonly kitRouter: Router
   ) {
     this.serverInstance = express();
-
-    // TODO: remove
-    this.serverInstance.use(cors());
   }
 
   public build(): express.Application {
@@ -54,6 +51,8 @@ export class ServerBuilder {
   }
 
   private registerPreRoutesMiddleware(): void {
+    this.serverInstance.use(cors());
+
     this.serverInstance.use('/metrics', defaultMetricsMiddleware());
     this.serverInstance.use(httpLogger({ logger: this.logger, ignorePaths: ['/metrics'] }));
 

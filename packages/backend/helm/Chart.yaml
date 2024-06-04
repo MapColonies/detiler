@@ -1,6 +1,6 @@
 apiVersion: v2
-name: detiler
-description: A Helm chart for detiler service
+name: detiler-backend
+description: A Helm chart for detiler-backend service
 type: application
 version: 1.0.0
 appVersion: 1.0.0
