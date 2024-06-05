@@ -31,6 +31,7 @@ export const METRICS: Metric[] = [
   { name: 'created-at', property: 'createdAt', range: INITIAL_MIN_MAX },
   { name: 'state', property: 'state', range: INITIAL_MIN_MAX },
   { name: 'currentness', property: 'updatedAt', range: INITIAL_MIN_MAX, maxFn: () => Math.round(Date.now() / MILLISECONDS_IN_SECOND) },
+  { name: 'skip-count', property: 'skipCount', range: INITIAL_MIN_MAX },
 ];
 
 export const findMinMax = <T>(arr: T[], property: keyof T): MinMax | null => {

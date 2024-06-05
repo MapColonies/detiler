@@ -49,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose }) => {
             <p>Created At: {presentifyValue(tile.createdAt, 'date')}</p>
             <p>Updated At: {presentifyValue(tile.updatedAt, 'date')}</p>
             <p>Update Count: {tile.updateCount}</p>
+            <p>Skip Count: {tile.skipCount}</p>
             <CopyToClipboard text={JSON.stringify({ ...tile, geojson: WktToGeojson(tile.geoshape) })} onCopy={onCopy}>
               <button>
                 <CopyIcon />

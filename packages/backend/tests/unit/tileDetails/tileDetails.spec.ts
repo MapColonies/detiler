@@ -21,13 +21,6 @@ const existsMock = jest.fn();
 const multiMock = jest.fn();
 const execMock = jest.fn();
 
-// class WatchError extends Error {
-//     public constructor(message: string) {
-//       super(message);
-//       Object.setPrototypeOf(this, WatchError.prototype);
-//     }
-//   }
-
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 jest.mock('redis', () => ({
   ...jest.requireActual('redis'),
@@ -402,6 +395,37 @@ describe('TileDetailsManager', () => {
       expect(execMock).toHaveBeenCalledTimes(1);
     });
 
+    it('should update in transaction the tile according to params and payload with skip flag', async () => {
+      executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
+      multiMock.mockReturnValue(mockedRedis);
+      const exisingKits = ['kit1'];
+      sMembersMock.mockResolvedValue(exisingKits);
+      existsMock.mockResolvedValue(1);
+
+      const params: TileParamsWithKit = {
+        kit: 'kit1',
+        z: 1,
+        x: 0,
+        y: 0,
+      };
+      const payload: TileDetailsPayload = { hasSkipped: true, timestamp: 1000 };
+
+      const response = await manager.upsertTilesDetails(params, payload);
+
+      expect(response).toBe(UpsertStatus.UPDATED);
+      expect(sMembersMock).toHaveBeenCalledTimes(1);
+      expect(sMembersMock).toHaveBeenCalledWith(REDIS_KITS_SET_KEY);
+      expect(executeIsolatedMock).toHaveBeenCalledTimes(1);
+      expect(watchMock).toHaveBeenCalledTimes(1);
+      expect(existsMock).toHaveBeenCalledTimes(1);
+      expect(multiMock).toHaveBeenCalledTimes(1);
+      expect(mSetMock).not.toHaveBeenCalled();
+      expect(numIncrByMock).toHaveBeenCalledTimes(1);
+      expect(numIncrByMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.skipCount', 1);
+      expect(setMock).not.toHaveBeenCalled();
+      expect(execMock).toHaveBeenCalledTimes(1);
+    });
+
     it('should throw if watch error detected', async () => {
       executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
       multiMock.mockReturnValue(mockedRedis);
@@ -419,7 +443,6 @@ describe('TileDetailsManager', () => {
       };
       const payload: TileDetailsPayload = { state: 666, timestamp: 1000 };
 
-      // await (expect(manager.upsertTilesDetails(params, payload)).rejects.toThrow(expected));
       await expect(manager.upsertTilesDetails(params, payload)).rejects.toThrow(expected);
 
       expect(sMembersMock).toHaveBeenCalledTimes(1);
@@ -451,7 +474,6 @@ describe('TileDetailsManager', () => {
       };
       const payload: TileDetailsPayload = { state: 666, timestamp: 1000 };
 
-      // await (expect(manager.upsertTilesDetails(params, payload)).rejects.toThrow(expected));
       await expect(manager.upsertTilesDetails(params, payload)).rejects.toThrow(expected);
 
       expect(sMembersMock).toHaveBeenCalledTimes(1);

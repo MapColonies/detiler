@@ -27,6 +27,7 @@ export interface TileDetails extends TileParamsWithKit {
   createdAt: number;
   updatedAt: number;
   updateCount: number;
+  skipCount: number;
   coordinates: string;
   geoshape: string;
 }
@@ -34,6 +35,7 @@ export interface TileDetails extends TileParamsWithKit {
 export interface TileDetailsPayload {
   timestamp: number;
   state?: number;
+  hasSkipped?: boolean;
 }
 
 export interface BaseQueryParams {

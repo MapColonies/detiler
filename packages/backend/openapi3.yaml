@@ -338,6 +338,8 @@ components:
           $ref: '#/components/schemas/unixTimestamp'
         state:
           $ref: '#/components/schemas/state'
+        hasSkipped:
+          type: boolean
       required:
         - timestamp
       additionalProperties: false
@@ -366,6 +368,8 @@ components:
         updatedAt:
           $ref: '#/components/schemas/unixTimestamp'
         updateCount:
+          $ref: '#/components/schemas/counter'
+        skipCount:
           $ref: '#/components/schemas/counter'
         coordinates:
           $ref: '#/components/schemas/coordinates'

@@ -129,12 +129,16 @@ export class TileDetailsManager {
         const transaction = isolatedClient.multi();
 
         if (keyExistCounter === 1) {
-          transaction.json.mSet([
-            { key, path: '$.state', value: payload.state ?? UNSPECIFIED_STATE },
-            { key, path: '$.updatedAt', value: payload.timestamp },
-          ]);
+          if (payload.hasSkipped === true) {
+            transaction.json.numIncrBy(key, '$.skipCount', 1);
+          } else {
+            transaction.json.mSet([
+              { key, path: '$.state', value: payload.state ?? UNSPECIFIED_STATE },
+              { key, path: '$.updatedAt', value: payload.timestamp },
+            ]);
 
-          transaction.json.numIncrBy(key, '$.updateCount', 1);
+            transaction.json.numIncrBy(key, '$.updateCount', 1);
+          }
 
           await transaction.exec();
 
@@ -156,6 +160,7 @@ export class TileDetailsManager {
           updatedAt: payload.timestamp,
           createdAt: payload.timestamp,
           updateCount: 1,
+          skipCount: 0,
           geoshape: wkt,
           coordinates: stringifyCoordinates(tileCoordinates),
         };
