@@ -13,6 +13,7 @@ interface DetilerClientConfig {
 interface AppConfig {
   readonly CONFIG_APP_BASEMAP_ENABLED: string;
   readonly CONFIG_APP_BASEMAP_URL?: string;
+  readonly CONFIG_APP_BASEMAP_XAPIKEY?: string;
   readonly CONFIG_APP_BASEMAP_TILE_SIZE?: string;
   readonly CONFIG_APP_BASEMAP_ZOOM_OFFSET?: string;
   readonly CONFIG_APP_BASEMAP_DESATURATE?: string;

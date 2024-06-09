@@ -64,6 +64,7 @@ env:
   app:
     basemapEnabled: true
     basemapUrl: https://c.tile.openstreetmap.org/{z}/{x}/{y}.png
+    baseMapXApiKey: ""
     basemapTileSize: 256
     basemapTileOffset: 0
     basemapDesaturate: 0

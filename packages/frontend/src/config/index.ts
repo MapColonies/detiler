@@ -32,6 +32,7 @@ export const config: IConfig = (function (): IConfig {
   const basemap = parseBoolean(viteConfig.CONFIG_APP_BASEMAP_ENABLED)
     ? {
         url: viteConfig.CONFIG_APP_BASEMAP_URL,
+        xApiKey: viteConfig.CONFIG_APP_BASEMAP_XAPIKEY,
         tileSize: parseInt(viteConfig.CONFIG_APP_BASEMAP_TILE_SIZE!),
         zoomOffset: parseInt(viteConfig.CONFIG_APP_BASEMAP_ZOOM_OFFSET!),
         desaturate: parseInt(viteConfig.CONFIG_APP_BASEMAP_DESATURATE!),
