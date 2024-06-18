@@ -13,7 +13,7 @@ interface StatsTableProps {
 }
 
 function createData(stat: string, value: string, average?: number): { prop: string; value: string; average: string } {
-  const averageResult = average !== undefined ? `${average.toFixed(DIGITS_AFTER_DECIMAL)}ms` : '';
+  const averageResult = average !== undefined ? average.toFixed(DIGITS_AFTER_DECIMAL).toString() : '';
   return { prop: `${stat}:`, value, average: averageResult };
 }
 

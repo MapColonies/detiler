@@ -28,12 +28,12 @@
         "husky": "^9.0.11",
         "lodash": "^4.17.21",
         "maplibre-gl": "^2.4.0",
+        "notistack": "^3.0.1",
         "pino": "^8.20.0",
         "react": "^18.2.0",
         "react-copy-to-clipboard": "^5.1.0",
         "react-dom": "^18.2.0",
         "react-map-gl": "^7.1.7",
-        "react-toastify": "^10.0.5",
         "set-interval-async": "^3.0.3",
         "wellknown": "^0.5.0"
     },

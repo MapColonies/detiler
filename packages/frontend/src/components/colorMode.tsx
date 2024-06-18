@@ -1,7 +1,11 @@
 import { ThemeProvider } from '@emotion/react';
-import { createTheme, PaletteMode, ThemeOptions } from '@mui/material';
+import { createTheme, PaletteMode, styled, ThemeOptions, useTheme } from '@mui/material';
 import { amber, grey, deepPurple } from '@mui/material/colors';
+import { MaterialDesignContent } from 'notistack';
 import { createContext, useMemo, useState } from 'react';
+
+const WHITE_HEX = '#fff';
+const BLACK_HEX = '#000';
 
 const DEFAULT_COLOR_MODE: PaletteMode = 'dark';
 
@@ -46,11 +50,25 @@ interface ColorModeProps {
 export const DARK_MODE_MAIN = amber[300];
 export const LIGHT_MODE_MAIN = deepPurple[300];
 
-export const toastStyle = (colorMode: PaletteMode): { color: string; backgroundColor: string } => {
-  return colorMode === 'dark' ? { color: '#fff', backgroundColor: '#000' } : { color: '#000', backgroundColor: '#fff' };
-};
-
 export const colorModeContext = createContext({ toggleColorMode: () => {} });
+
+export const StyledMaterialDesignContent = styled(MaterialDesignContent)(() => {
+  const theme = useTheme();
+
+  const notistackSuccess = '&.notistack-MuiContent-success';
+  const notistackError = '&.notistack-MuiContent-error';
+
+  return {
+    [notistackSuccess]: {
+      backgroundColor: theme.palette.mode === 'dark' ? BLACK_HEX : WHITE_HEX,
+      color: '#3cf057',
+    },
+    [notistackError]: {
+      backgroundColor: theme.palette.mode === 'dark' ? BLACK_HEX : WHITE_HEX,
+      color: '#d32f2f',
+    },
+  };
+});
 
 /* eslint-disable-next-line @typescript-eslint/naming-convention */
 export function ColorMode({ children }: ColorModeProps): JSX.Element {
@@ -69,7 +87,7 @@ export function ColorMode({ children }: ColorModeProps): JSX.Element {
 
   return (
     <colorModeContext.Provider value={colorMode}>
-      <ThemeProvider theme={theme}>{children}</ThemeProvider>
+      <ThemeProvider theme={theme}> {children}</ThemeProvider>
     </colorModeContext.Provider>
   );
 }

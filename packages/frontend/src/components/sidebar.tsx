@@ -1,22 +1,19 @@
+import React, { useState, useEffect } from 'react';
 import { TileDetails } from '@map-colonies/detiler-common';
-import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import FileCopy from '@mui/icons-material/FileCopy';
 import Drawer from '@mui/material/Drawer';
-import React from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { parse as WktToGeojson } from 'wellknown';
-import { Card, CardContent, Typography, Box, Stack } from '@mui/material';
+import { Card, CardContent, Typography, Box, Stack, Pagination } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import { presentifyValue } from '../utils/metric';
-import { TOAST_AUTO_CLOSE_MS } from '../utils/constants';
-import { toastStyle } from './colorMode';
 
+const TILES_PER_PAGE = 5;
+const FIRST_PAGE = 1;
+const DRAWER_WIDTH = 345;
 const SUCCESS_COPY_MESSAGE = 'Copied to Clipboard';
-
-const drawerWidth = 330;
 
 interface SidebarProps {
   isOpen: boolean;
@@ -25,29 +22,40 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose }) => {
-  const theme = useTheme();
+  const [currentPage, setCurrentPage] = useState(FIRST_PAGE);
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    setCurrentPage(FIRST_PAGE);
+  }, [data]);
 
   if (!isOpen) {
     return null;
   }
 
+  const startIndex = (currentPage - 1) * TILES_PER_PAGE;
+  const endIndex = startIndex + TILES_PER_PAGE;
+  const currentData = data.slice(startIndex, endIndex);
+
+  const handlePageChange = (_: React.ChangeEvent<unknown>, page: number): void => {
+    setCurrentPage(page);
+  };
+
   const onCopy = (_: string, result: boolean): void => {
     if (!result) {
       return;
     }
-    toast.success(SUCCESS_COPY_MESSAGE, {
-      style: toastStyle(theme.palette.mode),
-    });
+    enqueueSnackbar(SUCCESS_COPY_MESSAGE, { variant: 'success' });
   };
 
   /* eslint-disable @typescript-eslint/naming-convention */
   return (
     <Drawer
       sx={{
-        width: drawerWidth,
+        width: DRAWER_WIDTH,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
-          width: drawerWidth,
+          width: DRAWER_WIDTH,
           boxSizing: 'border-box',
         },
       }}
@@ -63,11 +71,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose }) => {
         <Typography variant="h5" gutterBottom>
           Tile: {data[0].z}/{data[0].x}/{data[0].y}
         </Typography>
-        <Typography gutterBottom>{data[0].geoshape}</Typography>
         <Typography gutterBottom sx={{ color: 'text.secondary' }}>
           ({data.length} result{data.length === 1 ? '' : 's'})
         </Typography>
-        {data.map((tile) => (
+        {currentData.map((tile) => (
           <Card variant="outlined" sx={{ mb: 2 }}>
             <CardContent key={`${tile.kit}/${tile.z}/${tile.x}/${tile.y}`}>
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
@@ -94,7 +101,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose }) => {
           </Card>
         ))}
       </Box>
-      <ToastContainer position="bottom-center" autoClose={TOAST_AUTO_CLOSE_MS} />
+      <Box display="flex" justifyContent="center" alignItems="center">
+        {data.length > TILES_PER_PAGE && (
+          <Pagination count={Math.ceil(data.length / TILES_PER_PAGE)} page={currentPage} onChange={handlePageChange} color="primary" />
+        )}
+      </Box>
     </Drawer>
   );
 };

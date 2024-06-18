@@ -1,4 +1,4 @@
 import ReactDOM from 'react-dom/client';
-import { App } from './app';
+import { WrappedApp } from './appWrapper';
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(<App />);
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(<WrappedApp />);
