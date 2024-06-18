@@ -19,7 +19,7 @@ import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE, TOAST_AUTO_CLOSE_
 import { colorFactory, ColorScale, colorScaleParser, ColorScaleFunc, DEFAULT_TILE_COLOR } from './utils/style';
 import { METRICS, findMinMax, updateMinMax, INITIAL_MIN_MAX, Metric } from './utils/metric';
 import { INIT_STATS, calcHttpStat, Stats } from './utils/stats';
-import { Preferences, Sidebar, StatsTable, Tooltip } from './components';
+import { Preferences, Sidebar, StatsTable, Tooltip, ColorMode } from './components';
 import { filterRangeFuncWrapper, transformFuncWrapper } from './deck-gl';
 import { CONSTANT_GEOJSON_LAYER_PROPERTIES } from './deck-gl/constants';
 import { basemapLayer } from './deck-gl/basemap';
@@ -129,6 +129,9 @@ export const App: React.FC = () => {
           return { ...prevStatsTable, httpInvokes: { ...prevStatsTable.httpInvokes, kits: nextHttpStat } };
         });
       } catch (err) {
+        logger.error({ msg: 'error fetching kits', err });
+        // const theme = useTheme();
+        // toast.error(JSON.stringify(err), { style: toastStyle(theme.palette.mode)});
         toast.error(JSON.stringify(err));
       }
     }
@@ -181,6 +184,8 @@ export const App: React.FC = () => {
       return features;
     } catch (err) {
       logger.error({ msg: 'error fetching data', err });
+      // const theme = useTheme();
+      // toast.error(JSON.stringify(err), { style: toastStyle(theme.palette.mode)});
       toast.error(JSON.stringify(err));
     }
   };
@@ -255,30 +260,35 @@ export const App: React.FC = () => {
         });
         handleOpenSidebar(result);
       } catch (err) {
+        logger.error({ msg: 'error getting tile details', err });
+        // const theme = useTheme();
+        // toast.error(JSON.stringify(err), { style: toastStyle(theme.palette.mode)});
         toast.error(JSON.stringify(err));
       }
     },
   });
 
   return (
-    <div>
-      <DeckGL initialViewState={INITIAL_VIEW_STATE} controller={true} layers={[basemapLayer, layer]} onViewStateChange={handleViewportChange}>
-        <Map id="map" reuseMaps mapLib={maplibregl as unknown as MapLibreGL} />
-        <Tooltip hoverInfo={hoverInfo} />
-      </DeckGL>
-      <Preferences
-        kits={kits}
-        zoomLevel={currentZoomLevel}
-        selectedKit={selectedKit}
-        selectedMetric={selectedMetric}
-        selectedColorScale={selectedColorScale}
-        onKitChange={handleKitChange}
-        onMetricChange={handleMetricChange}
-        onColorScaleChange={handleColorScaleChange}
-      />
-      <StatsTable stats={statsTable} />
-      <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} data={sidebarData} />
-      <ToastContainer position="bottom-center" autoClose={TOAST_AUTO_CLOSE_MS} />
-    </div>
+    <ColorMode>
+      <div>
+        <DeckGL initialViewState={INITIAL_VIEW_STATE} controller={true} layers={[basemapLayer, layer]} onViewStateChange={handleViewportChange}>
+          <Map id="map" reuseMaps mapLib={maplibregl as unknown as MapLibreGL} />
+          <Tooltip hoverInfo={hoverInfo} />
+        </DeckGL>
+        <Preferences
+          kits={kits}
+          zoomLevel={currentZoomLevel}
+          selectedKit={selectedKit}
+          selectedMetric={selectedMetric}
+          selectedColorScale={selectedColorScale}
+          onKitChange={handleKitChange}
+          onMetricChange={handleMetricChange}
+          onColorScaleChange={handleColorScaleChange}
+        />
+        <StatsTable stats={statsTable} />
+        <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} data={sidebarData} />
+        <ToastContainer position="bottom-center" autoClose={TOAST_AUTO_CLOSE_MS} />
+      </div>
+    </ColorMode>
   );
 };

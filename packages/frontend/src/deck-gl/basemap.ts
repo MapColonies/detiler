@@ -14,16 +14,17 @@ export const basemapLayer = appConfig.basemap.enabled
       data: appConfig.basemap.url,
       tileSize: appConfig.basemap.tileSize,
       zoomOffset: appConfig.basemap.zoomOffset,
-      loadOptions: appConfig.basemap.xApiKey
-        ? {
-            fetch: {
-              method: 'GET',
-              headers: {
-                'x-api-key': `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJNYXBDb2xvbmllc0RldiIsImlhdCI6MTUxNjIzOTAyMiwiZCI6WyJyYXN0ZXIiLCJyYXN0ZXJXbXMiLCJyYXN0ZXJFeHBvcnQiLCJkZW0iLCJ2ZWN0b3IiLCIzZCJdfQ.GvTQ_yLjnioxxFrNgGQiuarhJxLpe8AhTTtrWE3LHoUED48CFKBEOfKqOyEWSDVZjx1jHkDvZAL1iyEvi5FHNys7UBRXCiJvVlG-muJZ6ycS9PGKauzL-eggXqTqGsXh4FBkqvHUEElXEnu7ARsMCm5eIC66U2i_eHFU3PLcOc67qJvS1IQjAI2oj9Pd5mGaI_HlDaf3B4PFOb0AHdY-r_MDGwck3asm1G_InVzsvCXt36vImyn1Z4HYaN4YiDfaMLBF0-GGrlLE84PObzGGtt66EIuQ4OneEZSzoQNusBt5-SFs0EQXsfsDc_RMRTz3DZseqkNIKiXEsEBBPjMr7w`,
+      loadOptions:
+        appConfig.basemap.xApiKey !== undefined
+          ? {
+              fetch: {
+                method: 'GET',
+                headers: {
+                  'x-api-key': appConfig.basemap.xApiKey,
+                },
               },
-            },
-          }
-        : {},
+            }
+          : {},
       renderSubLayers: (props): BitmapLayer => {
         const {
           boundingBox: [[west, south], [east, north]],

@@ -1,66 +1,61 @@
 import React from 'react';
 import './css/common.css';
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { presentifyValue, TIMESTAMP_DETAIL } from '../utils/metric';
 import { Stats } from '../utils/stats';
 
 const DIGITS_AFTER_DECIMAL = 2;
 
+const TABLE_ROW_SX = '&:last-child td, &:last-child th';
+
 interface StatsTableProps {
   stats: Stats;
+}
+
+function createData(stat: string, value: string, average?: number): { prop: string; value: string; average: string } {
+  const averageResult = average !== undefined ? `${average.toFixed(DIGITS_AFTER_DECIMAL)}ms` : '';
+  return { prop: `${stat}:`, value, average: averageResult };
 }
 
 export const StatsTable: React.FC<StatsTableProps> = ({ stats }) => {
   const { metric, httpInvokes, ...basicStats } = stats;
 
+  const rows = [
+    createData('Currently Rendered Tiles', basicStats.currentlyRenderedTiles.toString()),
+    createData('Total Tiles Rendered', basicStats.totalTilesRendered.toString()),
+    createData('Unique Tiles Rendered', basicStats.uniqueTilesRendered.size.toString()),
+    createData('Map Renders Count', basicStats.mapRendersCount.toString()),
+    createData('Metric Min Value', metric ? presentifyValue(metric.range.min, TIMESTAMP_DETAIL.includes(metric.property) ? 'date' : 'string') : ''),
+    createData('Metric Max Value', metric ? presentifyValue(metric.range.max, TIMESTAMP_DETAIL.includes(metric.property) ? 'date' : 'string') : ''),
+    createData('HTTP Invokes - Query', httpInvokes.query.count.toString(), httpInvokes.query.average),
+    createData('HTTP Invokes - Kits', httpInvokes.kits.count.toString(), httpInvokes.kits.average),
+    createData('HTTP Invokes - Tile', httpInvokes.tile.count.toString(), httpInvokes.tile.average),
+  ];
+
   return (
     <div className="common stats">
-      <table>
-        <tbody>
-          <tr>
-            <td>Currently Rendered Tiles:</td>
-            <td>{basicStats.currentlyRenderedTiles}</td>
-          </tr>
-          <tr>
-            <td>Total Tiles Rendered:</td>
-            <td>{basicStats.totalTilesRendered}</td>
-          </tr>
-          <tr>
-            <td>Unique Tiles Rendered:</td>
-            <td>{basicStats.uniqueTilesRendered.size}</td>
-          </tr>
-          <tr>
-            <td>Map Renders Count:</td>
-            <td>{basicStats.mapRendersCount}</td>
-          </tr>
-          {metric?.range && (
-            <tr>
-              <td>Metric Min Value:</td>
-              <td>{presentifyValue(metric.range.min, TIMESTAMP_DETAIL.includes(metric.property) ? 'date' : 'string')}</td>
-            </tr>
-          )}
-          {metric?.range && (
-            <tr>
-              <td>Metric Max Value:</td>
-              <td>{presentifyValue(metric.range.max, TIMESTAMP_DETAIL.includes(metric.property) ? 'date' : 'string')}</td>
-            </tr>
-          )}
-          <tr>
-            <td>HTTP Invokes - Query:</td>
-            <td>{httpInvokes.query.count}</td>
-            <td>{httpInvokes.query.average?.toFixed(DIGITS_AFTER_DECIMAL) ?? 0}ms</td>
-          </tr>
-          <tr>
-            <td>HTTP Invokes - Kits:</td>
-            <td>{httpInvokes.kits.count}</td>
-            <td>{httpInvokes.kits.average?.toFixed(DIGITS_AFTER_DECIMAL) ?? 0}ms</td>
-          </tr>
-          <tr>
-            <td>HTTP Invokes - Tile:</td>
-            <td>{httpInvokes.tile.count}</td>
-            <td>{httpInvokes.tile.average?.toFixed(DIGITS_AFTER_DECIMAL) ?? 0}ms</td>
-          </tr>
-        </tbody>
-      </table>
+      <TableContainer component={Paper}>
+        <Table size="small" aria-label="a dense table">
+          <TableHead>
+            <TableRow>
+              <TableCell>Stat</TableCell>
+              <TableCell align="right">Avg(ms)</TableCell>
+              <TableCell align="right">Value</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.prop} sx={{ [TABLE_ROW_SX]: { border: 0 } }}>
+                <TableCell component="th" scope="row">
+                  {row.prop}
+                </TableCell>
+                <TableCell align="right">{row.average}</TableCell>
+                <TableCell align="right">{row.value}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </div>
   );
 };

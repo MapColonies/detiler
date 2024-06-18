@@ -14,9 +14,13 @@
         "build": "npm run typecheck && vite build"
     },
     "dependencies": {
+        "@emotion/react": "^11.11.4",
+        "@emotion/styled": "^11.11.5",
         "@map-colonies/detiler-client": "*",
         "@map-colonies/js-logger": "^1.0.1",
         "@map-colonies/tile-calc": "^0.1.5",
+        "@mui/icons-material": "^5.15.19",
+        "@mui/material": "^5.15.19",
         "config": "^3.3.11",
         "d3": "^7.9.0",
         "deck.gl": "^9.0.3",
@@ -28,7 +32,6 @@
         "react": "^18.2.0",
         "react-copy-to-clipboard": "^5.1.0",
         "react-dom": "^18.2.0",
-        "react-icons": "^5.0.1",
         "react-map-gl": "^7.1.7",
         "react-toastify": "^10.0.5",
         "set-interval-async": "^3.0.3",

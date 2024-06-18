@@ -2,6 +2,7 @@ import React from 'react';
 import './css/common.css';
 import { PickingInfo } from '@deck.gl/core/src/lib/picking/pick-info';
 import { Feature } from '@turf/helpers';
+import { Divider, List, ListItem, ListItemText } from '@mui/material';
 import { CalculatedDetail, Detail, presentifyValue, TIMESTAMP_DETAIL } from '../utils/metric';
 
 const TOOLTIP_PROPERTIES: (Detail | CalculatedDetail)[] = [
@@ -29,25 +30,32 @@ export const Tooltip: React.FC<TooltipProps> = ({ hoverInfo }) => {
 
   return (
     <div
-      className="common tooltip"
+      className="common"
       style={{
         left: hoverInfo.x,
         top: hoverInfo.y,
       }}
     >
       {hoverInfo.object.properties && (
-        <ul>
+        <List sx={{ bgcolor: 'background.paper', color: 'text.primary', maxWidth: 360, borderRadius: 2, padding: '5px' }}>
           {Object.entries(hoverInfo.object.properties)
             .filter(([key]) => TOOLTIP_PROPERTIES.includes(key as Detail))
             .map(([key, value]) => (
-              <li key={key}>
-                {`${key}: `}
-                {typeof value === 'number' || typeof value === 'undefined'
-                  ? presentifyValue(value, TIMESTAMP_DETAIL.includes(key as Detail) ? 'date' : 'string')
-                  : value}
-              </li>
+              <div>
+                <ListItem key={key} alignItems="flex-start" disablePadding={true} sx={{ padding: '1px' }}>
+                  <ListItemText
+                    primaryTypographyProps={{ fontSize: '12px' }}
+                    primary={
+                      typeof value === 'number' || typeof value === 'undefined'
+                        ? `${key}: ${presentifyValue(value, TIMESTAMP_DETAIL.includes(key as Detail) ? 'date' : 'string')}`
+                        : `${key}: ${value}`
+                    }
+                  ></ListItemText>
+                </ListItem>
+                <Divider variant="inset" component="li" />
+              </div>
             ))}
-        </ul>
+        </List>
       )}
     </div>
   );

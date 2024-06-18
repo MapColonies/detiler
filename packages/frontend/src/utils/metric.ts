@@ -89,7 +89,7 @@ export const presentifyValue = (value: number | undefined, type: PresentationTyp
   }
 
   if (type === 'date') {
-    return `${new Date(value * MILLISECONDS_IN_SECOND).toISOString().split('.')[0]}Z`;
+    return `${new Date(value * MILLISECONDS_IN_SECOND).toISOString().split('.')[0]}`;
   }
 
   if (typeof value === 'number') {

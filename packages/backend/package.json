@@ -11,7 +11,7 @@
     "prelint": "npm run format",
     "lint:openapi": "openapi lint ./openapi3.yaml",
     "lint": "eslint .",
-    "lint:fix": "eslint --fix .",
+    "lint:fix": "eslint --config ../../.eslintrc.json --fix .",
     "release": "standard-version",
     "test": "npm run test:unit",
     "prebuild": "npm run clean",
