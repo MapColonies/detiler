@@ -10,7 +10,7 @@
         "format:fix": "prettier --write . --ignore-path ../../.prettierignore",
         "prelint:fix": "npm run format:fix",
         "prelint": "npm run format",
-        "lint": "eslint .",
+        "lint": "eslint --config ../../.eslintrc.json .",
         "lint:fix": "eslint --config ../../.eslintrc.json --fix .",
         "prebuild": "npm run clean",
         "build": "tsc --project tsconfig.build.json",

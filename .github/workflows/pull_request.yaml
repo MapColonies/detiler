@@ -38,6 +38,9 @@ jobs:
           prettier: true
           eslint_extensions: ts
 
+      - name: Run local linters
+        run: npx lerna run lint:fix
+
   openapi-lint:
     name: Run OpenAPI lint Check
     runs-on: ubuntu-latest

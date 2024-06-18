@@ -7,8 +7,8 @@
         "format:fix": "prettier --write . --ignore-path ../../.prettierignore",
         "prelint:fix": "npm run format:fix",
         "prelint": "npm run format",
-        "lint": "eslint .",
-        "lint:fix": "eslint --fix .",
+        "lint": "eslint --config ../../.eslintrc.json .",
+        "lint:fix": "eslint --config ../../.eslintrc.json --fix .",
         "typecheck": "./typecheck.mjs",
         "start": "vite preview",
         "build": "npm run typecheck && vite build"
