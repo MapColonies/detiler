@@ -5,9 +5,10 @@ import viteEslint from 'vite-plugin-eslint';
 export default defineConfig({
   root: 'src',
   envPrefix: 'CONFIG',
-  // envDir: '../config',
+  envDir: '../config',
   build: {
     outDir: '../dist',
+    emptyOutDir: true,
     commonjsOptions: {
       include: ['packages/client', 'packages/common', /node_modules/],
     },

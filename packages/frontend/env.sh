@@ -6,5 +6,7 @@ do
     echo $key=$value
 
     # sed JS and CSS files
-    find /usr/share/nginx/html -type f \( -name '*.js' -o -name '*.css' \) -exec sed -i "s|${key}|${value}|g" '{}' +
+    find /usr/share/nginx/html -type f -name '*.js' -exec sed -i "s|${key}|${value}|g" '{}' +
 done
+
+echo "done setting env"

@@ -10,7 +10,7 @@ data:
   {{- if .app.basemapEnabled }}
   CONFIG_APP_BASEMAP_ENABLED_PLACEHOLDER: "true"
   CONFIG_APP_BASEMAP_URL_PLACEHOLDER: {{ .app.basemapUrl | quote }}
-  {{- if not .app.baseMapXApiKey "" }}
+  {{- if ne .app.baseMapXApiKey "" }}
   CONFIG_APP_BASEMAP_XAPIKEY_PLACEHOLDER: {{ .app.baseMapXApiKey | quote }}
   {{- end }}
   CONFIG_APP_BASEMAP_TILE_SIZE_PLACEHOLDER: {{ .app.basemapTileSize | quote }}
