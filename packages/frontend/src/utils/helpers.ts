@@ -1,16 +1,16 @@
 import { TileDetails, TileQueryParams } from '@map-colonies/detiler-common';
-import { TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
+import { BoundingBox, LonLat, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import { Feature, FeatureCollection } from 'geojson';
-import { FEATURE_ID_DUMMY, MAX_LATITUDE, MAX_LONGTITUDE, MIN_LATITUDE, MIN_LONGTITUDE, ZOOM_OFFEST } from './constants';
+import { FEATURE_ID_DUMMY, MAX_LATITUDE, MAX_LONGITUDE, MIN_LATITUDE, MIN_LONGITUDE, ZOOM_OFFEST } from './constants';
 
-const querifyLongtitude = (longtitude: number): number => {
-  if (longtitude > MAX_LONGTITUDE) {
-    return MAX_LONGTITUDE;
+const querifyLongitude = (longitude: number): number => {
+  if (longitude > MAX_LONGITUDE) {
+    return MAX_LONGITUDE;
   }
-  if (longtitude < MIN_LONGTITUDE) {
-    return MIN_LONGTITUDE;
+  if (longitude < MIN_LONGITUDE) {
+    return MIN_LONGITUDE;
   }
-  return longtitude;
+  return longitude;
 };
 
 const querifyLatitude = (latitude: number): number => {
@@ -25,7 +25,7 @@ const querifyLatitude = (latitude: number): number => {
 
 export const querifyBounds = (bounds: [number, number, number, number]): [number, number, number, number] => {
   const [west, south, east, north] = bounds;
-  return [querifyLongtitude(west), querifyLatitude(south), querifyLongtitude(east), querifyLatitude(north)];
+  return [querifyLongitude(west), querifyLatitude(south), querifyLongitude(east), querifyLatitude(north)];
 };
 
 export const parseBoolean = (value: string): boolean => value === 'true';
@@ -110,4 +110,15 @@ export const timerify = async <R, A extends unknown[]>(func: (...args: A) => Pro
   const endTime = performance.now();
 
   return [funcResult, endTime - startTime];
+};
+
+export const average = (args: number[]): number => {
+  const sum = args.reduce((acc, num) => acc + num, 0);
+  return sum / args.length;
+};
+
+export const bboxToLonLat = (bbox: BoundingBox): LonLat => {
+  const lon = average([bbox.west, bbox.east]);
+  const lat = average([bbox.north, bbox.south]);
+  return { lon, lat };
 };

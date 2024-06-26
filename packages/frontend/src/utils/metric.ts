@@ -15,6 +15,7 @@ export interface MinMax {
 
 export interface Metric {
   name: string;
+  info: string;
   property: Detail;
   range: MinMax;
   minFn?: () => number;
@@ -26,12 +27,18 @@ export const TIMESTAMP_DETAIL: Detail[] = ['createdAt', 'updatedAt'];
 export const INITIAL_MIN_MAX: { min: number; max: number } = { min: Number.MAX_SAFE_INTEGER, max: Number.MIN_SAFE_INTEGER };
 
 export const METRICS: Metric[] = [
-  { name: 'update-count', property: 'updateCount', range: INITIAL_MIN_MAX },
-  { name: 'updated-at', property: 'updatedAt', range: INITIAL_MIN_MAX },
-  { name: 'created-at', property: 'createdAt', range: INITIAL_MIN_MAX },
-  { name: 'state', property: 'state', range: INITIAL_MIN_MAX },
-  { name: 'currentness', property: 'updatedAt', range: INITIAL_MIN_MAX, maxFn: () => Math.round(Date.now() / MILLISECONDS_IN_SECOND) },
-  { name: 'skip-count', property: 'skipCount', range: INITIAL_MIN_MAX },
+  { name: 'update-count', property: 'updateCount', range: INITIAL_MIN_MAX, info: 'the number of times a tile has been rerendered' },
+  { name: 'updated-at', property: 'updatedAt', range: INITIAL_MIN_MAX, info: 'the last time a tile has been updated' },
+  { name: 'created-at', property: 'createdAt', range: INITIAL_MIN_MAX, info: 'the creation time of a tile' },
+  { name: 'state', property: 'state', range: INITIAL_MIN_MAX, info: 'the current state number of a tile' },
+  {
+    name: 'currentness',
+    property: 'updatedAt',
+    range: INITIAL_MIN_MAX,
+    maxFn: () => Math.round(Date.now() / MILLISECONDS_IN_SECOND),
+    info: "tile's last update time to current system time ratio",
+  },
+  { name: 'skip-count', property: 'skipCount', range: INITIAL_MIN_MAX, info: 'the number of times a tile rerendering has been skipped' },
 ];
 
 export const findMinMax = <T>(arr: T[], property: keyof T): MinMax | null => {

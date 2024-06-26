@@ -88,7 +88,7 @@ paths:
             type: array
             items:
               anyOf:
-                - $ref: '#/components/schemas/longtitude'
+                - $ref: '#/components/schemas/longitude'
                 - $ref: '#/components/schemas/latitude'
             minItems: 4
             maxItems: 4
@@ -288,7 +288,7 @@ components:
       properties:
         message:
           type: string
-    longtitude:
+    longitude:
       type: number
       minimum: -180
       maximum: 180

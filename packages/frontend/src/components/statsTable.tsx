@@ -1,5 +1,5 @@
 import React from 'react';
-import './css/common.css';
+import './css/styles.css';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { presentifyValue, TIMESTAMP_DETAIL } from '../utils/metric';
 import { Stats } from '../utils/stats';

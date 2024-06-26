@@ -1,5 +1,5 @@
 import React from 'react';
-import './css/common.css';
+import './css/styles.css';
 import { PickingInfo } from '@deck.gl/core/src/lib/picking/pick-info';
 import { Feature } from '@turf/helpers';
 import { Divider, List, ListItem, ListItemText } from '@mui/material';

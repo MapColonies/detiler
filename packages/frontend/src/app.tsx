@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Map } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
-import { WebMercatorViewport } from '@deck.gl/core';
+import { MapViewState, WebMercatorViewport, FlyToInterpolator } from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import { ViewStateChangeParameters } from '@deck.gl/core/src/controllers/controller';
@@ -15,7 +15,7 @@ import { LoggerOptions } from '@map-colonies/js-logger';
 import { setIntervalAsync } from 'set-interval-async';
 import { useSnackbar } from 'notistack';
 import { compareQueries, parseDataToFeatures, timerify, querifyBounds, removeDummyFeature } from './utils/helpers';
-import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE } from './utils/constants';
+import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE, MAX_ZOOM_LEVEL } from './utils/constants';
 import { colorFactory, ColorScale, colorScaleParser, ColorScaleFunc, DEFAULT_TILE_COLOR } from './utils/style';
 import { METRICS, findMinMax, updateMinMax, INITIAL_MIN_MAX, Metric } from './utils/metric';
 import { INIT_STATS, calcHttpStat, Stats } from './utils/stats';
@@ -39,7 +39,7 @@ let overrideComparator = false;
 const client = new DetilerClient({ ...detilerConfig, logger: logger.child({ subComponent: 'detilerClient' }) });
 
 export const App: React.FC = () => {
-  const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
+  const [viewState, setViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo>();
   const [selectedKit, setSelectedKit] = useState<string | undefined>();
   const [selectedMetric, setSelectedMetric] = useState<Metric | undefined>();
@@ -76,8 +76,19 @@ export const App: React.FC = () => {
     overrideComparator = true;
   };
 
+  const goToCoordinates = useCallback((longitude: number, latitude: number, zoom?: number) => {
+    setViewState({
+      ...viewState,
+      longitude,
+      latitude,
+      zoom: zoom ?? currentZoomLevel,
+      transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
+      transitionDuration: 'auto',
+    });
+  }, []);
+
   const handleViewportChange = (nextViewState: ViewStateChangeParameters<{ zoom: number }>): void => {
-    setViewState({ ...viewState, ...nextViewState });
+    setViewState({ ...viewState, ...nextViewState.viewState });
     // for higher zoom levels lower the viewport's zoom level by 1 to have a buffer around the query bounds
     const viewportZoom = nextViewState.viewState.zoom <= ZOOM_OFFEST + 1 ? nextViewState.viewState.zoom : nextViewState.viewState.zoom - 1;
     const webMercatorViewport = new WebMercatorViewport({ ...nextViewState.viewState, zoom: viewportZoom });
@@ -265,8 +276,8 @@ export const App: React.FC = () => {
 
   return (
     <div>
-      <DeckGL initialViewState={INITIAL_VIEW_STATE} controller={true} layers={[basemapLayer, layer]} onViewStateChange={handleViewportChange}>
-        <Map id="map" reuseMaps mapLib={maplibregl as unknown as MapLibreGL} />
+      <DeckGL initialViewState={viewState} controller={true} layers={[basemapLayer, layer]} onViewStateChange={handleViewportChange}>
+        <Map id="map" reuseMaps={true} mapLib={maplibregl as unknown as MapLibreGL} />
         <Tooltip hoverInfo={hoverInfo} />
       </DeckGL>
       <Preferences
@@ -278,6 +289,7 @@ export const App: React.FC = () => {
         onKitChange={handleKitChange}
         onMetricChange={handleMetricChange}
         onColorScaleChange={handleColorScaleChange}
+        onGoToClicked={goToCoordinates}
       />
       <StatsTable stats={statsTable} />
       <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} data={sidebarData} />

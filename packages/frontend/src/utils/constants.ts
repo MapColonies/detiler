@@ -4,8 +4,8 @@ export const MAX_ZOOM_LEVEL = 18;
 export const FETCH_KITS_INTERVAL = 60000;
 export const MILLISECONDS_IN_SECOND = 1000;
 
-export const MIN_LONGTITUDE = -179.99999;
-export const MAX_LONGTITUDE = 180;
+export const MIN_LONGITUDE = -179.99999;
+export const MAX_LONGITUDE = 180;
 export const MIN_LATITUDE = -85.05112877980659;
 export const MAX_LATITUDE = 85.05112877980659;
 

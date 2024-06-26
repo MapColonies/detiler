@@ -1,25 +1,30 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   Card,
   CardContent,
   FormControl,
   FormControlLabel,
   FormLabel,
+  IconButton,
   InputLabel,
   MenuItem,
   Radio,
   RadioGroup,
   Select,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { ZOOM_OFFEST } from '../utils/constants';
-import './css/common.css';
+import './css/styles.css';
 import { TargetetEvent } from '../deck-gl/types';
 import { Metric, METRICS } from '../utils/metric';
 import { ColorScale, COLOR_SCALES, ColorScaleFunc } from '../utils/style';
 import { colorModeContext } from './colorMode';
 import { ColorModeSwitch } from './colorModeSwitch';
+import { GoToModal } from './goToModal';
 
 interface PreferencesProps {
   kits: string[];
@@ -30,6 +35,7 @@ interface PreferencesProps {
   onKitChange: (event: TargetetEvent<string>) => void;
   onMetricChange: (event: TargetetEvent<string>) => void;
   onColorScaleChange: (event: TargetetEvent<string>) => void;
+  onGoToClicked: (longitude: number, latitude: number, zoom?: number) => void;
 }
 
 export const Preferences: React.FC<PreferencesProps> = ({
@@ -41,15 +47,30 @@ export const Preferences: React.FC<PreferencesProps> = ({
   onKitChange,
   onMetricChange,
   onColorScaleChange,
+  onGoToClicked,
 }) => {
   const colorMode = useContext(colorModeContext);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  const handleOpenModal = (): void => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = (): void => {
+    setIsModalOpen(false);
+  };
 
   return (
     <div className="common preferences">
       <Card>
         <CardContent>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography gutterBottom>Zoom: {currentZoomLevel + ZOOM_OFFEST}</Typography>
+            <Typography variant="h6">Zoom: {currentZoomLevel + ZOOM_OFFEST}</Typography>
+            <Tooltip title="go to tile / coordinates">
+              <IconButton onClick={handleOpenModal}>
+                <LocationOnIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <ColorModeSwitch sx={{ m: 1 }} defaultChecked onClick={colorMode.toggleColorMode} />
           </Stack>
           <br />
@@ -70,6 +91,11 @@ export const Preferences: React.FC<PreferencesProps> = ({
                 {METRICS.map((metric, index) => (
                   <MenuItem key={index} value={metric.name}>
                     {metric.name}
+                    <Tooltip title={metric.info}>
+                      <IconButton>
+                        <InfoIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </MenuItem>
                 ))}
               </Select>
@@ -91,6 +117,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
           </Stack>
         </CardContent>
       </Card>
+      <GoToModal isOpen={isModalOpen} onClose={handleCloseModal} onGoToClicked={onGoToClicked} />
     </div>
   );
 };
