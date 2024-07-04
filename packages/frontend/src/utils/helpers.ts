@@ -112,6 +112,19 @@ export const timerify = async <R, A extends unknown[]>(func: (...args: A) => Pro
   return [funcResult, endTime - startTime];
 };
 
+export const promiseWithTimeout = async <T>(ms: number, promise: Promise<T>): Promise<void> => {
+  // Create a promise that rejects in <ms> milliseconds
+  const timeout = new Promise<T>((_, reject) => {
+    const id = setTimeout(() => {
+      clearTimeout(id);
+      reject(new Error(`Timed out in + ${ms} + ms.`));
+    }, ms);
+  });
+
+  // Returns a race between our timeout and the passed in promise
+  await Promise.allSettled([promise, timeout]);
+};
+
 export const average = (args: number[]): number => {
   const sum = args.reduce((acc, num) => acc + num, 0);
   return sum / args.length;

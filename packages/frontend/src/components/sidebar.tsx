@@ -6,9 +6,14 @@ import FileCopy from '@mui/icons-material/FileCopy';
 import Drawer from '@mui/material/Drawer';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { parse as WktToGeojson } from 'wellknown';
-import { Card, CardContent, Typography, Box, Stack, Pagination } from '@mui/material';
+import { Card, CardContent, Typography, Box, Stack, Pagination, Tooltip, CircularProgress } from '@mui/material';
 import { useSnackbar } from 'notistack';
+import { TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { presentifyValue } from '../utils/metric';
+import { LOAD_TIMEOUT_MS, METATILE_SIZE, ZOOM_OFFEST } from '../utils/constants';
+import { bboxToLonLat, promiseWithTimeout } from '../utils/helpers';
 
 const TILES_PER_PAGE = 5;
 const FIRST_PAGE = 1;
@@ -19,10 +24,13 @@ interface SidebarProps {
   isOpen: boolean;
   data: TileDetails[];
   onClose: () => void;
+  onGoToClicked: (longitude: number, latitude: number, zoom?: number) => void;
+  onRefreshClicked: (z: number, x: number, y: number) => Promise<void>;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToClicked, onRefreshClicked }) => {
   const [currentPage, setCurrentPage] = useState(FIRST_PAGE);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -48,6 +56,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose }) => {
     enqueueSnackbar(SUCCESS_COPY_MESSAGE, { variant: 'success' });
   };
 
+  const wrappedGoTo = (): void => {
+    const { z, x, y } = data[0];
+    const tile = { z, x, y, metatile: METATILE_SIZE };
+    const bbox = tileToBoundingBox(tile, TILEGRID_WORLD_CRS84, true);
+    const { lon, lat } = bboxToLonLat(bbox);
+    onGoToClicked(lon, lat, z - ZOOM_OFFEST);
+  };
+
+  const wrappedRefresh = async (): Promise<void> => {
+    setIsLoading(true);
+
+    const { z, x, y } = data[0];
+    await promiseWithTimeout(LOAD_TIMEOUT_MS, onRefreshClicked(z, x, y));
+
+    setIsLoading(false);
+  };
+
+  /* eslint-disable @typescript-eslint/no-misused-promises */
   /* eslint-disable @typescript-eslint/naming-convention */
   return (
     <Drawer
@@ -67,40 +93,58 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose }) => {
       <IconButton aria-label="close" onClick={onClose} sx={{ ml: 'auto' }}>
         <CloseIcon />
       </IconButton>
-      <Box sx={{ padding: '20px' }}>
-        <Typography variant="h5" gutterBottom>
-          Tile: {data[0].z}/{data[0].x}/{data[0].y}
-        </Typography>
-        <Typography gutterBottom sx={{ color: 'text.secondary' }}>
-          ({data.length} result{data.length === 1 ? '' : 's'})
-        </Typography>
-        {currentData.map((tile) => (
-          <Card variant="outlined" sx={{ mb: 2 }}>
-            <CardContent key={`${tile.kit}/${tile.z}/${tile.x}/${tile.y}`}>
-              <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                <Typography variant="body2">
-                  Kit: {tile.kit}
-                  <br />
-                  State: {tile.state}
-                  <br />
-                  Created At: {presentifyValue(tile.createdAt, 'date')}
-                  <br />
-                  Updated At: {presentifyValue(tile.updatedAt, 'date')}
-                  <br />
-                  Update Count: {tile.updateCount}
-                  <br />
-                  Skip Count: {tile.skipCount}
-                </Typography>
-                <CopyToClipboard text={JSON.stringify({ ...tile, geojson: WktToGeojson(tile.geoshape) })} onCopy={onCopy}>
-                  <IconButton aria-label="copy">
-                    <FileCopy fontSize="small" />
-                  </IconButton>
-                </CopyToClipboard>
-              </Stack>
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
+      {isLoading ? (
+        <Stack direction="row" justifyContent="center" alignItems="center" sx={{ width: 1, height: '100vh' }}>
+          <CircularProgress />
+        </Stack>
+      ) : (
+        <Box sx={{ padding: '20px' }}>
+          <Typography variant="h5">
+            Tile: {data[0].z}/{data[0].x}/{data[0].y}
+          </Typography>
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+            <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+              ({data.length} result{data.length === 1 ? '' : 's'})
+            </Typography>
+            <Tooltip title="refresh">
+              <IconButton onClick={wrappedRefresh}>
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="go to tile">
+              <IconButton onClick={wrappedGoTo}>
+                <LocationOnIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+          {currentData.map((tile) => (
+            <Card variant="outlined" sx={{ mb: 2 }}>
+              <CardContent key={`${tile.kit}/${tile.z}/${tile.x}/${tile.y}`}>
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                  <Typography variant="body2">
+                    Kit: {tile.kit}
+                    <br />
+                    State: {tile.state}
+                    <br />
+                    Created At: {presentifyValue(tile.createdAt, 'date')}
+                    <br />
+                    Updated At: {presentifyValue(tile.updatedAt, 'date')}
+                    <br />
+                    Update Count: {tile.updateCount}
+                    <br />
+                    Skip Count: {tile.skipCount}
+                  </Typography>
+                  <CopyToClipboard text={JSON.stringify({ ...tile, geojson: WktToGeojson(tile.geoshape) })} onCopy={onCopy}>
+                    <IconButton aria-label="copy">
+                      <FileCopy fontSize="small" />
+                    </IconButton>
+                  </CopyToClipboard>
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      )}
       <Box display="flex" justifyContent="center" alignItems="center">
         {data.length > TILES_PER_PAGE && (
           <Pagination count={Math.ceil(data.length / TILES_PER_PAGE)} page={currentPage} onChange={handlePageChange} color="primary" />
@@ -110,3 +154,4 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose }) => {
   );
 };
 /* eslint-enable @typescript-eslint/naming-convention */
+/* eslint-enable @typescript-eslint/no-misused-promises */

@@ -15,7 +15,7 @@ import { LoggerOptions } from '@map-colonies/js-logger';
 import { setIntervalAsync } from 'set-interval-async';
 import { useSnackbar } from 'notistack';
 import { compareQueries, parseDataToFeatures, timerify, querifyBounds, removeDummyFeature } from './utils/helpers';
-import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE, MAX_ZOOM_LEVEL } from './utils/constants';
+import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE } from './utils/constants';
 import { colorFactory, ColorScale, colorScaleParser, ColorScaleFunc, DEFAULT_TILE_COLOR } from './utils/style';
 import { METRICS, findMinMax, updateMinMax, INITIAL_MIN_MAX, Metric } from './utils/metric';
 import { INIT_STATS, calcHttpStat, Stats } from './utils/stats';
@@ -44,8 +44,8 @@ export const App: React.FC = () => {
   const [selectedKit, setSelectedKit] = useState<string | undefined>();
   const [selectedMetric, setSelectedMetric] = useState<Metric | undefined>();
   const [selectedColorScale, setSelectedColorScale] = useState<{ key: ColorScale; value: ColorScaleFunc }>({
-    key: 'virdis',
-    value: colorScaleParser('virdis'),
+    key: 'heat',
+    value: colorScaleParser('heat'),
   });
   const [statsTable, setStatsTable] = useState<Stats>(INIT_STATS);
   const [sidebarData, setSidebarData] = useState<TileDetails[]>([]);
@@ -198,6 +198,28 @@ export const App: React.FC = () => {
     }
   };
 
+  const fetchTile = async (z: number, x: number, y: number): Promise<void> => {
+    try {
+      const [result, duration] = await timerify<Awaited<ReturnType<typeof client.getTilesDetails>>, [TileParams]>(
+        client.getTilesDetails.bind(client),
+        {
+          z,
+          x,
+          y,
+        }
+      );
+      setStatsTable((prevStatsTable) => {
+        const nextHttpStat = calcHttpStat(prevStatsTable.httpInvokes.tile, duration);
+        return { ...prevStatsTable, httpInvokes: { ...prevStatsTable.httpInvokes, tile: nextHttpStat } };
+      });
+
+      handleOpenSidebar(result);
+    } catch (err) {
+      logger.error({ msg: 'error getting tile details', err });
+      enqueueSnackbar(JSON.stringify(err), { variant: 'error' });
+    }
+  };
+
   const layer = new GeoJsonLayer({
     ...CONSTANT_GEOJSON_LAYER_PROPERTIES,
     data: fetchData(),
@@ -249,28 +271,13 @@ export const App: React.FC = () => {
       if (info.object === undefined) {
         return;
       }
+
       const { z, x, y } = info.object.properties;
       if (z === undefined || x === undefined || y === undefined) {
         return;
       }
-      try {
-        const [result, duration] = await timerify<Awaited<ReturnType<typeof client.getTilesDetails>>, [TileParams]>(
-          client.getTilesDetails.bind(client),
-          {
-            z,
-            x,
-            y,
-          }
-        );
-        setStatsTable((prevStatsTable) => {
-          const nextHttpStat = calcHttpStat(prevStatsTable.httpInvokes.tile, duration);
-          return { ...prevStatsTable, httpInvokes: { ...prevStatsTable.httpInvokes, tile: nextHttpStat } };
-        });
-        handleOpenSidebar(result);
-      } catch (err) {
-        logger.error({ msg: 'error getting tile details', err });
-        enqueueSnackbar(JSON.stringify(err), { variant: 'error' });
-      }
+
+      await fetchTile(z, x, y);
     },
   });
 
@@ -292,7 +299,7 @@ export const App: React.FC = () => {
         onGoToClicked={goToCoordinates}
       />
       <StatsTable stats={statsTable} />
-      <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} data={sidebarData} />
+      <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} data={sidebarData} onGoToClicked={goToCoordinates} onRefreshClicked={fetchTile} />
     </div>
   );
 };

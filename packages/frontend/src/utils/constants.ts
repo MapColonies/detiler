@@ -22,5 +22,8 @@ export const FEATURE_ID_DUMMY = 'dummy';
 
 export const NOT_FOUND_INDEX = -1;
 
+export const LOAD_TIMEOUT_MS = 1000;
 export const POPUP_AUTO_CLOSE_MS = 3000;
 export const POPUP_MAX_AMOUNT = 10;
+
+export const METATILE_SIZE = 8;

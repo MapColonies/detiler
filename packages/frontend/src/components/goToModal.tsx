@@ -3,9 +3,8 @@ import { Backdrop, Box, Modal, Fade, Button, Typography, TextField, Stack } from
 import { TILEGRID_WORLD_CRS84, validateLonlat, tileToBoundingBox, validateTile } from '@map-colonies/tile-calc';
 import { enqueueSnackbar } from 'notistack';
 import { bboxToLonLat } from '../utils/helpers';
-import { ZOOM_OFFEST } from '../utils/constants';
+import { METATILE_SIZE, ZOOM_OFFEST } from '../utils/constants';
 
-const METATILE_SIZE = 8;
 const INVALID_TILE_MESSAGE = 'Given tile is invalid.';
 const INVALID_COORDINATES_MESSAGE = 'Given coordinates are invalid.';
 
@@ -38,7 +37,7 @@ export const GoToModal: React.FC<GoToModalProps> = ({ isOpen, onClose, onGoToCli
   const [x, setX] = useState<string>('');
   const [y, setY] = useState<string>('');
 
-  const handleGoToTileClick = () => {
+  const handleGoToTileClick = (): void => {
     try {
       const zValue = parseInt(z, 10);
       const xValue = parseInt(x, 10);
@@ -63,7 +62,7 @@ export const GoToModal: React.FC<GoToModalProps> = ({ isOpen, onClose, onGoToCli
     }
   };
 
-  const handleGoToCoordinatesClick = () => {
+  const handleGoToCoordinatesClick = (): void => {
     try {
       const lon = parseFloat(longitude);
       const lat = parseFloat(latitude);
@@ -104,9 +103,9 @@ export const GoToModal: React.FC<GoToModalProps> = ({ isOpen, onClose, onGoToCli
             <br />
             <Stack direction="column" spacing={2}>
               <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-                <TextField id="zTextField" label="z" variant="outlined" value={z} onChange={(e) => setZ(e.target.value)} />
-                <TextField id="xTextField" label="x" variant="outlined" value={x} onChange={(e) => setX(e.target.value)} />
-                <TextField id="yTextField" label="y" variant="outlined" value={y} onChange={(e) => setY(e.target.value)} />
+                <TextField id="zTextField" label="z" variant="outlined" value={z} onChange={(e): void => setZ(e.target.value)} />
+                <TextField id="xTextField" label="x" variant="outlined" value={x} onChange={(e): void => setX(e.target.value)} />
+                <TextField id="yTextField" label="y" variant="outlined" value={y} onChange={(e): void => setY(e.target.value)} />
                 <Button variant="contained" onClick={handleGoToTileClick}>
                   Go
                 </Button>
@@ -117,14 +116,14 @@ export const GoToModal: React.FC<GoToModalProps> = ({ isOpen, onClose, onGoToCli
                   label="longitude"
                   variant="outlined"
                   value={longitude}
-                  onChange={(e) => setLongitude(e.target.value)}
+                  onChange={(e): void => setLongitude(e.target.value)}
                 />
                 <TextField
                   id="latitudeTextField"
                   label="latitude"
                   variant="outlined"
                   value={latitude}
-                  onChange={(e) => setLatitude(e.target.value)}
+                  onChange={(e): void => setLatitude(e.target.value)}
                 />
                 <Button variant="contained" onClick={handleGoToCoordinatesClick}>
                   Go
