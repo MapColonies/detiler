@@ -14,13 +14,12 @@ const createConnectionOptions = (redisConfig: RedisConfig): Partial<RedisClientO
   const { host, port, enableSslAuth, sslPaths, ...clientOptions } = redisConfig;
   clientOptions.socket = { host, port };
   if (enableSslAuth) {
-    clientOptions.password = undefined;
     clientOptions.socket = {
       ...clientOptions.socket,
       tls: true,
-      key: readFileSync(sslPaths.key),
-      cert: readFileSync(sslPaths.cert),
-      ca: readFileSync(sslPaths.ca),
+      key: sslPaths.key !== '' ? readFileSync(sslPaths.key) : undefined,
+      cert: sslPaths.cert !== '' ? readFileSync(sslPaths.cert) : undefined,
+      ca: sslPaths.ca !== '' ? readFileSync(sslPaths.ca) : undefined,
     };
   }
 

@@ -23,6 +23,14 @@ data:
   REDIS_HOST: {{ .host }}
   REDIS_DATABASE: {{ .database | quote}}
   REDIS_PORT: {{ .port | quote }}
+  {{- if .sslAuth.enabled }}
+  REDIS_ENABLE_SSL_AUTH: "true"
+  REDIS_CERT_PATH: /tmp/certs/{{ .sslAuth.certFileName }}
+  REDIS_KEY_PATH: /tmp/certs/{{ .sslAuth.keyFileName }}
+  REDIS_CA_PATH: /tmp/certs/{{ .sslAuth.caFileName }}
+  {{- else }}
+  REDIS_ENABLE_SSL_AUTH: "false"
+  {{- end }}
   {{- end }}
   npm_config_cache: /tmp/
 {{- end }}
