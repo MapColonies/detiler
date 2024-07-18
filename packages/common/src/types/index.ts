@@ -46,6 +46,13 @@ export interface BaseQueryParams {
 export interface TileQueryParams extends BaseQueryParams {
   minZoom: number;
   maxZoom: number;
+  minState?: number;
+  maxState?: number;
   kits: string[];
   bbox: number[];
+}
+
+export interface KitMetadata {
+  name: string;
+  [property: string]: string;
 }

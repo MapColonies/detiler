@@ -23,6 +23,6 @@ export const METATILE_SIZE = 8;
 export const COORDINATES_FRACTION_DIGITS = 6;
 
 export const REDIS_INDEX_NAME = 'tileDetailsIdx';
-export const REDIS_KITS_SET_KEY = 'kits';
+export const REDIS_KITS_HASH_PREFIX = 'kit';
 export const TILE_DETAILS_KEY_PREFIX = 'tile';
 export const SEARCHED_GEOSHAPE_NAME = 'polygon';

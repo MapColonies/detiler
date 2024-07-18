@@ -5,11 +5,13 @@ import { WatchError } from 'redis';
 import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import { DEFAULT_LIMIT, RedisClient } from '../../redis';
 import { keyfy, stringifyCoordinates, bboxToWktPolygon, UpsertStatus, bboxToLonLat } from '../../common/util';
-import { REDIS_KITS_SET_KEY, METATILE_SIZE, SERVICES, REDIS_INDEX_NAME, SEARCHED_GEOSHAPE_NAME } from '../../common/constants';
+import { REDIS_KITS_HASH_PREFIX, METATILE_SIZE, SERVICES, REDIS_INDEX_NAME, SEARCHED_GEOSHAPE_NAME } from '../../common/constants';
 import { KitNotFoundError, TileDetailsNotFoundError } from './errors';
 
-export interface TilesDetailsQueryParams extends Required<Omit<TileQueryParams, 'bbox'>> {
+export interface TilesDetailsQueryParams extends Omit<TileQueryParams, 'bbox'> {
   bbox: BoundingBox;
+  from: number;
+  size: number;
 }
 
 @injectable()
@@ -19,13 +21,16 @@ export class TileDetailsManager {
   public async queryTilesDetails(params: TilesDetailsQueryParams): Promise<TileDetails[]> {
     this.logger.info({ msg: 'quering tile details', ...params });
 
-    const { minZoom, maxZoom, kits, bbox, from, size } = params;
+    const { minZoom, maxZoom, minState, maxState, kits, bbox, from, size } = params;
+
     const geoshape = bboxToWktPolygon(bbox);
+
+    const stateFilter = minState !== undefined || maxState !== undefined ? ` @state:[${minState ?? '-inf'} ${maxState ?? '+inf'}] ` : ' ';
 
     /* eslint-disable @typescript-eslint/naming-convention */ // node-redis does not follow eslint nmaing convention
     const result = await this.redis.ft.search(
       REDIS_INDEX_NAME,
-      `@z:[${minZoom} ${maxZoom}] @kit:(${kits.join('|')}) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`,
+      `@z:[${minZoom} ${maxZoom}]${stateFilter}@kit:(${kits.join('|')}) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`,
       {
         PARAMS: { [SEARCHED_GEOSHAPE_NAME]: geoshape },
         DIALECT: 3,
@@ -112,8 +117,9 @@ export class TileDetailsManager {
   public async upsertTilesDetails(params: TileParamsWithKit, payload: TileDetailsPayload): Promise<UpsertStatus> {
     this.logger.info({ msg: 'upsterting tile details', params, payload });
 
-    const exisingKits = await this.redis.sMembers(REDIS_KITS_SET_KEY);
-    if (!exisingKits.includes(params.kit)) {
+    const existingKit = (await this.redis.hGet(`${REDIS_KITS_HASH_PREFIX}:${params.kit}`, 'name')) as string | null;
+
+    if (existingKit === null) {
       throw new KitNotFoundError(`kit ${params.kit} does not exists`);
     }
 

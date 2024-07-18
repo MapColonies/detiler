@@ -10,12 +10,12 @@ import { Feature, Geometry } from 'geojson';
 import pino from 'pino';
 import { differenceWith } from 'lodash';
 import { DetilerClient, DetilerClientConfig } from '@map-colonies/detiler-client';
-import { TileDetails, TileParams, TileQueryParams } from '@map-colonies/detiler-common';
+import { KitMetadata, TileDetails, TileParams, TileQueryParams } from '@map-colonies/detiler-common';
 import { LoggerOptions } from '@map-colonies/js-logger';
 import { setIntervalAsync } from 'set-interval-async';
 import { useSnackbar } from 'notistack';
 import { compareQueries, parseDataToFeatures, timerify, querifyBounds, removeDummyFeature } from './utils/helpers';
-import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE } from './utils/constants';
+import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE, DEFAULT_MIN_STATE, DEFAULT_MAX_STATE, MAX_KIT_STATE_KEY } from './utils/constants';
 import { colorFactory, ColorScale, colorScaleParser, ColorScaleFunc, DEFAULT_TILE_COLOR } from './utils/style';
 import { METRICS, findMinMax, updateMinMax, INITIAL_MIN_MAX, Metric } from './utils/metric';
 import { INIT_STATS, calcHttpStat, Stats } from './utils/stats';
@@ -30,7 +30,7 @@ const detilerConfig = config.get<DetilerClientConfig>('client');
 const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
 
 const logger = pino({ ...loggerConfig, browser: { asObject: true } });
-let kits: string[] = [];
+let kits: KitMetadata[] = [];
 let currentZoomLevel = ZOOM_OFFEST;
 let currentBounds: [number, number, number, number] | undefined = undefined;
 let lastDetilerQueryParams: TileQueryParams;
@@ -41,7 +41,8 @@ const client = new DetilerClient({ ...detilerConfig, logger: logger.child({ subC
 export const App: React.FC = () => {
   const [viewState, setViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo>();
-  const [selectedKit, setSelectedKit] = useState<string | undefined>();
+  const [selectedKit, setSelectedKit] = useState<KitMetadata | undefined>();
+  const [stateRange, setStateRange] = useState<number[]>([DEFAULT_MIN_STATE, DEFAULT_MAX_STATE]);
   const [selectedMetric, setSelectedMetric] = useState<Metric | undefined>();
   const [selectedColorScale, setSelectedColorScale] = useState<{ key: ColorScale; value: ColorScaleFunc }>({
     key: 'heat',
@@ -53,7 +54,8 @@ export const App: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
 
   const handleKitChange = (event: TargetetEvent<string>): void => {
-    setSelectedKit(event.target.value);
+    const kitMetadata = kits.find((kit) => kit.name === event.target.value);
+    setSelectedKit(kitMetadata);
     if (statsTable.metric) {
       setStatsTable((prevStatsTable) => {
         const nextMetric = prevStatsTable.metric ? { ...prevStatsTable.metric, range: { ...INITIAL_MIN_MAX } } : undefined;
@@ -61,6 +63,11 @@ export const App: React.FC = () => {
       });
     }
     overrideComparator = true;
+    setStateRange([DEFAULT_MIN_STATE, kitMetadata ? +kitMetadata[MAX_KIT_STATE_KEY] : DEFAULT_MAX_STATE]);
+  };
+
+  const handleKitStateChange = (event: Event, range: number | number[]) => {
+    setStateRange(range as number[]);
   };
 
   const handleMetricChange = (event: TargetetEvent<string>): void => {
@@ -121,6 +128,20 @@ export const App: React.FC = () => {
   };
 
   useEffect(() => {
+    if (selectedKit === undefined) {
+      return;
+    }
+    const prevMaxStateRange = selectedKit[MAX_KIT_STATE_KEY];
+    const kitMetadata = kits.find((kit) => kit.name === selectedKit.name);
+    setSelectedKit(kitMetadata);
+
+    if (+prevMaxStateRange !== stateRange[1]) {
+      return;
+    }
+    setStateRange([stateRange[0], kitMetadata ? +kitMetadata[MAX_KIT_STATE_KEY] : DEFAULT_MAX_STATE]);
+  }, [kits]);
+
+  useEffect(() => {
     if (selectedMetric === undefined) {
       return;
     }
@@ -158,7 +179,9 @@ export const App: React.FC = () => {
       const nextDetilerQueryParams: TileQueryParams = {
         minZoom: currentZoomLevel + ZOOM_OFFEST,
         maxZoom: currentZoomLevel + ZOOM_OFFEST,
-        kits: [selectedKit],
+        minState: stateRange[0],
+        maxState: stateRange[1],
+        kits: [selectedKit.name],
         bbox: querifyBounds(currentBounds),
       };
 
@@ -291,9 +314,11 @@ export const App: React.FC = () => {
         kits={kits}
         zoomLevel={currentZoomLevel}
         selectedKit={selectedKit}
+        stateRange={stateRange}
         selectedMetric={selectedMetric}
         selectedColorScale={selectedColorScale}
         onKitChange={handleKitChange}
+        onStateRangeChange={handleKitStateChange}
         onMetricChange={handleMetricChange}
         onColorScaleChange={handleColorScaleChange}
         onGoToClicked={goToCoordinates}

@@ -2,6 +2,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { RequestHandler } from 'express';
 import httpStatus, { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
+import { KitMetadata } from '@map-colonies/detiler-common';
 import mime from 'mime-types';
 import { SERVICES } from '../../common/constants';
 import { HttpError } from '../../common/errors';
@@ -11,7 +12,7 @@ import { KitManager } from '../models/kitManager';
 
 const txtplain = mime.contentType('text/plain') as string;
 
-type GetAllKitsHandler = RequestHandler<undefined, string[]>;
+type GetAllKitsHandler = RequestHandler<undefined, KitMetadata[]>;
 type PostKitHandler = RequestHandler<undefined, string, Kit>;
 
 @injectable()

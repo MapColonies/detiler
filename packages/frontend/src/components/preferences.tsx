@@ -14,10 +14,12 @@ import {
   Stack,
   Tooltip,
   Typography,
+  Slider,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
+import { KitMetadata } from '@map-colonies/detiler-common';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import { ZOOM_OFFEST } from '../utils/constants';
+import { DEFAULT_MAX_STATE, DEFAULT_MIN_STATE, MAX_KIT_STATE_KEY, ZOOM_OFFEST } from '../utils/constants';
 import './css/styles.css';
 import { TargetetEvent } from '../deck-gl/types';
 import { Metric, METRICS } from '../utils/metric';
@@ -27,12 +29,14 @@ import { ColorModeSwitch } from './colorModeSwitch';
 import { GoToModal } from './goToModal';
 
 interface PreferencesProps {
-  kits: string[];
+  kits: KitMetadata[];
   zoomLevel: number;
-  selectedKit?: string;
+  selectedKit?: KitMetadata;
+  stateRange?: number[];
   selectedMetric?: Metric;
   selectedColorScale: { key: ColorScale; value: ColorScaleFunc };
   onKitChange: (event: TargetetEvent<string>) => void;
+  onStateRangeChange: (event: Event, range: number | number[]) => void;
   onMetricChange: (event: TargetetEvent<string>) => void;
   onColorScaleChange: (event: TargetetEvent<string>) => void;
   onGoToClicked: (longitude: number, latitude: number, zoom?: number) => void;
@@ -42,9 +46,11 @@ export const Preferences: React.FC<PreferencesProps> = ({
   kits,
   zoomLevel: currentZoomLevel,
   selectedKit,
+  stateRange,
   selectedMetric,
   selectedColorScale,
   onKitChange,
+  onStateRangeChange,
   onMetricChange,
   onColorScaleChange,
   onGoToClicked,
@@ -59,6 +65,19 @@ export const Preferences: React.FC<PreferencesProps> = ({
   const handleCloseModal = (): void => {
     setIsModalOpen(false);
   };
+
+  const maxState = selectedKit ? +selectedKit[MAX_KIT_STATE_KEY] : DEFAULT_MAX_STATE;
+
+  const marks = [
+    {
+      value: DEFAULT_MIN_STATE,
+      label: DEFAULT_MIN_STATE,
+    },
+    {
+      value: maxState,
+      label: maxState,
+    },
+  ];
 
   return (
     <div className="common preferences">
@@ -77,10 +96,10 @@ export const Preferences: React.FC<PreferencesProps> = ({
           <Stack direction="column" spacing={2}>
             <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
               <InputLabel id="select-kit-label">Kit</InputLabel>
-              <Select labelId="select-kit-label" id="kit-select" value={selectedKit} onChange={onKitChange} label="Kit">
+              <Select labelId="select-kit-label" id="kit-select" value={selectedKit?.name} onChange={onKitChange} label="Kit">
                 {kits.map((kit, index) => (
-                  <MenuItem key={index} value={kit}>
-                    {kit}
+                  <MenuItem key={index} value={kit.name}>
+                    {kit.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -115,6 +134,18 @@ export const Preferences: React.FC<PreferencesProps> = ({
               </RadioGroup>
             </FormControl>
           </Stack>
+          <Typography id="stateslider" gutterBottom>
+            State Range:
+          </Typography>
+          <Slider
+            getAriaLabel={() => 'Stata range'}
+            marks={marks}
+            min={marks[0].value}
+            max={marks[marks.length - 1].value}
+            value={stateRange}
+            onChange={onStateRangeChange}
+            valueLabelDisplay="auto"
+          />
         </CardContent>
       </Card>
       <GoToModal isOpen={isModalOpen} onClose={handleCloseModal} onGoToClicked={onGoToClicked} />

@@ -2,11 +2,11 @@ import axios, { AxiosError, AxiosInstance } from 'axios';
 import axiosRetry, { exponentialDelay, IAxiosRetryConfig } from 'axios-retry';
 import { StatusCodes } from 'http-status-codes';
 import { stringify } from 'qs';
-import { ILogger, TileDetails, TileDetailsPayload, TileParams, TileParamsWithKit, TileQueryParams } from '@map-colonies/detiler-common';
+import { ILogger, KitMetadata, TileDetails, TileDetailsPayload, TileParams, TileParamsWithKit, TileQueryParams } from '@map-colonies/detiler-common';
 import { DEFAULT_PAGE_SIZE, DEFAULT_RETRY_STRATEGY_DELAY, DetilerClientConfig, DetilerOptions, RetryStrategy } from './config';
 
 export interface IDetilerClient {
-  getKits: () => Promise<string[]>;
+  getKits: () => Promise<KitMetadata[]>;
   queryTilesDetails: (params: TileQueryParams) => Promise<TileDetails[]>;
   queryTilesDetailsAsyncGenerator: (params: TileQueryParams) => AsyncGenerator<TileDetails[]>;
   getTileDetails: (params: TileParamsWithKit) => Promise<TileDetails | null>;
@@ -29,11 +29,11 @@ export class DetilerClient implements IDetilerClient {
     }
   }
 
-  public async getKits(): Promise<string[]> {
+  public async getKits(): Promise<KitMetadata[]> {
     this.logger?.debug({ msg: `getting kits`, url: this.config.url });
 
     try {
-      const res = await this.axios.get<string[]>(`${this.config.url}/kits`);
+      const res = await this.axios.get<KitMetadata[]>(`${this.config.url}/kits`);
       return res.data;
     } catch (error) {
       const axiosError = error as AxiosError;

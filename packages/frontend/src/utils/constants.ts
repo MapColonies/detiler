@@ -27,3 +27,8 @@ export const POPUP_AUTO_CLOSE_MS = 3000;
 export const POPUP_MAX_AMOUNT = 10;
 
 export const METATILE_SIZE = 8;
+
+export const DEFAULT_MIN_STATE = -1;
+export const DEFAULT_MAX_STATE = 1;
+
+export const MAX_KIT_STATE_KEY = 'maxState';

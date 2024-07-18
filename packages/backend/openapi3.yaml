@@ -27,7 +27,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
+                  $ref: '#/components/schemas/kitMetadata'
         4XX:
           $ref: '#/components/responses/BadRequest'
         5XX:
@@ -93,6 +93,16 @@ paths:
             minItems: 4
             maxItems: 4
           required: true
+        - in: query
+          name: minState
+          description: min tile's state
+          schema:
+            $ref: '#/components/schemas/state'
+        - in: query
+          name: maxState
+          description: max tile's state
+          schema:
+            $ref: '#/components/schemas/state'
         - in: query
           name: from
           description: pagination query from
@@ -350,6 +360,11 @@ components:
           $ref: '#/components/schemas/kitName'
       required:
         - name
+    kitMetadata:
+      type: object
+      additionalProperties: true
+      allOf:
+        - $ref: '#/components/schemas/kit'
     tileDetails:
       type: object
       properties:
