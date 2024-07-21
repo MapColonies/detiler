@@ -17,6 +17,7 @@
         "@emotion/react": "^11.11.4",
         "@emotion/styled": "^11.11.5",
         "@map-colonies/detiler-client": "*",
+        "@map-colonies/detiler-common": "*",
         "@map-colonies/js-logger": "^1.0.1",
         "@map-colonies/tile-calc": "^0.1.5",
         "@mui/icons-material": "^5.15.19",

@@ -27,7 +27,7 @@ TFUNCTION LOAD REPLACE "#!js name=LibName api_version=1.0\n
         }
     }
 
-    redis.registerKeySpaceTrigger('test2', 'tile:', getMaximum);"
+    redis.registerKeySpaceTrigger('KitLibrary', 'tile:', getMaximum);"
 ```
 
 # Tests

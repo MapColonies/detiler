@@ -79,10 +79,10 @@ export class TileDetailsManager {
 
     const { kits, ...tileParams } = params;
     const keys = kits.map((kit) => keyfy({ ...tileParams, kit }));
-    const result = (await this.redis.json.mGet(keys, '$')) as [null | TileDetails[]];
+    const result = (await this.redis.json.mGet(keys, '$')) as unknown as [null | TileDetails[]];
     const tilesDetails = result.flat().filter((element) => element !== null);
 
-    return tilesDetails as TileDetails[];
+    return tilesDetails;
   }
 
   public async getTilesDetailsByZXY(tileParams: TileParams): Promise<TileDetails[]> {

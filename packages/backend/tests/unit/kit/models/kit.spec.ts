@@ -52,7 +52,6 @@ describe('KitManager', () => {
 
   describe('#createKit', () => {
     it('should create the kit if it does not exist', async () => {
-      const existingKits: KitMetadata[] = [{ name: 'kit1' }, { name: 'kit2' }];
       const newKit: Kit = { name: 'kit3' };
       mockedRedis.hGet.mockResolvedValue(null);
 
