@@ -135,14 +135,14 @@ export class TileDetailsManager {
         const transaction = isolatedClient.multi();
 
         if (keyExistCounter === 1) {
+          transaction.json.mSet([
+            { key, path: '$.state', value: payload.state ?? UNSPECIFIED_STATE },
+            { key, path: '$.updatedAt', value: payload.timestamp },
+          ]);
+
           if (payload.hasSkipped === true) {
             transaction.json.numIncrBy(key, '$.skipCount', 1);
           } else {
-            transaction.json.mSet([
-              { key, path: '$.state', value: payload.state ?? UNSPECIFIED_STATE },
-              { key, path: '$.updatedAt', value: payload.timestamp },
-            ]);
-
             transaction.json.numIncrBy(key, '$.updateCount', 1);
           }
 

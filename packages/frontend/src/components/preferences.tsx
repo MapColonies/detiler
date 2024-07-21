@@ -134,9 +134,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
               </RadioGroup>
             </FormControl>
           </Stack>
-          <Typography id="stateslider" gutterBottom>
-            State Range:
-          </Typography>
+          <FormLabel id="stateslider-label">State Range</FormLabel>
           <Slider
             getAriaLabel={() => 'Stata range'}
             marks={marks}

@@ -486,7 +486,7 @@ describe('TileDetailsManager', () => {
         x: 0,
         y: 0,
       };
-      const payload: TileDetailsPayload = { hasSkipped: true, timestamp: 1000 };
+      const payload: TileDetailsPayload = { hasSkipped: true, state: 666, timestamp: 1000 };
 
       const response = await manager.upsertTilesDetails(params, payload);
 
@@ -497,7 +497,11 @@ describe('TileDetailsManager', () => {
       expect(watchMock).toHaveBeenCalledTimes(1);
       expect(existsMock).toHaveBeenCalledTimes(1);
       expect(multiMock).toHaveBeenCalledTimes(1);
-      expect(mSetMock).not.toHaveBeenCalled();
+      expect(mSetMock).toHaveBeenCalledTimes(1);
+      expect(mSetMock).toHaveBeenCalledWith([
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.state', value: payload.state },
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.updatedAt', value: payload.timestamp },
+      ]);
       expect(numIncrByMock).toHaveBeenCalledTimes(1);
       expect(numIncrByMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.skipCount', 1);
       expect(setMock).not.toHaveBeenCalled();
@@ -530,7 +534,12 @@ describe('TileDetailsManager', () => {
       expect(existsMock).toHaveBeenCalledTimes(1);
       expect(multiMock).toHaveBeenCalledTimes(1);
       expect(mSetMock).toHaveBeenCalledTimes(1);
+      expect(mSetMock).toHaveBeenCalledWith([
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.state', value: payload.state },
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.updatedAt', value: payload.timestamp },
+      ]);
       expect(numIncrByMock).toHaveBeenCalledTimes(1);
+      expect(numIncrByMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
     });
@@ -561,7 +570,12 @@ describe('TileDetailsManager', () => {
       expect(existsMock).toHaveBeenCalledTimes(1);
       expect(multiMock).toHaveBeenCalledTimes(1);
       expect(mSetMock).toHaveBeenCalledTimes(1);
+      expect(mSetMock).toHaveBeenCalledWith([
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.state', value: payload.state },
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.updatedAt', value: payload.timestamp },
+      ]);
       expect(numIncrByMock).toHaveBeenCalledTimes(1);
+      expect(numIncrByMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
     });
