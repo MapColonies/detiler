@@ -25,8 +25,10 @@ data is colored in relation to some metric (state, update count, skip count, cur
   "kit":"my-default-kit",
   "state":666,
   "updatedAt":1711907506,
+  "renderedAt":1711907506,
   "createdAt":1711302106,
   "updateCount":13,
+  "renderCount":11,
   "skipCount":2,
   "geoshape":"POLYGON ((34.453125 31.541748046875, 34.453125 31.53076171875, 34.464111328125 31.53076171875, 34.464111328125 31.541748046875, 34.453125 31.541748046875))",
   "coordinates":"34.458618, 31.536255"
@@ -37,10 +39,11 @@ data is colored in relation to some metric (state, update count, skip count, cur
 this process will occur in `retiler` by quering `detiler-backend`
 
 1. a tile is being candidate for processing
-2. query the tile's `updatedAt` field from the backend
+2. query the tile's details from the backend --and `renderedAt` field
 3. fetch the tile's kit data timestamp (the timestamp is being maintained by osm2pgsql, with every append data timestamp is updated)
-4. compare the two, if tile's update time is latter then data time - the tile has already been processed with the most current data, meaning it's processing can be skipped
-5. update the tile's `skipCount` accordingly
+4. compare the two, if tile's `renderedAt` time is later than kit data time - the tile has already been processed with the most current data, meaning its processing can be skipped. thus we have the following branch, either:
+    - `renderedAt` >= kit timestamp - processing should be skipped: update the tile's details - `state`, `updateCount`, `updatedAt` and `skipCount` accordingly
+    - `renderedAt` < kit timestamp - processing is needed: process the tile and update the tile's details - `state`, `updateCount`, `updatedAt`, `renderCount` and `renderedAt` accordingly
 
 ## Configuration
 the frontend app including its environment variables are being processed in buildtime.
@@ -52,7 +55,7 @@ see [.env.production](/packages/frontend/config/.env.production) and [env.sh](/p
 ### redis search index creation:
 ```
 FT.CREATE tileDetailsIdx ON JSON PREFIX 1 tile:
-SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.createdAt AS createdAt NUMERIC $.updateCount AS updateCount NUMERIC $.coordiantes AS coordinates GEO $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
+SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.renderedAt AS renderedAt NUMERIC $.createdAt AS createdAt NUMERIC $.updateCount AS updateCount NUMERIC $.renderCount AS renderCount NUMERIC $.skipCount AS skipCount NUMERIC $.coordiantes AS coordinates GEO $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
 ```
 
 ### redis post processing:

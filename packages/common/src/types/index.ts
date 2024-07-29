@@ -26,7 +26,9 @@ export interface TileDetails extends TileParamsWithKit {
   state: number;
   createdAt: number;
   updatedAt: number;
+  renderedAt: number;
   updateCount: number;
+  renderCount: number;
   skipCount: number;
   coordinates: string;
   geoshape: string;

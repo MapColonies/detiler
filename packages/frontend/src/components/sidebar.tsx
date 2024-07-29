@@ -15,7 +15,7 @@ import { presentifyValue } from '../utils/metric';
 import { LOAD_TIMEOUT_MS, METATILE_SIZE, ZOOM_OFFEST } from '../utils/constants';
 import { bboxToLonLat, promiseWithTimeout } from '../utils/helpers';
 
-const TILES_PER_PAGE = 5;
+const TILES_PER_PAGE = 4;
 const FIRST_PAGE = 1;
 const DRAWER_WIDTH = 345;
 const SUCCESS_COPY_MESSAGE = 'Copied to Clipboard';
@@ -32,6 +32,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
   const [currentPage, setCurrentPage] = useState(FIRST_PAGE);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { enqueueSnackbar } = useSnackbar();
+
+  data = data.sort((a, b) => a.kit.localeCompare(b.kit));
 
   useEffect(() => {
     setCurrentPage(FIRST_PAGE);
@@ -118,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
             </Tooltip>
           </Stack>
           {currentData.map((tile) => (
-            <Card variant="outlined" sx={{ mb: 2 }}>
+            <Card variant="outlined" sx={{ mb: 1 }}>
               <CardContent key={`${tile.kit}/${tile.z}/${tile.x}/${tile.y}`}>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                   <Typography variant="body2">
@@ -130,7 +132,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
                     <br />
                     Updated At: {presentifyValue(tile.updatedAt, 'date')}
                     <br />
+                    Rendered At: {presentifyValue(tile.renderedAt, 'date')}
+                    <br />
                     Update Count: {tile.updateCount}
+                    <br />
+                    Render Count: {tile.renderCount}
                     <br />
                     Skip Count: {tile.skipCount}
                   </Typography>

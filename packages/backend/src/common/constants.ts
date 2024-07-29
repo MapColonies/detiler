@@ -21,6 +21,7 @@ export const HEALTHCHECK = Symbol('healthcheck');
 
 export const METATILE_SIZE = 8;
 export const COORDINATES_FRACTION_DIGITS = 6;
+export const FIRST_ITEM_INDEX = 0;
 
 export const REDIS_INDEX_NAME = 'tileDetailsIdx';
 export const REDIS_KITS_HASH_PREFIX = 'kit';

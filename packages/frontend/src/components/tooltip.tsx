@@ -11,10 +11,12 @@ const TOOLTIP_PROPERTIES: (Detail | CalculatedDetail)[] = [
   'y',
   'kit',
   'state',
-  'createdAt',
   'updateCount',
+  'renderCount',
   'skipCount',
+  'createdAt',
   'updatedAt',
+  'renderedAt',
   'coordinates',
   'score',
 ];

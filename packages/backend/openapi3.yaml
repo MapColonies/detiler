@@ -382,7 +382,11 @@ components:
           $ref: '#/components/schemas/unixTimestamp'
         updatedAt:
           $ref: '#/components/schemas/unixTimestamp'
+        renderedAt:
+          $ref: '#/components/schemas/unixTimestamp'
         updateCount:
+          $ref: '#/components/schemas/counter'
+        renderCount:
           $ref: '#/components/schemas/counter'
         skipCount:
           $ref: '#/components/schemas/counter'
@@ -396,5 +400,8 @@ components:
         - state
         - createdAt
         - updatedAt
+        - renderedAt
         - updateCount
+        - renderCount
+        - skipCount
         - coordinates

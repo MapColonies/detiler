@@ -431,9 +431,11 @@ describe('TileDetailsManager', () => {
       expect(mSetMock).toHaveBeenCalledWith([
         { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.state', value: UNSPECIFIED_STATE },
         { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.updatedAt', value: payload.timestamp },
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.renderedAt', value: payload.timestamp },
       ]);
-      expect(numIncrByMock).toHaveBeenCalledTimes(1);
-      expect(numIncrByMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
+      expect(numIncrByMock).toHaveBeenCalledTimes(2);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(1, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.renderCount', 1);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
     });
@@ -466,9 +468,11 @@ describe('TileDetailsManager', () => {
       expect(mSetMock).toHaveBeenCalledWith([
         { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.state', value: payload.state },
         { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.updatedAt', value: payload.timestamp },
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.renderedAt', value: payload.timestamp },
       ]);
-      expect(numIncrByMock).toHaveBeenCalledTimes(1);
-      expect(numIncrByMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
+      expect(numIncrByMock).toHaveBeenCalledTimes(2);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(1, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.renderCount', 1);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
     });
@@ -502,8 +506,9 @@ describe('TileDetailsManager', () => {
         { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.state', value: payload.state },
         { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.updatedAt', value: payload.timestamp },
       ]);
-      expect(numIncrByMock).toHaveBeenCalledTimes(1);
-      expect(numIncrByMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.skipCount', 1);
+      expect(numIncrByMock).toHaveBeenCalledTimes(2);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(1, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.skipCount', 1);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
     });
@@ -537,9 +542,11 @@ describe('TileDetailsManager', () => {
       expect(mSetMock).toHaveBeenCalledWith([
         { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.state', value: payload.state },
         { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.updatedAt', value: payload.timestamp },
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.renderedAt', value: payload.timestamp },
       ]);
-      expect(numIncrByMock).toHaveBeenCalledTimes(1);
-      expect(numIncrByMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
+      expect(numIncrByMock).toHaveBeenCalledTimes(2);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(1, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.renderCount', 1);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
     });
@@ -573,9 +580,11 @@ describe('TileDetailsManager', () => {
       expect(mSetMock).toHaveBeenCalledWith([
         { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.state', value: payload.state },
         { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.updatedAt', value: payload.timestamp },
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.renderedAt', value: payload.timestamp },
       ]);
-      expect(numIncrByMock).toHaveBeenCalledTimes(1);
-      expect(numIncrByMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
+      expect(numIncrByMock).toHaveBeenCalledTimes(2);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(1, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.renderCount', 1);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
     });

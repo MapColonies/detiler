@@ -22,13 +22,15 @@ export interface Metric {
   maxFn?: () => number;
 }
 
-export const TIMESTAMP_DETAIL: Detail[] = ['createdAt', 'updatedAt'];
+export const TIMESTAMP_DETAIL: Detail[] = ['createdAt', 'updatedAt', 'renderedAt'];
 
 export const INITIAL_MIN_MAX: { min: number; max: number } = { min: Number.MAX_SAFE_INTEGER, max: Number.MIN_SAFE_INTEGER };
 
 export const METRICS: Metric[] = [
-  { name: 'Update Count', property: 'updateCount', range: INITIAL_MIN_MAX, info: 'the number of times a tile has been rerendered' },
-  { name: 'Updated At', property: 'updatedAt', range: INITIAL_MIN_MAX, info: 'the last time a tile has been updated' },
+  { name: 'Update Count', property: 'updateCount', range: INITIAL_MIN_MAX, info: 'the number of times a tile has been rerendered or skipped' },
+  { name: 'Render Count', property: 'renderCount', range: INITIAL_MIN_MAX, info: 'the number of times a tile has been rerendered' },
+  { name: 'Updated At', property: 'updatedAt', range: INITIAL_MIN_MAX, info: 'the last time a tile has been rendered or skipped' },
+  { name: 'Rendered At', property: 'renderedAt', range: INITIAL_MIN_MAX, info: 'the last time a tile has been rendered' },
   { name: 'Created At', property: 'createdAt', range: INITIAL_MIN_MAX, info: 'the creation time of a tile' },
   { name: 'State Number', property: 'state', range: INITIAL_MIN_MAX, info: 'the current state number of a tile' },
   {

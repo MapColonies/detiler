@@ -97,11 +97,13 @@ export const Preferences: React.FC<PreferencesProps> = ({
             <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
               <InputLabel id="select-kit-label">Kit</InputLabel>
               <Select labelId="select-kit-label" id="kit-select" value={selectedKit?.name} onChange={onKitChange} label="Kit">
-                {kits.map((kit, index) => (
-                  <MenuItem key={index} value={kit.name}>
-                    {kit.name}
-                  </MenuItem>
-                ))}
+                {kits
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((kit, index) => (
+                    <MenuItem key={index} value={kit.name}>
+                      {kit.name}
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
             <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>

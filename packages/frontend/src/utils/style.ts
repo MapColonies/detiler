@@ -13,9 +13,9 @@ export const RGBA_MAX = 255;
 
 export const DEFAULT_TILE_COLOR: [number, number, number, number] = [RGBA_MIN, RGBA_MIN, RGBA_MIN, DEFAULT_EMPTY_TILE_ALPHA];
 
-export type ColorScale = 'heat' | 'redToGreen' | 'virdis';
+export type ColorScale = 'heat' | 'r2g' | 'virdis';
 export type ColorScaleFunc = ReturnType<typeof colorScaleParser>;
-export const COLOR_SCALES: ColorScale[] = ['heat', 'redToGreen', 'virdis'];
+export const COLOR_SCALES: ColorScale[] = ['heat', 'r2g', 'virdis'];
 
 export const colorScaleParser = (colorScale: ColorScale): d3.ScaleSequential<unknown> | d3.ScalePower<unknown, unknown> => {
   switch (colorScale) {
@@ -26,7 +26,7 @@ export const colorScaleParser = (colorScale: ColorScale): d3.ScaleSequential<unk
         .scalePow([d3.rgb(RGBA_MAX, RGBA_MAX, RGBA_MIN), d3.rgb(RGBA_MAX, RGBA_MIN, RGBA_MIN)])
         .exponent(HEAT_EXPONENT)
         .domain([0, 1]);
-    case 'redToGreen':
+    case 'r2g':
       return d3.scaleSequential(d3.interpolateRgb(d3.rgb(RGBA_MAX, RGBA_MIN, RGBA_MIN), d3.rgb(RGBA_MIN, RGBA_MAX, RGBA_MIN))).domain([0, 1]);
   }
 };

@@ -5,7 +5,7 @@ import { WatchError } from 'redis';
 import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import { DEFAULT_LIMIT, RedisClient } from '../../redis';
 import { keyfy, stringifyCoordinates, bboxToWktPolygon, UpsertStatus, bboxToLonLat } from '../../common/util';
-import { REDIS_KITS_HASH_PREFIX, METATILE_SIZE, SERVICES, REDIS_INDEX_NAME, SEARCHED_GEOSHAPE_NAME } from '../../common/constants';
+import { REDIS_KITS_HASH_PREFIX, METATILE_SIZE, SERVICES, REDIS_INDEX_NAME, SEARCHED_GEOSHAPE_NAME, FIRST_ITEM_INDEX } from '../../common/constants';
 import { KitNotFoundError, TileDetailsNotFoundError } from './errors';
 
 export interface TilesDetailsQueryParams extends Omit<TileQueryParams, 'bbox'> {
@@ -79,8 +79,8 @@ export class TileDetailsManager {
 
     const { kits, ...tileParams } = params;
     const keys = kits.map((kit) => keyfy({ ...tileParams, kit }));
-    const result = (await this.redis.json.mGet(keys, '$')) as unknown as [null | TileDetails[]];
-    const tilesDetails = result.flat().filter((element) => element !== null);
+    const result = (await this.redis.json.mGet(keys, '$')) as unknown as [[TileDetails]];
+    const tilesDetails = result.flat().filter((element: TileDetails | null) => element !== null);
 
     return tilesDetails;
   }
@@ -135,16 +135,23 @@ export class TileDetailsManager {
         const transaction = isolatedClient.multi();
 
         if (keyExistCounter === 1) {
-          transaction.json.mSet([
-            { key, path: '$.state', value: payload.state ?? UNSPECIFIED_STATE },
-            { key, path: '$.updatedAt', value: payload.timestamp },
-          ]);
+          transaction.json.numIncrBy(key, '$.updateCount', 1);
 
-          if (payload.hasSkipped === true) {
-            transaction.json.numIncrBy(key, '$.skipCount', 1);
+          const jsonMSetItems: Parameters<typeof transaction.json.mSet> = [
+            [
+              { key, path: '$.state', value: payload.state ?? UNSPECIFIED_STATE },
+              { key, path: '$.updatedAt', value: payload.timestamp },
+            ],
+          ];
+
+          if (payload.hasSkipped !== true) {
+            transaction.json.numIncrBy(key, '$.renderCount', 1);
+            jsonMSetItems[0].push({ key, path: '$.renderedAt', value: payload.timestamp });
           } else {
-            transaction.json.numIncrBy(key, '$.updateCount', 1);
+            transaction.json.numIncrBy(key, '$.skipCount', 1);
           }
+
+          transaction.json.mSet(jsonMSetItems.flat());
 
           await transaction.exec();
 
@@ -165,7 +172,9 @@ export class TileDetailsManager {
           state: payload.state ?? UNSPECIFIED_STATE,
           updatedAt: payload.timestamp,
           createdAt: payload.timestamp,
+          renderedAt: payload.timestamp,
           updateCount: 1,
+          renderCount: 1,
           skipCount: 0,
           geoshape: wkt,
           coordinates: stringifyCoordinates(tileCoordinates),
