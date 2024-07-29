@@ -55,6 +55,6 @@ export interface TileQueryParams extends BaseQueryParams {
 }
 
 export interface KitMetadata {
-  name: string;
   [property: string]: string;
+  name: string;
 }

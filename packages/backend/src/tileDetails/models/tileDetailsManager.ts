@@ -5,7 +5,7 @@ import { WatchError } from 'redis';
 import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import { DEFAULT_LIMIT, RedisClient } from '../../redis';
 import { keyfy, stringifyCoordinates, bboxToWktPolygon, UpsertStatus, bboxToLonLat } from '../../common/util';
-import { REDIS_KITS_HASH_PREFIX, METATILE_SIZE, SERVICES, REDIS_INDEX_NAME, SEARCHED_GEOSHAPE_NAME, FIRST_ITEM_INDEX } from '../../common/constants';
+import { REDIS_KITS_HASH_PREFIX, METATILE_SIZE, SERVICES, REDIS_INDEX_NAME, SEARCHED_GEOSHAPE_NAME } from '../../common/constants';
 import { KitNotFoundError, TileDetailsNotFoundError } from './errors';
 
 export interface TilesDetailsQueryParams extends Omit<TileQueryParams, 'bbox'> {
