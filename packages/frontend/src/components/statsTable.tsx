@@ -1,6 +1,6 @@
 import React from 'react';
 import './css/styles.css';
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { presentifyValue, TIMESTAMP_DETAIL } from '../utils/metric';
 import { Stats } from '../utils/stats';
 
@@ -33,29 +33,27 @@ export const StatsTable: React.FC<StatsTableProps> = ({ stats }) => {
   ];
 
   return (
-    <div className="common stats">
-      <TableContainer component={Paper}>
-        <Table size="small" aria-label="a dense table">
-          <TableHead>
-            <TableRow>
-              <TableCell>Stat</TableCell>
-              <TableCell align="right">Avg(ms)</TableCell>
-              <TableCell align="right">Value</TableCell>
+    <TableContainer component={Box}>
+      <Table size="small" aria-label="a dense table">
+        <TableHead>
+          <TableRow>
+            <TableCell>Stat</TableCell>
+            <TableCell align="right">Avg(ms)</TableCell>
+            <TableCell align="right">Value</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={row.prop} sx={{ [TABLE_ROW_SX]: { border: 0 } }}>
+              <TableCell component="th" scope="row">
+                {row.prop}
+              </TableCell>
+              <TableCell align="right">{row.average}</TableCell>
+              <TableCell align="right">{row.value}</TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.prop} sx={{ [TABLE_ROW_SX]: { border: 0 } }}>
-                <TableCell component="th" scope="row">
-                  {row.prop}
-                </TableCell>
-                <TableCell align="right">{row.average}</TableCell>
-                <TableCell align="right">{row.value}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </div>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };

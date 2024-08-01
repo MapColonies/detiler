@@ -4,10 +4,11 @@ import { INITIAL_MIN_MAX, MinMax } from './metric';
 import { AppConfig } from './interfaces';
 
 const DEFAULT_EMPTY_TILE_ALPHA = 50;
-const DEFAULT_COLORED_TILE_ALPHA = 75;
 const HEAT_EXPONENT = 2;
 
 const configuredAlpha = config.get<AppConfig>('app').style.dataAlphaChannel;
+
+export const DEFAULT_COLORED_ALPHA = 75;
 export const RGBA_MIN = 0;
 export const RGBA_MAX = 255;
 
@@ -46,5 +47,5 @@ export const colorFactory = (value: number | undefined, colorScaleFunc: ColorSca
   const scaledColor = colorScaleFunc(value) as d3.ColorSpaceObject;
   const color = d3.color(scaledColor);
   const { r, g, b } = color.rgb();
-  return [r, g, b, configuredAlpha ?? DEFAULT_COLORED_TILE_ALPHA];
+  return [r, g, b, configuredAlpha ?? DEFAULT_COLORED_ALPHA];
 };

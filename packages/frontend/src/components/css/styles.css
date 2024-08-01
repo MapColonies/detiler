@@ -5,12 +5,12 @@
   z-index: 2;
 }
 
-.preferences {
+.top-right-corner {
   right: 5px;
   top: 5px;
 }
 
-.stats {
+.bottom-right-corner {
   right: 5px;
   bottom: 5px;
 }

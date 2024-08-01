@@ -5,11 +5,12 @@ import { Feature } from '@turf/helpers';
 import { RGBA_MAX, RGBA_MIN } from '../utils/style';
 import { MAX_ZOOM_LEVEL, MIN_ZOOM_LEVEL } from '../utils/constants';
 
-const GEOJSON_LAYER_ID = 'detiler-geojson-layer';
-const BASEMAP_LAYER_ID = 'detiler-tile-layer';
+export const BASEMAP_LAYER_ID = 'main-basemap-layer';
+export const GEOJSON_LAYER_ID = 'main-geojson-layer';
+export const OVERVIEW_BASEMAP_LAYER_ID = 'overview-geojson-layer';
+export const OVERVIEW_GEOJSON_LAYER_ID = 'overview-geojson-layer';
 
 export const CONSTANT_GEOJSON_LAYER_PROPERTIES: Partial<GeoJsonLayerProps & DataFilterExtensionProps> = {
-  id: GEOJSON_LAYER_ID,
   coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
   pickable: true,
   stroked: true,
@@ -26,7 +27,6 @@ export const CONSTANT_GEOJSON_LAYER_PROPERTIES: Partial<GeoJsonLayerProps & Data
 };
 
 export const CONSTANT_TILE_LAYER_PROPERTIES = {
-  id: BASEMAP_LAYER_ID,
   minZoom: MIN_ZOOM_LEVEL,
   maxZoom: MAX_ZOOM_LEVEL,
   coordinateSystem: COORDINATE_SYSTEM.LNGLAT,

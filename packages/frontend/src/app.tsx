@@ -19,12 +19,12 @@ import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE, DEFAULT_MIN_STATE
 import { colorFactory, ColorScale, colorScaleParser, ColorScaleFunc, DEFAULT_TILE_COLOR } from './utils/style';
 import { METRICS, findMinMax, updateMinMax, INITIAL_MIN_MAX, Metric } from './utils/metric';
 import { INIT_STATS, calcHttpStat, Stats } from './utils/stats';
-import { Preferences, Sidebar, StatsTable, Tooltip } from './components';
+import { Preferences, Sidebar, Tooltip, CornerTabs } from './components';
 import { filterRangeFuncWrapper, transformFuncWrapper } from './deck-gl';
-import { CONSTANT_GEOJSON_LAYER_PROPERTIES } from './deck-gl/constants';
-import { basemapLayer } from './deck-gl/basemap';
+import { CONSTANT_GEOJSON_LAYER_PROPERTIES, GEOJSON_LAYER_ID, BASEMAP_LAYER_ID } from './deck-gl/constants';
+import { basemapLayerFactory } from './deck-gl/basemap';
 import { config } from './config';
-import { MapLibreGL, TargetetEvent } from './deck-gl/types';
+import { Bounds, MapLibreGL, TargetetEvent } from './deck-gl/types';
 
 const detilerConfig = config.get<DetilerClientConfig>('client');
 const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
@@ -32,7 +32,7 @@ const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
 const logger = pino({ ...loggerConfig, browser: { asObject: true } });
 let kits: KitMetadata[] = [];
 let currentZoomLevel = ZOOM_OFFEST;
-let currentBounds: [number, number, number, number] | undefined = undefined;
+const bounds: { actual?: Bounds; query?: Bounds } = {};
 let lastDetilerQueryParams: TileQueryParams;
 let overrideComparator = false;
 
@@ -66,7 +66,7 @@ export const App: React.FC = () => {
     setStateRange([DEFAULT_MIN_STATE, kitMetadata ? +kitMetadata[MAX_KIT_STATE_KEY] : DEFAULT_MAX_STATE]);
   };
 
-  const handleKitStateChange = (event: Event, range: number | number[]) => {
+  const handleKitStateChange = (event: Event, range: number | number[]): void => {
     setStateRange(range as number[]);
   };
 
@@ -98,8 +98,8 @@ export const App: React.FC = () => {
     setViewState({ ...viewState, ...nextViewState.viewState });
     // for higher zoom levels lower the viewport's zoom level by 1 to have a buffer around the query bounds
     const viewportZoom = nextViewState.viewState.zoom <= ZOOM_OFFEST + 1 ? nextViewState.viewState.zoom : nextViewState.viewState.zoom - 1;
-    const webMercatorViewport = new WebMercatorViewport({ ...nextViewState.viewState, zoom: viewportZoom });
-    currentBounds = webMercatorViewport.getBounds();
+    bounds.query = new WebMercatorViewport({ ...nextViewState.viewState, zoom: viewportZoom }).getBounds();
+    bounds.actual = new WebMercatorViewport(nextViewState.viewState).getBounds();
     overrideComparator = true;
 
     const nextZoom = Math.floor(nextViewState.viewState.zoom);
@@ -177,7 +177,7 @@ export const App: React.FC = () => {
 
   const fetchData = async (): Promise<Feature[] | undefined> => {
     try {
-      if (currentBounds === undefined || selectedKit === undefined) {
+      if (bounds.query === undefined || selectedKit === undefined) {
         return;
       }
 
@@ -187,7 +187,7 @@ export const App: React.FC = () => {
         minState: stateRange[0],
         maxState: stateRange[1],
         kits: [selectedKit.name],
-        bbox: querifyBounds(currentBounds),
+        bbox: querifyBounds(bounds.query),
       };
 
       const areQueriesEqual = compareQueries(lastDetilerQueryParams, nextDetilerQueryParams);
@@ -248,7 +248,10 @@ export const App: React.FC = () => {
     }
   };
 
+  const basemapLayer = basemapLayerFactory(BASEMAP_LAYER_ID);
+
   const layer = new GeoJsonLayer({
+    id: GEOJSON_LAYER_ID,
     ...CONSTANT_GEOJSON_LAYER_PROPERTIES,
     data: fetchData(),
     dataTransform: transformFuncWrapper(statsTable.metric),
@@ -328,7 +331,7 @@ export const App: React.FC = () => {
         onColorScaleChange={handleColorScaleChange}
         onGoToClicked={goToCoordinates}
       />
-      <StatsTable stats={statsTable} />
+      <CornerTabs statsTableProps={{ stats: statsTable }} overviewMapProps={{ bounds: bounds.actual, zoom: currentZoomLevel }} />
       <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} data={sidebarData} onGoToClicked={goToCoordinates} onRefreshClicked={fetchTile} />
     </div>
   );

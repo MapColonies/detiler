@@ -80,7 +80,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
   ];
 
   return (
-    <div className="common preferences">
+    <div className="common top-right-corner">
       <Card>
         <CardContent>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -138,7 +138,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
           </Stack>
           <FormLabel id="stateslider-label">State Range</FormLabel>
           <Slider
-            getAriaLabel={() => 'Stata range'}
+            getAriaLabel={(): string => 'Stata range'}
             marks={marks}
             min={marks[0].value}
             max={marks[marks.length - 1].value}

@@ -3,7 +3,7 @@
 import { useTheme } from '@mui/material/styles';
 import { Switch } from '@mui/material';
 import { styled } from '@mui/system';
-import { DARK_MODE_MAIN, LIGHT_MODE_MAIN } from './colorMode';
+import { DARK_MODE_MAIN_HEX, LIGHT_MODE_MAIN_HEX } from './colorMode';
 
 export const ColorModeSwitch = styled(Switch)(() => {
   const theme = useTheme();
@@ -31,7 +31,7 @@ export const ColorModeSwitch = styled(Switch)(() => {
       },
     },
     '& .MuiSwitch-thumb': {
-      backgroundColor: theme.palette.mode === 'dark' ? DARK_MODE_MAIN : LIGHT_MODE_MAIN, // icon background color
+      backgroundColor: theme.palette.mode === 'dark' ? DARK_MODE_MAIN_HEX : LIGHT_MODE_MAIN_HEX, // icon background color
       width: 32,
       height: 32,
       '&::before': {

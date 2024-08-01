@@ -1,6 +1,6 @@
 import { TileDetails, TileQueryParams } from '@map-colonies/detiler-common';
 import { BoundingBox, LonLat, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
-import { Feature, FeatureCollection } from 'geojson';
+import { Feature } from 'geojson';
 import { FEATURE_ID_DUMMY, MAX_LATITUDE, MAX_LONGITUDE, MIN_LATITUDE, MIN_LONGITUDE, ZOOM_OFFEST } from './constants';
 
 const querifyLongitude = (longitude: number): number => {
@@ -50,6 +50,27 @@ export const compareQueries = (prev: TileQueryParams | undefined, next: TileQuer
   return true;
 };
 
+export const bboxToFeature = (boundingBox: BoundingBox): Feature => {
+  const { west, south, east, north } = boundingBox;
+
+  return {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [west, south],
+          [east, south],
+          [east, north],
+          [west, north],
+          [west, south],
+        ],
+      ],
+    },
+  };
+};
+
 export const parseDataToFeatures = (data: TileDetails[]): Feature[] => {
   return data
     .filter((tileDetails: TileDetails) => tileDetails.z > ZOOM_OFFEST)
@@ -93,13 +114,6 @@ export const removeDummyFeature = (features?: Feature[]): Feature[] | undefined 
     features.splice(0, 1);
   }
   return features;
-};
-
-export const featuresToFeatureCollection = (features: Feature[]): FeatureCollection => {
-  return {
-    type: 'FeatureCollection',
-    features: features,
-  };
 };
 
 export const timerify = async <R, A extends unknown[]>(func: (...args: A) => Promise<R>, ...args: A): Promise<[R, number]> => {
