@@ -12,7 +12,7 @@ import { differenceWith } from 'lodash';
 import { DetilerClient, DetilerClientConfig } from '@map-colonies/detiler-client';
 import { KitMetadata, TileDetails, TileParams, TileQueryParams } from '@map-colonies/detiler-common';
 import { LoggerOptions } from '@map-colonies/js-logger';
-import { setIntervalAsync } from 'set-interval-async';
+import { setIntervalAsync, clearIntervalAsync } from 'set-interval-async';
 import { useSnackbar } from 'notistack';
 import { compareQueries, parseDataToFeatures, timerify, querifyBounds, removeDummyFeature } from './utils/helpers';
 import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE, DEFAULT_MIN_STATE, DEFAULT_MAX_STATE, MAX_KIT_STATE_KEY } from './utils/constants';
@@ -166,8 +166,13 @@ export const App: React.FC = () => {
         enqueueSnackbar(JSON.stringify(err), { variant: 'error' });
       }
     }
+
     void kitsFetch();
-    setIntervalAsync(kitsFetch, FETCH_KITS_INTERVAL);
+
+    const timer = setIntervalAsync(kitsFetch, FETCH_KITS_INTERVAL);
+    return () => {
+      void clearIntervalAsync(timer).then(() => logger.info(`fetch timer cleared`));
+    };
   }, []);
 
   const fetchData = async (): Promise<Feature[] | undefined> => {

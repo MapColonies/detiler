@@ -4,7 +4,7 @@ import { KitMetadata } from '@map-colonies/detiler-common';
 import { REDIS_KITS_HASH_PREFIX, SERVICES } from '../../common/constants';
 import { RedisClient } from '../../redis';
 import { KitAlreadyExistsError } from './errors';
-import { Kit } from './kit';
+import { Kit, ExtendedKit } from './kit';
 
 @injectable()
 export class KitManager {
@@ -31,6 +31,8 @@ export class KitManager {
       throw new KitAlreadyExistsError(`kit named ${kit.name} already exists`);
     }
 
-    await this.redis.hSet(`${REDIS_KITS_HASH_PREFIX}:${kit.name}`, { ...kit, maxUpdatedAt: 0, maxState: 0 });
+    const extendedKit: ExtendedKit = { ...kit, maxUpdatedAt: 0, maxState: 0 };
+
+    await this.redis.hSet(`${REDIS_KITS_HASH_PREFIX}:${kit.name}`, { ...extendedKit });
   }
 }

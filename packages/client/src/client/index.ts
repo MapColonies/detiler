@@ -23,7 +23,7 @@ export class DetilerClient implements IDetilerClient {
     const { logger, ...config } = options;
     this.logger = logger;
     this.config = config;
-    this.axios = axios.create({ timeout: options.timeout });
+    this.axios = axios.create({ timeout: options.timeout, headers: options.headers });
     if (options.enableRetryStrategy === true) {
       this.configureRetryStrategy(options.retryStrategy as RetryStrategy);
     }

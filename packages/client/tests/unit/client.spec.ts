@@ -341,5 +341,36 @@ describe('Client', () => {
       expect(spyWithRetry).toHaveBeenCalledTimes(1);
       expect(spyWithRetry).toHaveBeenCalledWith(`${MOCK_DETILER_URL}/detail/${params.kit}/${params.z}/${params.x}/${params.y}`);
     });
+
+    it('should attach headers and complete request on the third attempt when retry strategy is enabled', async function () {
+      const networkError = new Error('Some connection error');
+      const headers = { ['x-api-key']: 'secret', header: 'key' };
+      const detilerWithRetry = new DetilerClient({
+        url: MOCK_DETILER_URL,
+        headers,
+        enableRetryStrategy: true,
+        retryStrategy: {
+          retries: 3,
+        },
+      });
+      const params: TileParamsWithKit = { kit: 'kit', z: 1, x: 1, y: 1 };
+      const details = { a: 1 };
+      nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).once().replyWithError(networkError);
+      nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).twice().replyWithError(networkError);
+      nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).thrice().reply(httpStatusCodes.OK, details);
+      const spyWithRetry = jest.spyOn(detilerWithRetry['axios'], 'get');
+
+      detilerWithRetry['axios'].interceptors.request.use((req) => {
+        expect(req.headers).toEqual(expect.objectContaining(headers));
+        return req;
+      });
+
+      const response = await detilerWithRetry.getTileDetails(params);
+
+      expect(response).toMatchObject(details);
+
+      expect(spyWithRetry).toHaveBeenCalledTimes(1);
+      expect(spyWithRetry).toHaveBeenCalledWith(`${MOCK_DETILER_URL}/detail/${params.kit}/${params.z}/${params.x}/${params.y}`);
+    });
   });
 });

@@ -27,7 +27,7 @@ export class TileDetailsManager {
 
     const stateFilter = minState !== undefined || maxState !== undefined ? ` @state:[${minState ?? '-inf'} ${maxState ?? '+inf'}] ` : ' ';
 
-    /* eslint-disable @typescript-eslint/naming-convention */ // node-redis does not follow eslint nmaing convention
+    /* eslint-disable @typescript-eslint/naming-convention */ // node-redis does not follow eslint naming convention
     const result = await this.redis.ft.search(
       REDIS_INDEX_NAME,
       `@z:[${minZoom} ${maxZoom}]${stateFilter}@kit:(${kits.join('|')}) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`,

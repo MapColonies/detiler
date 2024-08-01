@@ -13,6 +13,7 @@ export interface RetryStrategy {
 export interface DetilerClientConfig {
   url: string;
   timeout?: number;
+  headers?: Record<string, string>;
   enableRetryStrategy?: boolean;
   retryStrategy?: RetryStrategy;
 }
