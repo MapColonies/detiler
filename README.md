@@ -39,11 +39,13 @@ data is colored in relation to some metric (state, update count, skip count, cur
 this process will occur in `retiler` by quering `detiler-backend`
 
 1. a tile is being candidate for processing
-2. query the tile's details from the backend --and `renderedAt` field
-3. fetch the tile's kit data timestamp (the timestamp is being maintained by osm2pgsql, with every append data timestamp is updated)
-4. compare the two, if tile's `renderedAt` time is later than kit data time - the tile has already been processed with the most current data, meaning its processing can be skipped. thus we have the following branch, either:
+2. is the tile processing is attributed as forced? if so skip steps 3-5 and jump to step 6.
+3. query the tile's details from the backend --and `renderedAt` field
+4. fetch the tile's kit data timestamp (the timestamp is being maintained by osm2pgsql, with every append data timestamp is updated)
+5. compare the two, if tile's `renderedAt` time is later than kit data time - the tile has already been processed with the most current data, meaning its processing can be skipped. thus we have the following branch, either:
     - `renderedAt` >= kit timestamp - processing should be skipped: update the tile's details - `state`, `updateCount`, `updatedAt` and `skipCount` accordingly
-    - `renderedAt` < kit timestamp - processing is needed: process the tile and update the tile's details - `state`, `updateCount`, `updatedAt`, `renderCount` and `renderedAt` accordingly
+    - `renderedAt` < kit timestamp - processing is needed
+6. process the tile and update the tile's details - `state`, `updateCount`, `updatedAt`, `renderCount` and `renderedAt` accordingly
 
 ## Configuration
 the frontend app including its environment variables are being processed in buildtime.
