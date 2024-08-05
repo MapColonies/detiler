@@ -2,6 +2,7 @@ import { TileDetails, TileQueryParams } from '@map-colonies/detiler-common';
 import { BoundingBox, LonLat, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import { Feature } from 'geojson';
 import { FEATURE_ID_DUMMY, MAX_LATITUDE, MAX_LONGITUDE, MIN_LATITUDE, MIN_LONGITUDE, ZOOM_OFFEST } from './constants';
+import { AppHelper } from './interfaces';
 
 const querifyLongitude = (longitude: number): number => {
   if (longitude > MAX_LONGITUDE) {
@@ -148,4 +149,12 @@ export const bboxToLonLat = (bbox: BoundingBox): LonLat => {
   const lon = average([bbox.west, bbox.east]);
   const lat = average([bbox.north, bbox.south]);
   return { lon, lat };
+};
+
+export const appHelper: AppHelper = {
+  kits: [],
+  currentZoomLevel: ZOOM_OFFEST,
+  bounds: {},
+  lastDetilerQueryParams: undefined,
+  shouldOverrideComarator: false,
 };

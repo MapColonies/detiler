@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { Tabs, Tab, Paper } from '@mui/material';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import MapIcon from '@mui/icons-material/Map';
-import { StatsTable, OverviewMap } from '.';
+import { StatsTable, OverviewMap, StatsTableProps, OverviewMapProps } from '.';
 import './css/styles.css';
 
-/* eslint-disable @typescript-eslint/no-magic-numbers */
 interface CornerTabsProps {
-  statsTableProps: Parameters<typeof StatsTable>[0];
-  overviewMapProps: Parameters<typeof OverviewMap>[0];
+  statsTableProps: StatsTableProps;
+  overviewMapProps: OverviewMapProps;
 }
-/* eslint-enable @typescript-eslint/no-magic-numbers */
 
 export const CornerTabs: React.FC<CornerTabsProps> = ({ statsTableProps: { stats }, overviewMapProps: { bounds, zoom } }) => {
   const [tabId, setTabId] = useState<number>(0);
@@ -26,7 +24,7 @@ export const CornerTabs: React.FC<CornerTabsProps> = ({ statsTableProps: { stats
           <Tab icon={<QueryStatsIcon fontSize="small" />} aria-label="stats" />
           <Tab icon={<MapIcon fontSize="small" />} aria-label="map" />
         </Tabs>
-        <div style={{ height: '32vh', width: '20vw', position: 'relative' }}>
+        <div style={{ height: '32vh', minWidth: '20vw', maxWidth: '24vw', position: 'relative' }}>
           {tabId === 0 ? <StatsTable stats={stats} /> : <OverviewMap bounds={bounds} zoom={zoom} />}
         </div>
       </Paper>

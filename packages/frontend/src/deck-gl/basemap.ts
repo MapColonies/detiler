@@ -10,7 +10,7 @@ const X_API_KEY_HEADER = 'x-api-key';
 const appConfig = config.get<AppConfig>('app');
 
 /* eslint-disable @typescript-eslint/naming-convention */
-export const basemapLayerFactory = (id: string): TileLayer | undefined => {
+export const basemapLayerFactory = (id?: string): TileLayer | undefined => {
   return appConfig.basemap.enabled
     ? new TileLayer({
         ...CONSTANT_TILE_LAYER_PROPERTIES,

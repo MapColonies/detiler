@@ -8,13 +8,13 @@ const DIGITS_AFTER_DECIMAL = 2;
 
 const TABLE_ROW_SX = '&:last-child td, &:last-child th';
 
-interface StatsTableProps {
-  stats: Stats;
-}
-
 function createData(stat: string, value: string, average?: number): { prop: string; value: string; average: string } {
   const averageResult = average !== undefined ? average.toFixed(DIGITS_AFTER_DECIMAL).toString() : '';
   return { prop: stat, value, average: averageResult };
+}
+
+export interface StatsTableProps {
+  stats: Stats;
 }
 
 export const StatsTable: React.FC<StatsTableProps> = ({ stats }) => {
@@ -37,19 +37,19 @@ export const StatsTable: React.FC<StatsTableProps> = ({ stats }) => {
       <Table size="small" aria-label="a dense table">
         <TableHead>
           <TableRow>
-            <TableCell>Stat</TableCell>
-            <TableCell align="right">Avg(ms)</TableCell>
-            <TableCell align="right">Value</TableCell>
+            <TableCell align="left">Stat</TableCell>
+            <TableCell align="left">Avg(ms)</TableCell>
+            <TableCell align="left">Value</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.prop} sx={{ [TABLE_ROW_SX]: { border: 0 } }}>
-              <TableCell component="th" scope="row">
+              <TableCell align="left" component="th" scope="row">
                 {row.prop}
               </TableCell>
-              <TableCell align="right">{row.average}</TableCell>
-              <TableCell align="right">{row.value}</TableCell>
+              <TableCell align="left">{row.average}</TableCell>
+              <TableCell align="left">{row.value}</TableCell>
             </TableRow>
           ))}
         </TableBody>

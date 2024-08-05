@@ -7,36 +7,21 @@ import { GeoJsonLayer } from '@deck.gl/layers';
 import { ViewStateChangeParameters } from '@deck.gl/core/src/controllers/controller';
 import { PickingInfo } from '@deck.gl/core/src/lib/picking/pick-info';
 import { Feature, Geometry } from 'geojson';
-import pino from 'pino';
-import { differenceWith } from 'lodash';
-import { DetilerClient, DetilerClientConfig } from '@map-colonies/detiler-client';
 import { KitMetadata, TileDetails, TileParams, TileQueryParams } from '@map-colonies/detiler-common';
-import { LoggerOptions } from '@map-colonies/js-logger';
 import { setIntervalAsync, clearIntervalAsync } from 'set-interval-async';
 import { useSnackbar } from 'notistack';
-import { compareQueries, parseDataToFeatures, timerify, querifyBounds, removeDummyFeature } from './utils/helpers';
+import { appHelper, compareQueries, parseDataToFeatures, timerify, querifyBounds } from './utils/helpers';
 import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE, DEFAULT_MIN_STATE, DEFAULT_MAX_STATE, MAX_KIT_STATE_KEY } from './utils/constants';
 import { colorFactory, ColorScale, colorScaleParser, ColorScaleFunc, DEFAULT_TILE_COLOR } from './utils/style';
 import { METRICS, findMinMax, updateMinMax, INITIAL_MIN_MAX, Metric } from './utils/metric';
 import { INIT_STATS, calcHttpStat, Stats } from './utils/stats';
 import { Preferences, Sidebar, Tooltip, CornerTabs } from './components';
-import { filterRangeFuncWrapper, transformFuncWrapper } from './deck-gl';
+import { comparatorFuncWrapper, filterRangeFuncWrapper, transformFuncWrapper } from './deck-gl';
 import { CONSTANT_GEOJSON_LAYER_PROPERTIES, GEOJSON_LAYER_ID, BASEMAP_LAYER_ID } from './deck-gl/constants';
 import { basemapLayerFactory } from './deck-gl/basemap';
-import { config } from './config';
-import { Bounds, MapLibreGL, TargetetEvent } from './deck-gl/types';
-
-const detilerConfig = config.get<DetilerClientConfig>('client');
-const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
-
-const logger = pino({ ...loggerConfig, browser: { asObject: true } });
-let kits: KitMetadata[] = [];
-let currentZoomLevel = ZOOM_OFFEST;
-const bounds: { actual?: Bounds; query?: Bounds } = {};
-let lastDetilerQueryParams: TileQueryParams;
-let overrideComparator = false;
-
-const client = new DetilerClient({ ...detilerConfig, logger: logger.child({ subComponent: 'detilerClient' }) });
+import { logger } from './logger';
+import { client } from './client';
+import { MapLibreGL, TargetetEvent } from './deck-gl/types';
 
 export const App: React.FC = () => {
   const [viewState, setViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
@@ -54,7 +39,7 @@ export const App: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
 
   const handleKitChange = (event: TargetetEvent<string>): void => {
-    const kitMetadata = kits.find((kit) => kit.name === event.target.value);
+    const kitMetadata = appHelper.kits.find((kit) => kit.name === event.target.value);
     setSelectedKit(kitMetadata);
     if (statsTable.metric) {
       setStatsTable((prevStatsTable) => {
@@ -62,7 +47,7 @@ export const App: React.FC = () => {
         return { ...prevStatsTable, metric: nextMetric };
       });
     }
-    overrideComparator = true;
+    appHelper.shouldOverrideComarator = true;
     setStateRange([DEFAULT_MIN_STATE, kitMetadata ? +kitMetadata[MAX_KIT_STATE_KEY] : DEFAULT_MAX_STATE]);
   };
 
@@ -74,13 +59,13 @@ export const App: React.FC = () => {
     const index = METRICS.findIndex((metric) => metric.name === event.target.value);
     const metric = METRICS[index];
     setSelectedMetric(metric);
-    overrideComparator = true;
+    appHelper.shouldOverrideComarator = true;
   };
 
   const handleColorScaleChange = (event: TargetetEvent<string>): void => {
     const colorScale = event.target.value as ColorScale;
     setSelectedColorScale({ key: colorScale, value: colorScaleParser(colorScale) });
-    overrideComparator = true;
+    appHelper.shouldOverrideComarator = true;
   };
 
   const goToCoordinates = useCallback((longitude: number, latitude: number, zoom?: number) => {
@@ -88,7 +73,7 @@ export const App: React.FC = () => {
       ...viewState,
       longitude,
       latitude,
-      zoom: zoom ?? currentZoomLevel,
+      zoom: zoom ?? appHelper.currentZoomLevel,
       transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
       transitionDuration: 'auto',
     });
@@ -98,16 +83,16 @@ export const App: React.FC = () => {
     setViewState({ ...viewState, ...nextViewState.viewState });
     // for higher zoom levels lower the viewport's zoom level by 1 to have a buffer around the query bounds
     const viewportZoom = nextViewState.viewState.zoom <= ZOOM_OFFEST + 1 ? nextViewState.viewState.zoom : nextViewState.viewState.zoom - 1;
-    bounds.query = new WebMercatorViewport({ ...nextViewState.viewState, zoom: viewportZoom }).getBounds();
-    bounds.actual = new WebMercatorViewport(nextViewState.viewState).getBounds();
-    overrideComparator = true;
+    appHelper.bounds.query = new WebMercatorViewport({ ...nextViewState.viewState, zoom: viewportZoom }).getBounds();
+    appHelper.bounds.actual = new WebMercatorViewport(nextViewState.viewState).getBounds();
+    appHelper.shouldOverrideComarator = true;
 
     const nextZoom = Math.floor(nextViewState.viewState.zoom);
-    if (currentZoomLevel === nextZoom) {
+    if (appHelper.currentZoomLevel === nextZoom) {
       return;
     }
 
-    currentZoomLevel = nextZoom;
+    appHelper.currentZoomLevel = nextZoom;
     // reset min-max values between zoom changes
     if (statsTable.metric) {
       setStatsTable((prevStatsTable) => {
@@ -132,14 +117,14 @@ export const App: React.FC = () => {
       return;
     }
     const prevMaxStateRange = selectedKit[MAX_KIT_STATE_KEY];
-    const kitMetadata = kits.find((kit) => kit.name === selectedKit.name);
+    const kitMetadata = appHelper.kits.find((kit) => kit.name === selectedKit.name);
     setSelectedKit(kitMetadata);
 
     if (+prevMaxStateRange !== stateRange[1]) {
       return;
     }
     setStateRange([stateRange[0], kitMetadata ? +kitMetadata[MAX_KIT_STATE_KEY] : DEFAULT_MAX_STATE]);
-  }, [kits]);
+  }, [appHelper.kits]);
 
   useEffect(() => {
     if (selectedMetric === undefined) {
@@ -149,14 +134,14 @@ export const App: React.FC = () => {
       const nextMetric = { ...selectedMetric, range: { ...INITIAL_MIN_MAX } };
       return { ...prevStatsTable, metric: nextMetric };
     });
-    overrideComparator = true;
+    appHelper.shouldOverrideComarator = true;
   }, [selectedMetric]);
 
   useEffect(() => {
     async function kitsFetch(): Promise<void> {
       try {
         const [result, duration] = await timerify<Awaited<ReturnType<typeof client.getKits>>, never[]>(client.getKits.bind(client));
-        kits = result;
+        appHelper.kits = result;
         setStatsTable((prevStatsTable) => {
           const nextHttpStat = calcHttpStat(prevStatsTable.httpInvokes.kits, duration);
           return { ...prevStatsTable, httpInvokes: { ...prevStatsTable.httpInvokes, kits: nextHttpStat } };
@@ -177,25 +162,25 @@ export const App: React.FC = () => {
 
   const fetchData = async (): Promise<Feature[] | undefined> => {
     try {
-      if (bounds.query === undefined || selectedKit === undefined) {
+      if (appHelper.bounds.query === undefined || selectedKit === undefined) {
         return;
       }
 
       const nextDetilerQueryParams: TileQueryParams = {
-        minZoom: currentZoomLevel + ZOOM_OFFEST,
-        maxZoom: currentZoomLevel + ZOOM_OFFEST,
+        minZoom: appHelper.currentZoomLevel + ZOOM_OFFEST,
+        maxZoom: appHelper.currentZoomLevel + ZOOM_OFFEST,
         minState: stateRange[0],
         maxState: stateRange[1],
         kits: [selectedKit.name],
-        bbox: querifyBounds(bounds.query),
+        bbox: querifyBounds(appHelper.bounds.query),
       };
 
-      const areQueriesEqual = compareQueries(lastDetilerQueryParams, nextDetilerQueryParams);
+      const areQueriesEqual = compareQueries(appHelper.lastDetilerQueryParams, nextDetilerQueryParams);
       if (areQueriesEqual) {
         return;
       }
 
-      lastDetilerQueryParams = nextDetilerQueryParams;
+      appHelper.lastDetilerQueryParams = nextDetilerQueryParams;
 
       let data: TileDetails[] = [];
       const queryGenerator = client.queryTilesDetailsAsyncGenerator(nextDetilerQueryParams);
@@ -205,12 +190,12 @@ export const App: React.FC = () => {
         }
       });
 
+      const features = parseDataToFeatures(data);
+
       setStatsTable((prevStatsTable) => {
         const nextHttpStat = calcHttpStat(prevStatsTable.httpInvokes.query, duration);
         return { ...prevStatsTable, httpInvokes: { ...prevStatsTable.httpInvokes, query: nextHttpStat } };
       });
-
-      const features = parseDataToFeatures(data);
 
       if (statsTable.metric !== undefined) {
         const currentMinMax = findMinMax(data, statsTable.metric.property);
@@ -226,15 +211,11 @@ export const App: React.FC = () => {
     }
   };
 
-  const fetchTile = async (z: number, x: number, y: number): Promise<void> => {
+  const fetchTile = async (tile: TileParams): Promise<void> => {
     try {
       const [result, duration] = await timerify<Awaited<ReturnType<typeof client.getTilesDetails>>, [TileParams]>(
         client.getTilesDetails.bind(client),
-        {
-          z,
-          x,
-          y,
-        }
+        tile
       );
       setStatsTable((prevStatsTable) => {
         const nextHttpStat = calcHttpStat(prevStatsTable.httpInvokes.tile, duration);
@@ -243,7 +224,7 @@ export const App: React.FC = () => {
 
       handleOpenSidebar(result);
     } catch (err) {
-      logger.error({ msg: 'error getting tile details', err });
+      logger.error({ msg: 'error getting tile details', err, tile });
       enqueueSnackbar(JSON.stringify(err), { variant: 'error' });
     }
   };
@@ -255,41 +236,8 @@ export const App: React.FC = () => {
     ...CONSTANT_GEOJSON_LAYER_PROPERTIES,
     data: fetchData(),
     dataTransform: transformFuncWrapper(statsTable.metric),
-    dataComparator: (nextData: Feature[], prevData: Feature[]): boolean => {
-      let shouldSkipRedering = false;
-      // render if override flag is enabled or next data is greater than prev
-      if (overrideComparator || prevData.length < nextData.length) {
-        overrideComparator = false;
-      } else {
-        // render if new data is not contained in prev data
-        const comparator = (tile1: Feature, tile2: Feature): boolean => tile1.properties?.id === tile2.properties?.id;
-        const difference = differenceWith(nextData, prevData, comparator);
-        shouldSkipRedering = difference.length === 0;
-      }
-
-      if (!shouldSkipRedering) {
-        removeDummyFeature(nextData);
-
-        setStatsTable((prevStatsTable) => {
-          const nextMapRendersCount = prevStatsTable.mapRendersCount + 1;
-          const nextRenderedTiles = (prevStatsTable.currentlyRenderedTiles = nextData.length);
-          const nextTotalTilesRendered = (prevStatsTable.totalTilesRendered += nextData.length);
-          const nextUniqueTilesRendered = new Set(prevStatsTable.uniqueTilesRendered);
-          const newIds: string[] = nextData.map((tile) => tile.properties?.id as string);
-          newIds.forEach((id) => nextUniqueTilesRendered.add(id));
-          return {
-            ...prevStatsTable,
-            currentlyRenderedTiles: nextRenderedTiles,
-            mapRendersCount: nextMapRendersCount,
-            totalTilesRendered: nextTotalTilesRendered,
-            uniqueTilesRendered: nextUniqueTilesRendered,
-          };
-        });
-      }
-
-      return shouldSkipRedering;
-    },
-    filterRange: filterRangeFuncWrapper(currentZoomLevel),
+    dataComparator: comparatorFuncWrapper(appHelper, setStatsTable),
+    filterRange: filterRangeFuncWrapper(appHelper.currentZoomLevel),
     getFillColor: (tile: Feature<Geometry, { score: number }>): [number, number, number, number] => {
       if (!statsTable.metric) {
         return DEFAULT_TILE_COLOR;
@@ -308,7 +256,7 @@ export const App: React.FC = () => {
         return;
       }
 
-      await fetchTile(z, x, y);
+      await fetchTile({ z, x, y });
     },
   });
 
@@ -319,8 +267,8 @@ export const App: React.FC = () => {
         <Tooltip hoverInfo={hoverInfo} />
       </DeckGL>
       <Preferences
-        kits={kits}
-        zoomLevel={currentZoomLevel}
+        kits={appHelper.kits}
+        zoomLevel={appHelper.currentZoomLevel}
         selectedKit={selectedKit}
         stateRange={stateRange}
         selectedMetric={selectedMetric}
@@ -331,7 +279,7 @@ export const App: React.FC = () => {
         onColorScaleChange={handleColorScaleChange}
         onGoToClicked={goToCoordinates}
       />
-      <CornerTabs statsTableProps={{ stats: statsTable }} overviewMapProps={{ bounds: bounds.actual, zoom: currentZoomLevel }} />
+      <CornerTabs statsTableProps={{ stats: statsTable }} overviewMapProps={{ bounds: appHelper.bounds.actual, zoom: appHelper.currentZoomLevel }} />
       <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} data={sidebarData} onGoToClicked={goToCoordinates} onRefreshClicked={fetchTile} />
     </div>
   );

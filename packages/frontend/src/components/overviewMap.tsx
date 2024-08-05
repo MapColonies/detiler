@@ -15,12 +15,10 @@ import { basemapLayerFactory } from '../deck-gl/basemap';
 import { DEFAULT_COLORED_ALPHA } from '../utils/style';
 import { BACKGROUND_RGBA, LIGHT_MODE_MAIN_RGB, DARK_MODE_MAIN_RGB } from './colorMode';
 
-interface OverviewMapProps {
+export interface OverviewMapProps {
   bounds?: Bounds;
   zoom: number;
 }
-
-const overviewBaseLayer = basemapLayerFactory(OVERVIEW_BASEMAP_LAYER_ID);
 
 export const OverviewMap: React.FC<OverviewMapProps> = ({ bounds, zoom }) => {
   if (bounds === undefined) {
@@ -36,7 +34,6 @@ export const OverviewMap: React.FC<OverviewMapProps> = ({ bounds, zoom }) => {
   const [viewState] = useState<MapViewState>({ ...INITIAL_VIEW_STATE, longitude: lon, latitude: lat, zoom: zoom - ZOOM_OFFEST });
 
   const overviewGeojsonLayer = new GeoJsonLayer({
-    id: OVERVIEW_GEOJSON_LAYER_ID,
     ...CONSTANT_GEOJSON_LAYER_PROPERTIES,
     getFillColor: theme.palette.mode === 'dark' ? [...DARK_MODE_MAIN_RGB, DEFAULT_COLORED_ALPHA] : [...LIGHT_MODE_MAIN_RGB, DEFAULT_COLORED_ALPHA],
     pickable: true,
@@ -50,6 +47,8 @@ export const OverviewMap: React.FC<OverviewMapProps> = ({ bounds, zoom }) => {
       return shouldSkipRedering;
     },
   });
+
+  const overviewBaseLayer = basemapLayerFactory(OVERVIEW_BASEMAP_LAYER_ID);
 
   return (
     <DeckGL initialViewState={viewState} controller={true} layers={[overviewBaseLayer, overviewGeojsonLayer]}>

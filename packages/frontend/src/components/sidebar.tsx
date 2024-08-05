@@ -8,6 +8,7 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { parse as WktToGeojson } from 'wellknown';
 import { Card, CardContent, Typography, Box, Stack, Pagination, Tooltip, CircularProgress } from '@mui/material';
 import { useSnackbar } from 'notistack';
+import { TileParams } from '@map-colonies/detiler-common';
 import { TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -25,7 +26,7 @@ interface SidebarProps {
   data: TileDetails[];
   onClose: () => void;
   onGoToClicked: (longitude: number, latitude: number, zoom?: number) => void;
-  onRefreshClicked: (z: number, x: number, y: number) => Promise<void>;
+  onRefreshClicked: (tile: TileParams) => Promise<void>;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToClicked, onRefreshClicked }) => {
@@ -70,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
     setIsLoading(true);
 
     const { z, x, y } = data[0];
-    await promiseWithTimeout(LOAD_TIMEOUT_MS, onRefreshClicked(z, x, y));
+    await promiseWithTimeout(LOAD_TIMEOUT_MS, onRefreshClicked({ z, x, y }));
 
     setIsLoading(false);
   };
