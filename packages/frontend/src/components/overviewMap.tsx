@@ -52,7 +52,7 @@ export const OverviewMap: React.FC<OverviewMapProps> = ({ bounds, zoom }) => {
 
   return (
     <DeckGL initialViewState={viewState} controller={true} layers={[overviewBaseLayer, overviewGeojsonLayer]}>
-      <Map id="overview-map" reuseMaps={true} mapLib={maplibregl as unknown as MapLibreGL} />
+      <Map id="overview-map" reuseMaps={true} mapLib={maplibregl as unknown as MapLibreGL} attributionControl={false} />
     </DeckGL>
   );
 };

@@ -263,7 +263,7 @@ export const App: React.FC = () => {
   return (
     <div>
       <DeckGL initialViewState={viewState} controller={true} layers={[basemapLayer, layer]} onViewStateChange={handleViewportChange}>
-        <Map id="map" reuseMaps={true} mapLib={maplibregl as unknown as MapLibreGL} />
+        <Map id="map" reuseMaps={true} mapLib={maplibregl as unknown as MapLibreGL} attributionControl={false} />
         <Tooltip hoverInfo={hoverInfo} />
       </DeckGL>
       <Preferences
