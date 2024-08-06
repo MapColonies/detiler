@@ -1,7 +1,7 @@
 import { KitMetadata } from '@map-colonies/detiler-common';
 import jsLogger from '@map-colonies/js-logger';
 import { createClient } from 'redis';
-import { REDIS_KITS_HASH_PREFIX } from '../../../../src/common/constants';
+import { REDIS_KITS_HASH_PREFIX, REDIS_KITS_SET } from '../../../../src/common/constants';
 import { KitAlreadyExistsError } from '../../../../src/kit/models/errors';
 import { Kit } from '../../../../src/kit/models/kit';
 import { KitManager } from '../../../../src/kit/models/kitManager';
@@ -10,10 +10,11 @@ import { KitManager } from '../../../../src/kit/models/kitManager';
 jest.mock('redis', () => ({
   ...jest.requireActual('redis'),
   createClient: jest.fn().mockImplementation(() => ({
-    keys: jest.fn(),
     hGet: jest.fn(),
     hGetAll: jest.fn(),
     hSet: jest.fn(),
+    sMembers: jest.fn(),
+    sAdd: jest.fn(),
   })),
 }));
 
@@ -34,19 +35,19 @@ describe('KitManager', () => {
 
   describe('#getAllKits', () => {
     it('should get all existing kits', async () => {
-      const expectedKeys = [`${REDIS_KITS_HASH_PREFIX}:kit1`, `${REDIS_KITS_HASH_PREFIX}:kit2`];
+      const expectedKeys = ['kit1', 'kit2'];
       const expected: KitMetadata[] = [{ name: 'kit1' }, { name: 'kit2' }];
-      mockedRedis.keys.mockResolvedValue(expectedKeys);
+      mockedRedis.sMembers.mockResolvedValue(expectedKeys);
       mockedRedis.hGetAll.mockResolvedValueOnce(expected[0]).mockResolvedValueOnce(expected[1]);
 
       const response = await kitManager.getAllKits();
 
       expect(response).toMatchObject(expected);
-      expect(mockedRedis.keys).toHaveBeenCalledTimes(1);
-      expect(mockedRedis.keys).toHaveBeenCalledWith(`${REDIS_KITS_HASH_PREFIX}:*`);
+      expect(mockedRedis.sMembers).toHaveBeenCalledTimes(1);
+      expect(mockedRedis.sMembers).toHaveBeenCalledWith(REDIS_KITS_SET);
       expect(mockedRedis.hGetAll).toHaveBeenCalledTimes(expectedKeys.length);
-      expect(mockedRedis.hGetAll).toHaveBeenNthCalledWith(1, expectedKeys[0]);
-      expect(mockedRedis.hGetAll).toHaveBeenNthCalledWith(2, expectedKeys[1]);
+      expect(mockedRedis.hGetAll).toHaveBeenNthCalledWith(1, `${REDIS_KITS_HASH_PREFIX}:${expectedKeys[0]}`);
+      expect(mockedRedis.hGetAll).toHaveBeenNthCalledWith(2, `${REDIS_KITS_HASH_PREFIX}:${expectedKeys[1]}`);
     });
   });
 
@@ -59,6 +60,8 @@ describe('KitManager', () => {
 
       expect(mockedRedis.hGet).toHaveBeenCalledTimes(1);
       expect(mockedRedis.hGet).toHaveBeenCalledWith(`${REDIS_KITS_HASH_PREFIX}:${newKit.name}`, 'name');
+      expect(mockedRedis.sAdd).toHaveBeenCalledTimes(1);
+      expect(mockedRedis.sAdd).toHaveBeenCalledWith(REDIS_KITS_SET, newKit.name);
       expect(mockedRedis.hSet).toHaveBeenCalledTimes(1);
       expect(mockedRedis.hSet).toHaveBeenCalledWith(`${REDIS_KITS_HASH_PREFIX}:${newKit.name}`, { ...newKit, maxUpdatedAt: 0, maxState: 0 });
     });

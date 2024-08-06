@@ -24,7 +24,7 @@ export const CornerTabs: React.FC<CornerTabsProps> = ({ statsTableProps: { stats
           <Tab icon={<QueryStatsIcon fontSize="small" />} aria-label="stats" />
           <Tab icon={<MapIcon fontSize="small" />} aria-label="map" />
         </Tabs>
-        <div style={{ height: '32vh', minWidth: '20vw', maxWidth: '24vw', position: 'relative' }}>
+        <div style={{ minHeight: '32vh', maxHeight: '36vh', minWidth: '20vw', maxWidth: '24vw', position: 'relative' }}>
           {tabId === 0 ? <StatsTable stats={stats} /> : <OverviewMap bounds={bounds} zoom={zoom} />}
         </div>
       </Paper>

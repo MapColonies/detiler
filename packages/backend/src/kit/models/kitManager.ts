@@ -1,7 +1,7 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import { KitMetadata } from '@map-colonies/detiler-common';
-import { REDIS_KITS_HASH_PREFIX, SERVICES } from '../../common/constants';
+import { REDIS_KITS_SET, REDIS_KITS_HASH_PREFIX, SERVICES } from '../../common/constants';
 import { RedisClient } from '../../redis';
 import { KitAlreadyExistsError } from './errors';
 import { Kit, ExtendedKit } from './kit';
@@ -13,9 +13,9 @@ export class KitManager {
   public async getAllKits(): Promise<KitMetadata[]> {
     this.logger.info('getting all kits');
 
-    const keys = await this.redis.keys(`${REDIS_KITS_HASH_PREFIX}:*`);
+    const kitNames = await this.redis.sMembers(REDIS_KITS_SET);
 
-    const kits = (await Promise.all(keys.map(async (key) => this.redis.hGetAll(key)))) as KitMetadata[];
+    const kits = (await Promise.all(kitNames.map(async (name) => this.redis.hGetAll(`${REDIS_KITS_HASH_PREFIX}:${name}`)))) as KitMetadata[];
 
     this.logger.debug({ msg: 'fetched kits', count: kits.length, kits });
 
@@ -32,6 +32,8 @@ export class KitManager {
     }
 
     const extendedKit: ExtendedKit = { ...kit, maxUpdatedAt: 0, maxState: 0 };
+
+    await this.redis.sAdd(REDIS_KITS_SET, kit.name);
 
     await this.redis.hSet(`${REDIS_KITS_HASH_PREFIX}:${kit.name}`, { ...extendedKit });
   }
