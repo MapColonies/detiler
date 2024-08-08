@@ -7,6 +7,7 @@ import Drawer from '@mui/material/Drawer';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { parse as WktToGeojson } from 'wellknown';
 import { Card, CardContent, Typography, Box, Stack, Pagination, Tooltip, CircularProgress } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
 import { TileParams } from '@map-colonies/detiler-common';
 import { TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
@@ -20,6 +21,13 @@ const TILES_PER_PAGE = 4;
 const FIRST_PAGE = 1;
 const DRAWER_WIDTH = 345;
 const SUCCESS_COPY_MESSAGE = 'Copied to Clipboard';
+
+const StyledCardContent = styled(CardContent)(`
+  padding: 10px;
+  &:last-child {
+    padding-bottom: 10px;
+  }
+`);
 
 interface SidebarProps {
   isOpen: boolean;
@@ -101,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
           <CircularProgress />
         </Stack>
       ) : (
-        <Box sx={{ padding: '20px' }}>
+        <Box sx={{ padding: '10px' }}>
           <Typography variant="h5">
             Tile: {data[0].z}/{data[0].x}/{data[0].y}
           </Typography>
@@ -122,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
           </Stack>
           {currentData.map((tile) => (
             <Card variant="outlined" sx={{ mb: 1 }}>
-              <CardContent key={`${tile.kit}/${tile.z}/${tile.x}/${tile.y}`}>
+              <StyledCardContent key={`${tile.kit}/${tile.z}/${tile.x}/${tile.y}`}>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                   <Typography variant="body2">
                     Kit: {tile.kit}
@@ -147,12 +155,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
                     </IconButton>
                   </CopyToClipboard>
                 </Stack>
-              </CardContent>
+              </StyledCardContent>
             </Card>
           ))}
         </Box>
       )}
-      <Box display="flex" justifyContent="center" alignItems="center">
+      <Box display="flex" justifyContent="center" alignItems="center" margin="auto" marginBottom="10%">
         {data.length > TILES_PER_PAGE && (
           <Pagination count={Math.ceil(data.length / TILES_PER_PAGE)} page={currentPage} onChange={handlePageChange} color="primary" />
         )}

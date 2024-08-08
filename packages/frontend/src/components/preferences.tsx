@@ -16,6 +16,7 @@ import {
   Typography,
   Slider,
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import InfoIcon from '@mui/icons-material/Info';
 import { KitMetadata } from '@map-colonies/detiler-common';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -27,6 +28,13 @@ import { ColorScale, COLOR_SCALES, ColorScaleFunc } from '../utils/style';
 import { colorModeContext } from './colorMode';
 import { ColorModeSwitch } from './colorModeSwitch';
 import { GoToModal } from './goToModal';
+
+const StyledCardContent = styled(CardContent)(`
+  padding: 30px;
+  &:last-child {
+    padding-bottom: 24px;
+  }
+`);
 
 interface PreferencesProps {
   kits: KitMetadata[];
@@ -82,7 +90,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
   return (
     <div className="common top-right-corner">
       <Card>
-        <CardContent>
+        <StyledCardContent>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Zoom: {currentZoomLevel + ZOOM_OFFEST}</Typography>
             <Tooltip title="go to tile / coordinates">
@@ -146,7 +154,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
             onChange={onStateRangeChange}
             valueLabelDisplay="auto"
           />
-        </CardContent>
+        </StyledCardContent>
       </Card>
       <GoToModal isOpen={isModalOpen} onClose={handleCloseModal} onGoToClicked={onGoToClicked} />
     </div>
