@@ -1,6 +1,6 @@
 {
     "name": "@map-colonies/detiler-common",
-    "version": "1.0.0-rc6",
+    "version": "1.0.0",
     "description": "detiler common types",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
