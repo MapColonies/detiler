@@ -1,0 +1,16 @@
+.common {
+  position: absolute;
+  padding: 8px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.top-right-corner {
+  right: 5px;
+  top: 5px;
+}
+
+.bottom-right-corner {
+  right: 5px;
+  bottom: 5px;
+}

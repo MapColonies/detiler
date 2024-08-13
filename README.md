@@ -1,118 +1,101 @@
-# Map Colonies typescript service template
+# detiler
 
-----------------------------------
+this monorepo includes detiler backend, frontend, client and their common library
 
-This is a basic repo template for building new MapColonies web services in Typescript.
+## detiler-backend
+deploys an api used to maintain each and every metatile's metadata and query it according to selected filters
 
-### Template Features:
+data is cached in redis and updated with each tile processing done by the [retiler](https://github.com/MapColonies/retiler) service
 
-- eslint configuration by [@map-colonies/eslint-config](https://github.com/MapColonies/eslint-config)
+- leverages from unnecessary tile processing skip
+- quick and easy kit comparison
+- data maintenance for immediate and future BI
 
-- prettier configuration by [@map-colonies/prettier-config](https://github.com/MapColonies/prettier-config)
+## detiler-frontend
+a react app containing `deck.gl` map components presenting selected kit's metatiles.
 
-- jest
+data is colored in relation to some metric (state, update count, skip count, currentness, etc.) thus presenting for each tile it's metric in correlation with all other tiles.
 
-- .nvmrc
-
-- Multi stage production-ready Dockerfile
-
-- commitlint
-
-- git hooks
-
-- logging by [@map-colonies/js-logger](https://github.com/MapColonies/js-logger)
-
-- OpenAPI request validation
-
-- config load with [node-config](https://www.npmjs.com/package/node-config)
-
-- Tracing and metrics by [@map-colonies/telemetry](https://github.com/MapColonies/telemetry)
-
-- github templates
-
-- bug report
-
-- feature request
-
-- pull request
-
-- github actions
-
-- on pull_request
-
-- LGTM
-
-- test
-
-- lint
-
-- snyk
-
-## API
-Checkout the OpenAPI spec [here](/openapi3.yaml)
-
-## Installation
-
-Install deps with npm
-
-```bash
-npm install
-```
-### Install Git Hooks
-```bash
-npx husky install
+### tile metadata example:
+```json
+{
+  "z":17,
+  "x":19520,
+  "y":5321,
+  "kit":"my-default-kit",
+  "state":666,
+  "updatedAt":1711907506,
+  "renderedAt":1711907506,
+  "createdAt":1711302106,
+  "updateCount":13,
+  "renderCount":11,
+  "skipCount":2,
+  "geoshape":"POLYGON ((34.453125 31.541748046875, 34.453125 31.53076171875, 34.464111328125 31.53076171875, 34.464111328125 31.541748046875, 34.453125 31.541748046875))",
+  "coordinates":"34.458618, 31.536255"
+}
 ```
 
-## Run Locally
+### tile processing skip timeline:
+this process will occur in `retiler` by quering `detiler-backend`
 
-Clone the project
+1. a tile is being candidate for processing
+2. is the tile processing is attributed as forced? if so skip steps 3-5 and jump to step 6.
+3. query the tile's details from the backend --and `renderedAt` field
+4. fetch the tile's kit data timestamp (the timestamp is being maintained by osm2pgsql, with every append data timestamp is updated)
+5. compare the two, if tile's `renderedAt` time is later than kit data time - the tile has already been processed with the most current data, meaning its processing can be skipped. thus we have the following branch, either:
+    - `renderedAt` >= kit timestamp - processing should be skipped: update the tile's details - `state`, `updateCount`, `updatedAt` and `skipCount` accordingly
+    - `renderedAt` < kit timestamp - processing is needed
+6. process the tile and update the tile's details - `state`, `updateCount`, `updatedAt`, `renderCount` and `renderedAt` accordingly
 
-```bash
+## Configuration
+the frontend app including its environment variables are being processed in buildtime.
+to achieve runtime variables we inject for each variable it's value in runtime instead of a placeholder.
 
-git clone https://link-to-project
+see [.env.production](/packages/frontend/config/.env.production) and [env.sh](/packages/frontend/env.sh).
 
+## Redis
+### redis search index creation:
+```
+FT.CREATE tileDetailsIdx ON JSON PREFIX 1 tile:
+SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.renderedAt AS renderedAt NUMERIC $.createdAt AS createdAt NUMERIC $.updateCount AS updateCount NUMERIC $.renderCount AS renderCount NUMERIC $.skipCount AS skipCount NUMERIC $.coordiantes AS coordinates GEO $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
 ```
 
-Go to the project directory
+### redis post processing:
+preferably we would use the `Redis Gears` module, but in the meantime the deprecated `Triggers and Functions` module is in use.
 
-```bash
+the following post processing function is being used to maintain additional metadata for each kit - it's `maxState` and `maxUpdatedAt`
 
-cd my-project
+execute with `redis-cli`
+```
+TFUNCTION LOAD REPLACE "#!js name=LibName api_version=1.0\n
+   function getMaximum(client, data) {
+       currentKit = client.call('json.get', data.key, 'kit');
+       currentState = client.call('json.get', data.key, 'state');
+       currentUpdatedAt = client.call('json.get', data.key, 'updatedAt');
+       key = 'kit:' + currentKit.slice(1, currentKit.length - 1);
+       maxState = client.call('hget', key, 'maxState');
+       if(maxState < currentState) {
+           client.call('hset', key, 'maxState', currentState);
+       }
+       maxUpdatedAt = client.call('hget', key, 'maxUpdatedAt');
+       if(maxUpdatedAt < currentUpdatedAt) {
+           client.call('hset', key, 'maxUpdatedAt', currentUpdatedAt);
+       }
+   }
 
+   redis.registerKeySpaceTrigger('KitLibrary', 'tile:', getMaximum);"
 ```
 
-Install dependencies
+## Development
+This repository is a monorepo managed by [`Lerna`](https://lerna.js.org/) and separated into multiple independent packages
 
-```bash
-
-npm install
-
+## Building
+```
+npx lerna run build
 ```
 
-Start the server
-
-```bash
-
-npm run start
-
+## Tests
+integration tests are missing due to `node-redis` library structure, [see open issue here](https://github.com/redis/node-redis/issues/2546)
 ```
-
-## Running Tests
-
-To run tests, run the following command
-
-```bash
-
-npm run test
-
-```
-
-To only run unit tests:
-```bash
-npm run test:unit
-```
-
-To only run integration tests:
-```bash
-npm run test:integration
+npx lerna run test
 ```

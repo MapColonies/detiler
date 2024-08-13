@@ -13,3 +13,5 @@ node_modules
 coverage
 helm
 reports
+jest.config*.js
+lerna.json

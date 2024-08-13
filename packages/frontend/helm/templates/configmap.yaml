@@ -1,0 +1,34 @@
+{{- if .Values.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-configmap" (include "detiler.fullname" .) }}
+data:
+  {{- with .Values.env }}
+  CONFIG_LOG_LEVEL_PLACEHOLDER: {{ .logLevel | quote }}
+  CONFIG_LOG_PRETTY_PRINT_ENABLED_PLACEHOLDER: {{ .logPrettyPrintEnabled | quote }}
+  {{- if .app.basemapEnabled }}
+  CONFIG_APP_BASEMAP_ENABLED_PLACEHOLDER: "true"
+  CONFIG_APP_BASEMAP_URL_PLACEHOLDER: {{ .app.basemapUrl | quote }}
+  {{- if ne .app.baseMapXApiKey "" }}
+  CONFIG_APP_BASEMAP_XAPIKEY_PLACEHOLDER: {{ .app.baseMapXApiKey | quote }}
+  {{- end }}
+  CONFIG_APP_BASEMAP_TILE_SIZE_PLACEHOLDER: {{ .app.basemapTileSize | quote }}
+  CONFIG_APP_BASEMAP_ZOOM_OFFSET_PLACEHOLDER: {{ .app.basemapZoomOffset | quote }}
+  CONFIG_APP_BASEMAP_DESATURATE_PLACEHOLDER: {{ .app.basemapDesaturate | quote }}
+  {{- else }}
+  CONFIG_APP_BASEMAP_ENABLED_PLACEHOLDER: "false"
+  {{- end }}
+  CONFIG_APP_DATA_ALPHA_CHANNEL_PLACEHOLDER: {{ .app.dataAlphaChannel | quote }}
+  CONFIG_DETILER_CLIENT_URL_PLACEHOLDER: {{ .detilerClient.url | quote }}
+  CONFIG_DETILER_CLIENT_TIMEOUT_PLACEHOLDER: {{ .detilerClient.timeout | quote }}
+  CONFIG_DETILER_CLIENT_ENABLE_RETRY_STRATEGY_PLACEHOLDER: {{ .detilerClient.retryStrategy.enabled | quote }}
+  {{- if .detilerClient.retryStrategy.enabled }}
+  CONFIG_DETILER_CLIENT_RETRY_STRATEGY_RETRIES_PLACEHOLDER: {{ .detilerClient.retryStrategy.retries | quote }}
+  CONFIG_DETILER_CLIENT_RETRY_STRATEGY_SHOULD_RESET_TIMEOUT_PLACEHOLDER: {{ .detilerClient.retryStrategy.shouldResetTimeout | default false | quote }}
+  CONFIG_DETILER_CLIENT_RETRY_STRATEGY_IS_EXPONENTIAL_PLACEHOLDER: {{ .detilerClient.retryStrategy.isExponential | default false | quote }}
+  CONFIG_DETILER_CLIENT_RETRY_STRATEGY_DELAY_PLACEHOLDER: {{ .detilerClient.retryStrategy.delay | quote }}
+  {{- end }}
+  npm_config_cache: /tmp/
+  {{- end }}
+{{- end }}
