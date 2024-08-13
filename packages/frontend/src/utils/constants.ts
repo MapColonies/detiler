@@ -1,6 +1,6 @@
 export const ZOOM_OFFEST = 3;
 export const MIN_ZOOM_LEVEL = 0;
-export const MAX_ZOOM_LEVEL = 18;
+export const MAX_ZOOM_LEVEL = 21;
 export const FETCH_KITS_INTERVAL = 60000;
 export const MILLISECONDS_IN_SECOND = 1000;
 

@@ -15,6 +15,7 @@ import {
   Tooltip,
   Typography,
   Slider,
+  Input,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import InfoIcon from '@mui/icons-material/Info';
@@ -74,6 +75,14 @@ export const Preferences: React.FC<PreferencesProps> = ({
     setIsModalOpen(false);
   };
 
+  const handleMinInputChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    onStateRangeChange(event as unknown as Event, [+event.target.value, stateRange ? stateRange[1] : 0]);
+  };
+
+  const handleMaxInputChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    onStateRangeChange(event as unknown as Event, [stateRange ? stateRange[0] : 0, +event.target.value]);
+  };
+
   const maxState = selectedKit ? +selectedKit[MAX_KIT_STATE_KEY] : DEFAULT_MAX_STATE;
 
   const marks = [
@@ -87,8 +96,11 @@ export const Preferences: React.FC<PreferencesProps> = ({
     },
   ];
 
+  const minStateValue = marks[0].value;
+  const maxStateValue = marks[marks.length - 1].value;
+
   return (
-    <div className="common top-right-corner">
+    <div className="common top-right-corner" style={{ width: '16vw' }}>
       <Card>
         <StyledCardContent>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -146,14 +158,40 @@ export const Preferences: React.FC<PreferencesProps> = ({
           </Stack>
           <FormLabel id="stateslider-label">State Range</FormLabel>
           <Slider
-            getAriaLabel={(): string => 'Stata range'}
+            getAriaLabel={(): string => 'State range'}
             marks={marks}
-            min={marks[0].value}
-            max={marks[marks.length - 1].value}
+            min={minStateValue}
+            max={maxStateValue}
             value={stateRange}
             onChange={onStateRangeChange}
             valueLabelDisplay="auto"
           />
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+            <FormLabel id="stateslider-min-label">Min:</FormLabel>
+            <Input
+              value={stateRange !== undefined ? stateRange[0] : minStateValue}
+              size="small"
+              onChange={handleMinInputChange}
+              inputProps={{
+                step: 1,
+                min: minStateValue,
+                max: maxStateValue,
+                type: 'number',
+              }}
+            />
+            <FormLabel id="stateslider-max-label">Max:</FormLabel>
+            <Input
+              value={stateRange !== undefined ? stateRange[1] : maxStateValue}
+              size="small"
+              onChange={handleMaxInputChange}
+              inputProps={{
+                step: 1,
+                min: minStateValue,
+                max: maxStateValue,
+                type: 'number',
+              }}
+            />
+          </Stack>
         </StyledCardContent>
       </Card>
       <GoToModal isOpen={isModalOpen} onClose={handleCloseModal} onGoToClicked={onGoToClicked} />

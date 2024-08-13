@@ -9,7 +9,7 @@ import { Feature } from 'geojson';
 import { differenceWith } from 'lodash';
 import { INITIAL_VIEW_STATE, ZOOM_OFFEST } from '../utils/constants';
 import { Bounds, MapLibreGL } from '../deck-gl/types';
-import { CONSTANT_GEOJSON_LAYER_PROPERTIES, OVERVIEW_BASEMAP_LAYER_ID, OVERVIEW_GEOJSON_LAYER_ID } from '../deck-gl/constants';
+import { CONSTANT_GEOJSON_LAYER_PROPERTIES, OVERVIEW_BASEMAP_LAYER_ID } from '../deck-gl/constants';
 import { bboxToFeature, bboxToLonLat } from '../utils/helpers';
 import { basemapLayerFactory } from '../deck-gl/basemap';
 import { DEFAULT_COLORED_ALPHA } from '../utils/style';
