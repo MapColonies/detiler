@@ -18,6 +18,10 @@ interface AppConfig {
   readonly CONFIG_APP_BASEMAP_ZOOM_OFFSET?: string;
   readonly CONFIG_APP_BASEMAP_DESATURATE?: string;
   readonly CONFIG_APP_DATA_ALPHA_CHANNEL?: string;
+  readonly CONFIG_APP_KITS_FETCH_INTERVAL?: string;
+  readonly CONFIG_APP_TILES_FETCH_INTERVAL?: string;
+  readonly CONFIG_APP_TILES_BATCH_SIZE?: string;
+  readonly CONFIG_APP_TILES_FETCH_TIMEOUT?: string;
 }
 
 interface ImportMetaEnv extends AppConfig, DetilerClientConfig {

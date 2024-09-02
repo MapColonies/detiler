@@ -10,24 +10,46 @@ import { Feature, Geometry } from 'geojson';
 import { KitMetadata, TileDetails, TileParams, TileQueryParams } from '@map-colonies/detiler-common';
 import { setIntervalAsync, clearIntervalAsync } from 'set-interval-async';
 import { useSnackbar } from 'notistack';
+import pTimeout from 'p-timeout';
+import { uniqBy } from 'lodash';
+import { AxiosError } from 'axios';
 import { appHelper, compareQueries, parseDataToFeatures, timerify, querifyBounds } from './utils/helpers';
-import { ZOOM_OFFEST, FETCH_KITS_INTERVAL, INITIAL_VIEW_STATE, DEFAULT_MIN_STATE, DEFAULT_MAX_STATE, MAX_KIT_STATE_KEY } from './utils/constants';
+import {
+  ZOOM_OFFEST,
+  INITIAL_VIEW_STATE,
+  DEFAULT_MIN_STATE,
+  DEFAULT_MAX_STATE,
+  MAX_KIT_STATE_KEY,
+  CLIENT_ABORTED_ERROR_CODE,
+  DEFAULT_KITS_FETCH_INTERVAL,
+  DEFAULT_TILES_FETCH_INTERVAL,
+  DEFAULT_TILES_FETCH_TIMEOUT,
+  DEFAULT_TILES_BATCH_SIZE,
+  MIN_ZOOM_LEVEL,
+  MAX_ZOOM_LEVEL,
+} from './utils/constants';
 import { colorFactory, ColorScale, colorScaleParser, ColorScaleFunc, DEFAULT_TILE_COLOR } from './utils/style';
-import { METRICS, findMinMax, updateMinMax, INITIAL_MIN_MAX, Metric } from './utils/metric';
+import { METRICS, INITIAL_MIN_MAX, Metric } from './utils/metric';
 import { INIT_STATS, calcHttpStat, Stats } from './utils/stats';
 import { Preferences, Sidebar, Tooltip, CornerTabs } from './components';
 import { comparatorFuncWrapper, filterRangeFuncWrapper, transformFuncWrapper } from './deck-gl';
 import { CONSTANT_GEOJSON_LAYER_PROPERTIES, GEOJSON_LAYER_ID, BASEMAP_LAYER_ID } from './deck-gl/constants';
 import { basemapLayerFactory } from './deck-gl/basemap';
 import { logger } from './logger';
+import { config } from './config';
 import { client } from './client';
 import { MapLibreGL, TargetetEvent } from './deck-gl/types';
+import { AppConfig } from './utils/interfaces';
+
+const appConfig = config.get<AppConfig>('app');
 
 export const App: React.FC = () => {
   const [viewState, setViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
+  const [loadedData, setLoadedData] = useState<Feature[]>([]);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo>();
   const [selectedKit, setSelectedKit] = useState<KitMetadata | undefined>();
   const [stateRange, setStateRange] = useState<number[]>([DEFAULT_MIN_STATE, DEFAULT_MAX_STATE]);
+  const [queryZoom, setQueryZoom] = useState<number>(INITIAL_VIEW_STATE.zoom + ZOOM_OFFEST);
   const [selectedMetric, setSelectedMetric] = useState<Metric | undefined>();
   const [selectedColorScale, setSelectedColorScale] = useState<{ key: ColorScale; value: ColorScaleFunc }>({
     key: 'heat',
@@ -36,10 +58,14 @@ export const App: React.FC = () => {
   const [statsTable, setStatsTable] = useState<Stats>(INIT_STATS);
   const [sidebarData, setSidebarData] = useState<TileDetails[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [shouldFollowZoom, setShouldFollowZoom] = useState<boolean>(true);
   const { enqueueSnackbar } = useSnackbar();
 
   const handleKitChange = (event: TargetetEvent<string>): void => {
     const kitMetadata = appHelper.kits.find((kit) => kit.name === event.target.value);
+    appHelper.shouldOverrideComarator = true;
     setSelectedKit(kitMetadata);
     if (statsTable.metric) {
       setStatsTable((prevStatsTable) => {
@@ -47,7 +73,6 @@ export const App: React.FC = () => {
         return { ...prevStatsTable, metric: nextMetric };
       });
     }
-    appHelper.shouldOverrideComarator = true;
     setStateRange([DEFAULT_MIN_STATE, kitMetadata ? +kitMetadata[MAX_KIT_STATE_KEY] : DEFAULT_MAX_STATE]);
   };
 
@@ -55,17 +80,36 @@ export const App: React.FC = () => {
     setStateRange(range as number[]);
   };
 
+  const handleQueryZoomChange = (event: Event, zoom: number | number[]): void => {
+    if (!shouldFollowZoom) {
+      setQueryZoom(zoom as number);
+    }
+  };
+
+  const handleShouldFollowZoomChange = (event: React.ChangeEvent<HTMLInputElement>, shouldFollow: boolean): void => {
+    if (shouldFollow) {
+      setQueryZoom(appHelper.currentZoomLevel + ZOOM_OFFEST);
+    }
+    setShouldFollowZoom(shouldFollow);
+  };
+
+  const handleQueryZoomChangeByViewport = (zoom: number): void => {
+    if (shouldFollowZoom) {
+      setQueryZoom(zoom + ZOOM_OFFEST);
+    }
+  };
+
   const handleMetricChange = (event: TargetetEvent<string>): void => {
     const index = METRICS.findIndex((metric) => metric.name === event.target.value);
     const metric = METRICS[index];
-    setSelectedMetric(metric);
     appHelper.shouldOverrideComarator = true;
+    setSelectedMetric(metric);
   };
 
   const handleColorScaleChange = (event: TargetetEvent<string>): void => {
     const colorScale = event.target.value as ColorScale;
-    setSelectedColorScale({ key: colorScale, value: colorScaleParser(colorScale) });
     appHelper.shouldOverrideComarator = true;
+    setSelectedColorScale({ key: colorScale, value: colorScaleParser(colorScale) });
   };
 
   const goToCoordinates = useCallback((longitude: number, latitude: number, zoom?: number) => {
@@ -80,26 +124,18 @@ export const App: React.FC = () => {
   }, []);
 
   const handleViewportChange = (nextViewState: ViewStateChangeParameters<{ zoom: number }>): void => {
+    appHelper.shouldFetch = true;
+
     setViewState({ ...viewState, ...nextViewState.viewState });
+
     // for higher zoom levels lower the viewport's zoom level by 1 to have a buffer around the query bounds
     const viewportZoom = nextViewState.viewState.zoom <= ZOOM_OFFEST + 1 ? nextViewState.viewState.zoom : nextViewState.viewState.zoom - 1;
     appHelper.bounds.query = new WebMercatorViewport({ ...nextViewState.viewState, zoom: viewportZoom }).getBounds();
     appHelper.bounds.actual = new WebMercatorViewport(nextViewState.viewState).getBounds();
-    appHelper.shouldOverrideComarator = true;
 
     const nextZoom = Math.floor(nextViewState.viewState.zoom);
-    if (appHelper.currentZoomLevel === nextZoom) {
-      return;
-    }
-
     appHelper.currentZoomLevel = nextZoom;
-    // reset min-max values between zoom changes
-    if (statsTable.metric) {
-      setStatsTable((prevStatsTable) => {
-        const nextMetric = prevStatsTable.metric ? { ...prevStatsTable.metric, range: { ...INITIAL_MIN_MAX } } : undefined;
-        return { ...prevStatsTable, metric: nextMetric };
-      });
-    }
+    handleQueryZoomChangeByViewport(nextZoom);
   };
 
   const handleOpenSidebar = (data: TileDetails[]): void => {
@@ -110,6 +146,10 @@ export const App: React.FC = () => {
   const handleCloseSidebar = (): void => {
     setSidebarData([]);
     setIsSidebarOpen(false);
+  };
+
+  const handleActionClicked = (): void => {
+    setIsPaused(!isPaused);
   };
 
   useEffect(() => {
@@ -130,12 +170,15 @@ export const App: React.FC = () => {
     if (selectedMetric === undefined) {
       return;
     }
+
+    appHelper.lastDetilerQueryParams = undefined;
+    appHelper.shouldOverrideComarator = true;
+
     setStatsTable((prevStatsTable) => {
       const nextMetric = { ...selectedMetric, range: { ...INITIAL_MIN_MAX } };
       return { ...prevStatsTable, metric: nextMetric };
     });
-    appHelper.shouldOverrideComarator = true;
-  }, [selectedMetric]);
+  }, [selectedMetric, queryZoom]);
 
   useEffect(() => {
     async function kitsFetch(): Promise<void> {
@@ -154,60 +197,110 @@ export const App: React.FC = () => {
 
     void kitsFetch();
 
-    const timer = setIntervalAsync(kitsFetch, FETCH_KITS_INTERVAL);
+    const timer = setIntervalAsync(kitsFetch, appConfig.kits.fetchInterval ?? DEFAULT_KITS_FETCH_INTERVAL);
     return () => {
-      void clearIntervalAsync(timer).then(() => logger.info(`fetch timer cleared`));
+      void clearIntervalAsync(timer).then(() => logger.info(`kits-fetch-timer cleared`));
     };
   }, []);
 
-  const fetchData = async (): Promise<Feature[] | undefined> => {
+  useEffect(() => {
+    const abortController = new AbortController();
+    const timeoutMs = appConfig.tiles.fetchTimeout ?? DEFAULT_TILES_FETCH_TIMEOUT;
+
+    if (isPaused) {
+      return;
+    }
+
+    // flush data
+    setLoadedData([]);
+
+    // fetch data immediately
+    pTimeout(fetchData(abortController), { milliseconds: timeoutMs, signal: abortController.signal }).catch(() => {
+      appHelper.lastDetilerQueryParams = undefined;
+      appHelper.shouldFetch = true;
+    });
+
+    // fetch data in interval only if should
+    async function fetchDataFn(): Promise<void> {
+      if (!appHelper.shouldFetch) {
+        return;
+      }
+
+      appHelper.shouldFetch = false;
+
+      try {
+        await pTimeout(fetchData(abortController), { milliseconds: timeoutMs, signal: abortController.signal });
+      } catch (err) {
+        appHelper.lastDetilerQueryParams = undefined;
+        appHelper.shouldFetch = true;
+      }
+    }
+
+    // init timer
+    const dataFetchTimer = setIntervalAsync(fetchDataFn, appConfig.tiles.fetchInterval ?? DEFAULT_TILES_FETCH_INTERVAL);
+
+    return () => {
+      // aborts any previous intervals with previous dependencies
+      logger.info({ msg: 'aborting previous data fetches' });
+      abortController.abort();
+      void clearIntervalAsync(dataFetchTimer).then(() => logger.info(`data-fetch-timer cleared`));
+    };
+  }, [isPaused, selectedKit?.name, statsTable.metric?.name, queryZoom, ...stateRange]);
+
+  const fetchData = async (abortController?: AbortController): Promise<void> => {
     try {
       if (appHelper.bounds.query === undefined || selectedKit === undefined) {
         return;
       }
 
       const nextDetilerQueryParams: TileQueryParams = {
-        minZoom: appHelper.currentZoomLevel + ZOOM_OFFEST,
-        maxZoom: appHelper.currentZoomLevel + ZOOM_OFFEST,
+        minZoom: queryZoom,
+        maxZoom: queryZoom,
         minState: stateRange[0],
         maxState: stateRange[1],
         kits: [selectedKit.name],
         bbox: querifyBounds(appHelper.bounds.query),
+        size: appConfig.tiles.batchSize ?? DEFAULT_TILES_BATCH_SIZE,
       };
 
       const areQueriesEqual = compareQueries(appHelper.lastDetilerQueryParams, nextDetilerQueryParams);
+
       if (areQueriesEqual) {
         return;
       }
 
+      setIsLoading(true);
+
       appHelper.lastDetilerQueryParams = nextDetilerQueryParams;
 
-      let data: TileDetails[] = [];
-      const queryGenerator = client.queryTilesDetailsAsyncGenerator(nextDetilerQueryParams);
+      const queryGenerator = client.queryTilesDetailsAsyncGenerator(nextDetilerQueryParams, abortController);
       const [, duration] = await timerify(async () => {
         for await (const pageData of queryGenerator) {
-          data = [...data, ...pageData];
+          const features = parseDataToFeatures(pageData);
+          setLoadedData((prev) => {
+            const next = [...prev, ...features];
+            return uniqBy(next, 'properties.id');
+          });
         }
       });
-
-      const features = parseDataToFeatures(data);
 
       setStatsTable((prevStatsTable) => {
         const nextHttpStat = calcHttpStat(prevStatsTable.httpInvokes.query, duration);
         return { ...prevStatsTable, httpInvokes: { ...prevStatsTable.httpInvokes, query: nextHttpStat } };
       });
-
-      if (statsTable.metric !== undefined) {
-        const currentMinMax = findMinMax(data, statsTable.metric.property);
-        if (currentMinMax !== null) {
-          updateMinMax(currentMinMax, statsTable.metric);
-        }
-      }
-
-      return features;
     } catch (err) {
-      logger.error({ msg: 'error fetching data', err });
-      enqueueSnackbar(JSON.stringify(err), { variant: 'error' });
+      if (err instanceof AxiosError) {
+        if (err.code === CLIENT_ABORTED_ERROR_CODE) {
+          logger.error({ msg: 'aborted data fetch', err });
+          setIsLoading(false);
+          throw err;
+        }
+      } else {
+        logger.error({ msg: 'error fetching data', err });
+        enqueueSnackbar(JSON.stringify(err), { variant: 'error' });
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -234,11 +327,11 @@ export const App: React.FC = () => {
   const layer = new GeoJsonLayer({
     id: GEOJSON_LAYER_ID,
     ...CONSTANT_GEOJSON_LAYER_PROPERTIES,
-    data: fetchData(),
+    data: loadedData,
     dataTransform: transformFuncWrapper(statsTable.metric),
-    dataComparator: comparatorFuncWrapper(appHelper, setStatsTable),
-    filterRange: filterRangeFuncWrapper(appHelper.currentZoomLevel),
-    getFillColor: (tile: Feature<Geometry, { score: number }>): [number, number, number, number] => {
+    dataComparator: comparatorFuncWrapper(setStatsTable),
+    filterRange: isPaused ? [MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL] : filterRangeFuncWrapper(queryZoom),
+    getFillColor: (tile: Feature<Geometry, { z: number; score: number }>): [number, number, number, number] => {
       if (!statsTable.metric) {
         return DEFAULT_TILE_COLOR;
       }
@@ -271,13 +364,20 @@ export const App: React.FC = () => {
         zoomLevel={appHelper.currentZoomLevel}
         selectedKit={selectedKit}
         stateRange={stateRange}
+        queryZoom={queryZoom}
         selectedMetric={selectedMetric}
         selectedColorScale={selectedColorScale}
+        shouldFollowZoom={shouldFollowZoom}
+        isPaused={isPaused}
+        isLoading={isLoading}
         onKitChange={handleKitChange}
         onStateRangeChange={handleKitStateChange}
+        onQueryZoomChange={handleQueryZoomChange}
         onMetricChange={handleMetricChange}
         onColorScaleChange={handleColorScaleChange}
         onGoToClicked={goToCoordinates}
+        onShouldFollowZoomChange={handleShouldFollowZoomChange}
+        onActionClicked={handleActionClicked}
       />
       <CornerTabs statsTableProps={{ stats: statsTable }} overviewMapProps={{ bounds: appHelper.bounds.actual, zoom: appHelper.currentZoomLevel }} />
       <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} data={sidebarData} onGoToClicked={goToCoordinates} onRefreshClicked={fetchTile} />

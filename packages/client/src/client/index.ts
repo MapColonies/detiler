@@ -71,7 +71,7 @@ export class DetilerClient implements IDetilerClient {
     }
   }
 
-  public async *queryTilesDetailsAsyncGenerator(params: TileQueryParams): AsyncGenerator<TileDetails[]> {
+  public async *queryTilesDetailsAsyncGenerator(params: TileQueryParams, controller?: AbortController): AsyncGenerator<TileDetails[]> {
     let currentPage = params.from ?? 0;
     const pageSize = params.size ?? DEFAULT_PAGE_SIZE;
 
@@ -84,6 +84,7 @@ export class DetilerClient implements IDetilerClient {
         const res = await this.axios.get<TileDetails[]>(`${this.config.url}/detail`, {
           params: pageParams,
           paramsSerializer: (params) => stringify(params),
+          signal: controller?.signal,
         });
 
         if (res.data.length < pageSize) {

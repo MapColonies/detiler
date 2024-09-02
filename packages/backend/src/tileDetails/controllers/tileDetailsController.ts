@@ -44,7 +44,7 @@ export class TileDetailController {
       const tilesDetails = await this.manager.queryTilesDetails({
         bbox,
         minZoom: +minZoom,
-        maxZoom: +minZoom,
+        maxZoom: +maxZoom,
         from: +from,
         size: +size,
         ...queryParams,

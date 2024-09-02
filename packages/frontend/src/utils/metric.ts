@@ -70,6 +70,27 @@ export const findMinMax = <T>(arr: T[], property: keyof T): MinMax | null => {
   return { min: minValue, max: maxValue };
 };
 
+export const findNumericMinMax = (arr: number[]): MinMax | null => {
+  if (arr.length === 0) {
+    return null;
+  }
+
+  let minValue = arr[0];
+  let maxValue = arr[0];
+
+  for (const value of arr) {
+    if (value < minValue) {
+      minValue = value;
+    }
+
+    if (value > maxValue) {
+      maxValue = value;
+    }
+  }
+
+  return { min: minValue, max: maxValue };
+};
+
 export const updateMinMax = (current: MinMax, metric: Omit<Metric, 'range'> & { range: MinMax }): void => {
   if (metric.minFn === undefined) {
     if (current.min < metric.range.min) {

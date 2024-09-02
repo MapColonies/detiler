@@ -42,6 +42,8 @@ export class TileDetailsManager {
       search: {
         minZoom,
         maxZoom,
+        minState,
+        maxState,
         kits,
         PARAMS: { [SEARCHED_GEOSHAPE_NAME]: geoshape },
         DIALECT: 3,
