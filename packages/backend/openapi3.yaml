@@ -104,10 +104,10 @@ paths:
           schema:
             $ref: '#/components/schemas/state'
         - in: query
-          name: from
-          description: pagination query from
+          name: cursor
+          description: pagination cursor
           schema:
-            $ref: '#/components/schemas/from'
+            $ref: '#/components/schemas/cursor'
         - in: query
           name: size
           description: pagination query size limitation
@@ -119,9 +119,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/tileDetails'
+                $ref: '#/components/schemas/getTileDetailsResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         5XX:
@@ -307,15 +305,13 @@ components:
       type: number
       minimum: -85.05112877980659
       maximum: 85.05112877980659
-    from:
-      type: number
-      minimum: 0
-      default: 0
     size:
       type: number
       minimum: 0
       maximum: 1000
       default: 100
+    cursor:
+      type: number
     z:
       type: integer
       minimum: 0
@@ -365,6 +361,18 @@ components:
       additionalProperties: true
       allOf:
         - $ref: '#/components/schemas/kit'
+    getTileDetailsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - tiles
+      properties:
+        tiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/tileDetails'
+        cursor:
+          $ref: '#/components/schemas/cursor'
     tileDetails:
       type: object
       properties:

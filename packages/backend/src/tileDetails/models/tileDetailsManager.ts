@@ -1,65 +1,75 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
-import { TileDetails, TileDetailsPayload, TileParams, TileParamsWithKit, TileQueryParams, UNSPECIFIED_STATE } from '@map-colonies/detiler-common';
+import {
+  TileDetails,
+  TileDetailsPayload,
+  TileParams,
+  TileParamsWithKit,
+  TileQueryParams,
+  TileQueryResponse,
+  UNSPECIFIED_STATE,
+} from '@map-colonies/detiler-common';
 import { WatchError } from 'redis';
 import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
-import { DEFAULT_LIMIT, RedisClient } from '../../redis';
+import { AggregateReply, DEFAULT_LIMIT, DEFAULT_PAGE_SIZE, RedisClient } from '../../redis';
 import { keyfy, stringifyCoordinates, bboxToWktPolygon, UpsertStatus, bboxToLonLat } from '../../common/util';
 import { REDIS_KITS_HASH_PREFIX, METATILE_SIZE, SERVICES, REDIS_INDEX_NAME, SEARCHED_GEOSHAPE_NAME } from '../../common/constants';
 import { KitNotFoundError, TileDetailsNotFoundError } from './errors';
+import { LOAD_FIELDS, transformDocument } from './util';
 
 export interface TilesDetailsQueryParams extends Omit<TileQueryParams, 'bbox'> {
   bbox: BoundingBox;
-  from: number;
-  size: number;
 }
 
 @injectable()
 export class TileDetailsManager {
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.REDIS) private readonly redis: RedisClient) {}
 
-  public async queryTilesDetails(params: TilesDetailsQueryParams): Promise<TileDetails[]> {
+  public async queryTilesDetails(params: TilesDetailsQueryParams): Promise<TileQueryResponse> {
+    let response: AggregateReply;
+
     this.logger.info({ msg: 'quering tile details', ...params });
 
-    const { minZoom, maxZoom, minState, maxState, kits, bbox, from, size } = params;
-
-    const geoshape = bboxToWktPolygon(bbox);
+    const { cursor, minZoom, maxZoom, minState, maxState, kits, bbox, size } = params;
 
     const stateFilter = minState !== undefined || maxState !== undefined ? ` @state:[${minState ?? '-inf'} ${maxState ?? '+inf'}] ` : ' ';
+    const query = `@z:[${minZoom} ${maxZoom}]${stateFilter}@kit:(${kits.join('|')}) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
 
+    const geoshape = bboxToWktPolygon(bbox);
     /* eslint-disable @typescript-eslint/naming-convention */ // node-redis does not follow eslint naming convention
-    const result = await this.redis.ft.search(
-      REDIS_INDEX_NAME,
-      `@z:[${minZoom} ${maxZoom}]${stateFilter}@kit:(${kits.join('|')}) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`,
-      {
-        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: geoshape },
-        DIALECT: 3,
-        LIMIT: { from, size },
-      }
-    );
+    const options = {
+      DIALECT: 3,
+      PARAMS: { [SEARCHED_GEOSHAPE_NAME]: geoshape },
+      LOAD: LOAD_FIELDS,
+      TIMEOUT: 0,
+      COUNT: size ?? DEFAULT_PAGE_SIZE,
+    };
 
-    this.logger.debug({
-      search: {
-        minZoom,
-        maxZoom,
-        minState,
-        maxState,
-        kits,
-        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: geoshape },
-        DIALECT: 3,
-        LIMIT: { from, size },
-      },
-      result,
-    });
+    if (cursor === undefined) {
+      response = await this.redis.ft.aggregateWithCursor(REDIS_INDEX_NAME, query, options);
+    } else {
+      response = await this.redis.ft.cursorRead(REDIS_INDEX_NAME, cursor, { COUNT: size ?? DEFAULT_PAGE_SIZE });
+    }
     /* eslint-enable @typescript-eslint/naming-convention */
 
-    if (result.total === 0) {
-      return [];
+    this.logger.debug({
+      cursor,
+      query,
+      options,
+      response: {
+        total: response.total,
+        resultsCount: response.results.length,
+        cursor: response.cursor,
+      },
+    });
+
+    if (response.results.length === 0) {
+      return { tiles: [], cursor: response.cursor };
     }
 
-    const tilesDetails = result.documents.map((document) => document.value[0]);
+    const tilesDetails = response.results.map((document) => transformDocument(document));
 
-    return tilesDetails as unknown as TileDetails[];
+    return { tiles: tilesDetails as unknown as TileDetails[], cursor: response.cursor };
   }
 
   public async getTileDetailsByKit(params: TileParamsWithKit): Promise<TileDetails> {

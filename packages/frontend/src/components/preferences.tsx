@@ -42,7 +42,7 @@ import { GoToModal } from './goToModal';
 const StyledCardContent = styled(CardContent)(`
   padding: 30px;
   &:last-child {
-    padding-bottom: 24px;
+    padding-bottom: 0px;
   }
 `);
 

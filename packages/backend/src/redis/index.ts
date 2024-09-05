@@ -8,7 +8,6 @@ import { RedisConfig, IConfig } from '../common/interfaces';
 import { promiseTimeout } from '../common/util';
 
 const DEFAULT_LIMIT_FROM = 0;
-const DEFAULT_LIMIT_SIZE = 1000;
 
 const createConnectionOptions = (redisConfig: RedisConfig): Partial<RedisClientOptions> => {
   const { host, port, enableSslAuth, sslPaths, ...clientOptions } = redisConfig;
@@ -28,9 +27,17 @@ const createConnectionOptions = (redisConfig: RedisConfig): Partial<RedisClientO
 
 export const CONNECTION_TIMEOUT = 5000;
 
-export const DEFAULT_LIMIT = { from: DEFAULT_LIMIT_FROM, size: DEFAULT_LIMIT_SIZE };
+export const DEFAULT_PAGE_SIZE = 1000;
+
+export const DEFAULT_LIMIT = { from: DEFAULT_LIMIT_FROM, size: DEFAULT_PAGE_SIZE };
 
 export type RedisClient = ReturnType<typeof createClient>;
+
+export interface AggregateReply {
+  total: number;
+  results: Record<string, string>[];
+  cursor?: number;
+}
 
 export const redisClientFactory: FactoryFunction<RedisClient> = (container: DependencyContainer): RedisClient => {
   const logger = container.resolve<ILogger>(SERVICES.LOGGER);

@@ -1,8 +1,17 @@
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import axiosRetry, { exponentialDelay, IAxiosRetryConfig } from 'axios-retry';
 import { StatusCodes } from 'http-status-codes';
 import { stringify } from 'qs';
-import { ILogger, KitMetadata, TileDetails, TileDetailsPayload, TileParams, TileParamsWithKit, TileQueryParams } from '@map-colonies/detiler-common';
+import {
+  ILogger,
+  KitMetadata,
+  TileDetails,
+  TileDetailsPayload,
+  TileParams,
+  TileParamsWithKit,
+  TileQueryParams,
+  TileQueryResponse,
+} from '@map-colonies/detiler-common';
 import { DEFAULT_PAGE_SIZE, DEFAULT_RETRY_STRATEGY_DELAY, DetilerClientConfig, DetilerOptions, RetryStrategy } from './config';
 
 export interface IDetilerClient {
@@ -72,35 +81,37 @@ export class DetilerClient implements IDetilerClient {
   }
 
   public async *queryTilesDetailsAsyncGenerator(params: TileQueryParams, controller?: AbortController): AsyncGenerator<TileDetails[]> {
-    let currentPage = params.from ?? 0;
+    let cursor: number | undefined = undefined;
+
     const pageSize = params.size ?? DEFAULT_PAGE_SIZE;
 
-    this.logger?.debug({ msg: `getting tile details`, url: this.config.url, pageSize, ...params });
+    this.logger?.debug({ msg: `getting tile details`, url: this.config.url, cursor, size: pageSize, ...params });
 
     /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */ // get the next page unconditionally until done
     while (true) {
-      const pageParams: TileQueryParams = { ...params, from: currentPage * pageSize, size: pageSize };
+      const pageParams: TileQueryParams = { ...params, cursor, size: pageSize };
       try {
-        const res = await this.axios.get<TileDetails[]>(`${this.config.url}/detail`, {
-          params: pageParams,
+        const res: AxiosResponse<TileQueryResponse> = await this.axios.get(`${this.config.url}/detail`, {
+          params: { ...pageParams, cursor },
           paramsSerializer: (params) => stringify(params),
           signal: controller?.signal,
         });
 
-        if (res.data.length < pageSize) {
-          if (res.data.length !== 0) {
-            yield res.data;
+        // check if the cursor has reached is limit
+        if (res.data.cursor === undefined || res.data.cursor === 0) {
+          if (res.data.tiles.length !== 0) {
+            yield res.data.tiles;
           }
           break;
         }
 
-        yield res.data;
-        currentPage++;
+        yield res.data.tiles;
+        cursor = res.data.cursor;
       } catch (error) {
         const axiosError = error as AxiosError;
 
         this.logger?.error({
-          msg: `failed to get tiles details for page ${currentPage}`,
+          msg: `failed to get tiles details for cursor ${cursor}`,
           err: axiosError,
           url: this.config.url,
           params: pageParams,
