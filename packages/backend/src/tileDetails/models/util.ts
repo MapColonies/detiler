@@ -12,6 +12,7 @@ export const LOAD_FIELDS: LoadField[] = [
   { identifier: '@y', AS: 'y' },
   { identifier: '$.kit', AS: 'kit' },
   { identifier: '$.state', AS: 'state' },
+  { identifier: '$.states', AS: 'states' },
   { identifier: '$.createdAt', AS: 'createdAt' },
   { identifier: '$.updatedAt', AS: 'updatedAt' },
   { identifier: '$.renderedAt', AS: 'renderedAt' },

@@ -68,6 +68,7 @@ env:
     basemapTileSize: 256
     basemapTileOffset: 0
     basemapDesaturate: 0
+    tilesPerPage: 5
     dataAlphaChannel: 75
     kits:
       fetchInterval: 60000

@@ -94,6 +94,11 @@ paths:
             maxItems: 4
           required: true
         - in: query
+          name: currentState
+          description: should the state match the current tile's state
+          schema:
+            type: boolean
+        - in: query
           name: minState
           description: min tile's state
           schema:
@@ -386,6 +391,9 @@ components:
           $ref: '#/components/schemas/kitName'
         state:
           $ref: '#/components/schemas/state'
+        states:
+          items:
+            $ref: '#/components/schemas/state'
         createdAt:
           $ref: '#/components/schemas/unixTimestamp'
         updatedAt:
@@ -406,6 +414,7 @@ components:
         - y
         - kit
         - state
+        - states
         - createdAt
         - updatedAt
         - renderedAt

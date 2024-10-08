@@ -24,6 +24,7 @@ export interface TileParamsWithKit extends TileParams {
 
 export interface TileDetails extends TileParamsWithKit {
   state: number;
+  states: number[];
   createdAt: number;
   updatedAt: number;
   renderedAt: number;
@@ -55,6 +56,7 @@ export interface TileQueryParams extends BaseQueryParams {
   maxZoom: number;
   minState?: number;
   maxState?: number;
+  currentState?: boolean;
   kits: string[];
   bbox: number[];
 }

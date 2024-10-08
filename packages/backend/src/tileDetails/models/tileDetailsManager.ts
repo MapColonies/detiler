@@ -30,9 +30,11 @@ export class TileDetailsManager {
 
     this.logger.info({ msg: 'quering tile details', ...params });
 
-    const { cursor, minZoom, maxZoom, minState, maxState, kits, bbox, size } = params;
+    const { cursor, minZoom, maxZoom, minState, maxState, currentState, kits, bbox, size } = params;
 
-    const stateFilter = minState !== undefined || maxState !== undefined ? ` @state:[${minState ?? '-inf'} ${maxState ?? '+inf'}] ` : ' ';
+    const stateProperty = currentState === true ? 'state' : 'states';
+    const stateFilter = minState !== undefined || maxState !== undefined ? ` @${stateProperty}:[${minState ?? '-inf'} ${maxState ?? '+inf'}] ` : ' ';
+
     const query = `@z:[${minZoom} ${maxZoom}]${stateFilter}@kit:(${kits.join('|')}) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
 
     const geoshape = bboxToWktPolygon(bbox);
@@ -147,11 +149,14 @@ export class TileDetailsManager {
         const transaction = isolatedClient.multi();
 
         if (keyExistCounter === 1) {
+          const state = payload.state ?? UNSPECIFIED_STATE;
+
+          transaction.json.arrAppend(key, '$.states', state);
           transaction.json.numIncrBy(key, '$.updateCount', 1);
 
           const jsonMSetItems: Parameters<typeof transaction.json.mSet> = [
             [
-              { key, path: '$.state', value: payload.state ?? UNSPECIFIED_STATE },
+              { key, path: '$.state', value: state },
               { key, path: '$.updatedAt', value: payload.timestamp },
             ],
           ];
@@ -175,13 +180,14 @@ export class TileDetailsManager {
 
         const wkt = bboxToWktPolygon(bbox);
         const tileCoordinates = bboxToLonLat(bbox);
-
+        const state = payload.state ?? UNSPECIFIED_STATE;
         const initialTileDetails: TileDetails = {
           z: params.z,
           x: params.x,
           y: params.y,
           kit: params.kit,
-          state: payload.state ?? UNSPECIFIED_STATE,
+          state: state,
+          states: [state],
           updatedAt: payload.timestamp,
           createdAt: payload.timestamp,
           renderedAt: payload.timestamp,

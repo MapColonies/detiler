@@ -63,6 +63,7 @@ interface PreferencesProps {
   zoomLevel: number;
   queryZoom: number;
   shouldFollowZoom: boolean;
+  shouldQueryCurrentState: boolean;
   stateRange?: number[];
   selectedMetric?: Metric;
   selectedColorScale: { key: ColorScale; value: ColorScaleFunc };
@@ -75,6 +76,7 @@ interface PreferencesProps {
   onColorScaleChange: (event: TargetetEvent<string>) => void;
   onGoToClicked: (longitude: number, latitude: number, zoom?: number) => void;
   onShouldFollowZoomChange: (event: React.ChangeEvent<HTMLInputElement>, shouldFollow: boolean) => void;
+  onShouldQueryCurrentStateChange: (event: React.ChangeEvent<HTMLInputElement>, shouldQueryCurrentState: boolean) => void;
   onActionClicked: () => void;
 }
 
@@ -87,6 +89,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
   selectedMetric,
   selectedColorScale,
   shouldFollowZoom,
+  shouldQueryCurrentState,
   isPaused,
   isLoading,
   onKitChange,
@@ -96,6 +99,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
   onColorScaleChange,
   onGoToClicked,
   onShouldFollowZoomChange,
+  onShouldQueryCurrentStateChange,
   onActionClicked,
 }) => {
   const colorMode = useContext(colorModeContext);
@@ -234,6 +238,11 @@ export const Preferences: React.FC<PreferencesProps> = ({
             </AccordionSummary>
             <AccordionActions>
               <Stack direction="column" spacing={3}>
+                <Box display="flex" justifyContent="center" alignItems="center">
+                  <Typography>all</Typography>
+                  <Switch checked={shouldQueryCurrentState} onChange={onShouldQueryCurrentStateChange} size="small" />
+                  <Typography>current</Typography>
+                </Box>
                 <Slider
                   getAriaLabel={(): string => 'State range'}
                   marks={marks}

@@ -11,6 +11,7 @@ export interface AppConfig {
     desaturate?: number;
   };
   style: {
+    tilesPerPage?: number;
     dataAlphaChannel?: number;
   };
   kits: {

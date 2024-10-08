@@ -4,9 +4,10 @@ import jsLogger from '@map-colonies/js-logger';
 import { createClient, WatchError } from 'redis';
 import { REDIS_INDEX_NAME, REDIS_KITS_HASH_PREFIX, SEARCHED_GEOSHAPE_NAME, TILE_DETAILS_KEY_PREFIX } from '../../../src/common/constants';
 import { bboxToWktPolygon, UpsertStatus } from '../../../src/common/util';
-import { DEFAULT_LIMIT } from '../../../src/redis';
+import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '../../../src/redis';
 import { KitNotFoundError, TileDetailsNotFoundError } from '../../../src/tileDetails/models/errors';
 import { TileDetailsManager, TilesDetailsQueryParams } from '../../../src/tileDetails/models/tileDetailsManager';
+import { LOAD_FIELDS } from '../../../src/tileDetails/models/util';
 
 const mGetMock = jest.fn();
 const searchMock = jest.fn();
@@ -14,12 +15,15 @@ const hGetMock = jest.fn();
 const mSetMock = jest.fn();
 const setMock = jest.fn();
 const numIncrByMock = jest.fn();
+const arrAppendMock = jest.fn();
 
 const executeIsolatedMock = jest.fn();
 const watchMock = jest.fn();
 const existsMock = jest.fn();
 const multiMock = jest.fn();
 const execMock = jest.fn();
+const aggregateWithCursorMock = jest.fn();
+const cursorReadMock = jest.fn();
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 jest.mock('redis', () => ({
@@ -38,10 +42,13 @@ jest.mock('redis', () => ({
       set: setMock,
       mSet: mSetMock,
       numIncrBy: numIncrByMock,
+      arrAppend: arrAppendMock,
     },
     ft: {
       search: searchMock,
       SEARCH: searchMock,
+      aggregateWithCursor: aggregateWithCursorMock,
+      cursorRead: cursorReadMock,
     },
   })),
 }));
@@ -62,7 +69,7 @@ describe('TileDetailsManager', () => {
   });
 
   describe('#queryTilesDetails', () => {
-    it('should search accoring to given params and handle empty result', async () => {
+    it('should aggregate search accoring to given params and handle empty result', async () => {
       const params: TilesDetailsQueryParams = {
         minZoom: 0,
         maxZoom: 10,
@@ -70,23 +77,25 @@ describe('TileDetailsManager', () => {
         kits: ['kit1'],
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
-      searchMock.mockResolvedValue({ total: 0 });
+      aggregateWithCursorMock.mockResolvedValue({ results: [], cursor: undefined });
       const index = REDIS_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @kit:(kit1) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
-      const searchParams = {
-        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
+      const options = {
         DIALECT: 3,
-        LIMIT: { size: params.size },
+        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
+        LOAD: LOAD_FIELDS,
+        TIMEOUT: 0,
+        COUNT: params.size,
       };
 
       const response = await manager.queryTilesDetails(params);
 
-      expect(response).toMatchObject([]);
-      expect(searchMock).toHaveBeenCalledTimes(1);
-      expect(searchMock).toHaveBeenCalledWith(index, query, searchParams);
+      expect(response).toMatchObject({ tiles: [], cursor: undefined });
+      expect(aggregateWithCursorMock).toHaveBeenCalledTimes(1);
+      expect(aggregateWithCursorMock).toHaveBeenCalledWith(index, query, options);
     });
 
-    it('should search accoring to given params and handle single result', async () => {
+    it('should aggregate search accoring to given params and handle single result', async () => {
       const params: TilesDetailsQueryParams = {
         minZoom: 0,
         maxZoom: 10,
@@ -94,23 +103,25 @@ describe('TileDetailsManager', () => {
         kits: ['kit1'],
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
-      searchMock.mockResolvedValue({ total: 1, documents: [{ value: [{ a: 1 }] }] });
+      aggregateWithCursorMock.mockResolvedValue({ results: [{ a: '1' }], cursor: undefined });
       const index = REDIS_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @kit:(kit1) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
-      const searchParams = {
-        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
+      const options = {
         DIALECT: 3,
-        LIMIT: { size: params.size },
+        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
+        LOAD: LOAD_FIELDS,
+        TIMEOUT: 0,
+        COUNT: params.size,
       };
 
       const response = await manager.queryTilesDetails(params);
 
-      expect(response).toMatchObject([{ a: 1 }]);
-      expect(searchMock).toHaveBeenCalledTimes(1);
-      expect(searchMock).toHaveBeenCalledWith(index, query, searchParams);
+      expect(response).toMatchObject({ tiles: [{ a: 1 }], cursor: undefined });
+      expect(aggregateWithCursorMock).toHaveBeenCalledTimes(1);
+      expect(aggregateWithCursorMock).toHaveBeenCalledWith(index, query, options);
     });
 
-    it('should search accoring to given params and handle multiple results', async () => {
+    it('should aggregate search accoring to given params and handle multiple results', async () => {
       const params: TilesDetailsQueryParams = {
         minZoom: 0,
         maxZoom: 10,
@@ -118,48 +129,53 @@ describe('TileDetailsManager', () => {
         kits: ['kit1', 'kit2'],
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
-      searchMock.mockResolvedValue({ total: 2, documents: [{ value: [{ a: 1 }] }, { value: [{ a: 2 }] }] });
+      aggregateWithCursorMock.mockResolvedValue({ total: 2, results: [{ a: '1' }, { a: '2' }], cursor: undefined });
       const index = REDIS_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @kit:(kit1|kit2) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
       const searchParams = {
-        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
         DIALECT: 3,
-        LIMIT: { size: params.size },
+        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
+        LOAD: LOAD_FIELDS,
+        TIMEOUT: 0,
+        COUNT: params.size,
       };
 
       const response = await manager.queryTilesDetails(params);
 
-      expect(response).toMatchObject([{ a: 1 }, { a: 2 }]);
-      expect(searchMock).toHaveBeenCalledTimes(1);
-      expect(searchMock).toHaveBeenCalledWith(index, query, searchParams);
+      expect(response).toMatchObject({ tiles: [{ a: 1 }, { a: 2 }], cursor: undefined });
+      expect(aggregateWithCursorMock).toHaveBeenCalledTimes(1);
+      expect(aggregateWithCursorMock).toHaveBeenCalledWith(index, query, searchParams);
     });
 
-    it('should search accoring to given params including minState', async () => {
+    it('should aggregate search accoring to given params including minState', async () => {
       const params: TilesDetailsQueryParams = {
         minZoom: 0,
         maxZoom: 10,
         minState: 100,
+        currentState: true,
         size: 10,
         kits: ['kit1', 'kit2'],
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
-      searchMock.mockResolvedValue({ total: 2, documents: [{ value: [{ a: 1 }] }, { value: [{ a: 2 }] }] });
+      aggregateWithCursorMock.mockResolvedValue({ results: [{ a: '1' }, { a: 'abc' }] });
       const index = REDIS_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @state:[${params.minState} +inf] @kit:(kit1|kit2) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
       const searchParams = {
-        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
         DIALECT: 3,
-        LIMIT: { size: params.size },
+        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
+        LOAD: LOAD_FIELDS,
+        TIMEOUT: 0,
+        COUNT: params.size,
       };
 
       const response = await manager.queryTilesDetails(params);
 
-      expect(response).toMatchObject([{ a: 1 }, { a: 2 }]);
-      expect(searchMock).toHaveBeenCalledTimes(1);
-      expect(searchMock).toHaveBeenCalledWith(index, query, searchParams);
+      expect(response).toMatchObject({ tiles: [{ a: 1 }, { a: 'abc' }], cursor: undefined });
+      expect(aggregateWithCursorMock).toHaveBeenCalledTimes(1);
+      expect(aggregateWithCursorMock).toHaveBeenCalledWith(index, query, searchParams);
     });
 
-    it('should search accoring to given params including maxState', async () => {
+    it('should aggregate search accoring to given params including maxState', async () => {
       const params: TilesDetailsQueryParams = {
         minZoom: 0,
         maxZoom: 10,
@@ -168,46 +184,88 @@ describe('TileDetailsManager', () => {
         kits: ['kit1', 'kit2'],
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
-      searchMock.mockResolvedValue({ total: 2, documents: [{ value: [{ a: 1 }] }, { value: [{ a: 2 }] }] });
+      aggregateWithCursorMock.mockResolvedValue({ results: [{ a: '1' }, { a: '2' }], cursor: undefined });
       const index = REDIS_INDEX_NAME;
-      const query = `@z:[${params.minZoom} ${params.maxZoom}] @state:[-inf ${params.maxState}] @kit:(kit1|kit2) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
+      const query = `@z:[${params.minZoom} ${params.maxZoom}] @states:[-inf ${params.maxState}] @kit:(kit1|kit2) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
       const searchParams = {
-        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
         DIALECT: 3,
-        LIMIT: { size: params.size },
+        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
+        LOAD: LOAD_FIELDS,
+        TIMEOUT: 0,
+        COUNT: params.size,
       };
 
       const response = await manager.queryTilesDetails(params);
 
-      expect(response).toMatchObject([{ a: 1 }, { a: 2 }]);
-      expect(searchMock).toHaveBeenCalledTimes(1);
-      expect(searchMock).toHaveBeenCalledWith(index, query, searchParams);
+      expect(response).toMatchObject({ tiles: [{ a: 1 }, { a: 2 }], cursor: undefined });
+      expect(aggregateWithCursorMock).toHaveBeenCalledTimes(1);
+      expect(aggregateWithCursorMock).toHaveBeenCalledWith(index, query, searchParams);
     });
 
-    it('should search accoring to given params including minState and maxState', async () => {
+    it('should aggregate search accoring to given params including minState and maxState', async () => {
       const params: TilesDetailsQueryParams = {
         minZoom: 0,
         maxZoom: 10,
+        currentState: true,
         minState: -1,
         maxState: 100,
         size: 10,
         kits: ['kit1', 'kit2'],
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
-      searchMock.mockResolvedValue({ total: 2, documents: [{ value: [{ a: 1 }] }, { value: [{ a: 2 }] }] });
+      aggregateWithCursorMock.mockResolvedValue({ results: [{ a: '1' }, { a: '2' }], cursor: undefined });
       const index = REDIS_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @state:[${params.minState} ${params.maxState}] @kit:(kit1|kit2) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
       const searchParams = {
-        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
         DIALECT: 3,
-        LIMIT: { size: params.size },
+        PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
+        LOAD: LOAD_FIELDS,
+        TIMEOUT: 0,
+        COUNT: params.size,
       };
 
       const response = await manager.queryTilesDetails(params);
 
-      expect(response).toMatchObject([{ a: 1 }, { a: 2 }]);
-      expect(searchMock).toHaveBeenCalledTimes(1);
-      expect(searchMock).toHaveBeenCalledWith(index, query, searchParams);
+      expect(response).toMatchObject({ tiles: [{ a: 1 }, { a: 2 }], cursor: undefined });
+      expect(aggregateWithCursorMock).toHaveBeenCalledTimes(1);
+      expect(aggregateWithCursorMock).toHaveBeenCalledWith(index, query, searchParams);
+    });
+
+    it('should continue aggregate search accoring to given params which include the cursor id', async () => {
+      const params: TilesDetailsQueryParams = {
+        minZoom: 0,
+        maxZoom: 10,
+        size: 10,
+        kits: ['kit1', 'kit2'],
+        bbox: { east: 1, north: 2, south: 3, west: 4 },
+        cursor: 666,
+      };
+      cursorReadMock.mockResolvedValue({ results: [{ a: '1' }, { a: '2' }], cursor: 667 });
+      const index = REDIS_INDEX_NAME;
+
+      const response = await manager.queryTilesDetails(params);
+
+      expect(response).toMatchObject({ tiles: [{ a: 1 }, { a: 2 }], cursor: 667 });
+      expect(cursorReadMock).toHaveBeenCalledTimes(1);
+      expect(cursorReadMock).toHaveBeenCalledWith(index, params.cursor, { COUNT: params.size });
+    });
+
+    it('should continue aggregate search accoring to given params which include the cursor id and no size', async () => {
+      const params: TilesDetailsQueryParams = {
+        minZoom: 0,
+        maxZoom: 10,
+        kits: ['kit1', 'kit2'],
+        bbox: { east: 1, north: 2, south: 3, west: 4 },
+        cursor: 666,
+      };
+      cursorReadMock.mockResolvedValue({ results: [{ a: '1' }, { a: '2' }], cursor: 667 });
+      const index = REDIS_INDEX_NAME;
+
+      const response = await manager.queryTilesDetails(params);
+
+      expect(response).toMatchObject({ tiles: [{ a: 1 }, { a: 2 }], cursor: 667 });
+      expect(cursorReadMock).toHaveBeenCalledTimes(1);
+      expect(cursorReadMock).toHaveBeenCalledWith(index, params.cursor, { COUNT: DEFAULT_PAGE_SIZE });
     });
   });
 
@@ -430,6 +488,8 @@ describe('TileDetailsManager', () => {
       expect(numIncrByMock).toHaveBeenCalledTimes(2);
       expect(numIncrByMock).toHaveBeenNthCalledWith(1, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
       expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.renderCount', 1);
+      expect(arrAppendMock).toHaveBeenCalledTimes(1);
+      expect(arrAppendMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.states', UNSPECIFIED_STATE);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
     });
@@ -467,6 +527,8 @@ describe('TileDetailsManager', () => {
       expect(numIncrByMock).toHaveBeenCalledTimes(2);
       expect(numIncrByMock).toHaveBeenNthCalledWith(1, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
       expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.renderCount', 1);
+      expect(arrAppendMock).toHaveBeenCalledTimes(1);
+      expect(arrAppendMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.states', payload.state);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
     });
@@ -503,6 +565,8 @@ describe('TileDetailsManager', () => {
       expect(numIncrByMock).toHaveBeenCalledTimes(2);
       expect(numIncrByMock).toHaveBeenNthCalledWith(1, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
       expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.skipCount', 1);
+      expect(arrAppendMock).toHaveBeenCalledTimes(1);
+      expect(arrAppendMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.states', payload.state);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
     });

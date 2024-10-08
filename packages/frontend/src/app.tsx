@@ -61,6 +61,7 @@ export const App: React.FC = () => {
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [shouldFollowZoom, setShouldFollowZoom] = useState<boolean>(true);
+  const [shouldQueryCurrentState, setShouldQueryCurrentState] = useState<boolean>(true);
   const { enqueueSnackbar } = useSnackbar();
 
   const handleKitChange = (event: TargetetEvent<string>): void => {
@@ -97,6 +98,10 @@ export const App: React.FC = () => {
     if (shouldFollowZoom) {
       setQueryZoom(zoom + ZOOM_OFFEST);
     }
+  };
+
+  const handleShouldQueryCurrentStateChange = (event: React.ChangeEvent<HTMLInputElement>, shouldQueryCurrentState: boolean): void => {
+    setShouldQueryCurrentState(shouldQueryCurrentState);
   };
 
   const handleMetricChange = (event: TargetetEvent<string>): void => {
@@ -167,18 +172,18 @@ export const App: React.FC = () => {
   }, [appHelper.kits]);
 
   useEffect(() => {
+    appHelper.lastDetilerQueryParams = undefined;
+    appHelper.shouldOverrideComarator = true;
+
     if (selectedMetric === undefined) {
       return;
     }
-
-    appHelper.lastDetilerQueryParams = undefined;
-    appHelper.shouldOverrideComarator = true;
 
     setStatsTable((prevStatsTable) => {
       const nextMetric = { ...selectedMetric, range: { ...INITIAL_MIN_MAX } };
       return { ...prevStatsTable, metric: nextMetric };
     });
-  }, [selectedMetric, queryZoom]);
+  }, [selectedMetric, queryZoom, shouldQueryCurrentState]);
 
   useEffect(() => {
     async function kitsFetch(): Promise<void> {
@@ -245,7 +250,7 @@ export const App: React.FC = () => {
       abortController.abort();
       void clearIntervalAsync(dataFetchTimer).then(() => logger.info(`data-fetch-timer cleared`));
     };
-  }, [isPaused, selectedKit?.name, statsTable.metric?.name, queryZoom, ...stateRange]);
+  }, [isPaused, selectedKit?.name, statsTable.metric?.name, queryZoom, shouldQueryCurrentState, ...stateRange]);
 
   const fetchData = async (abortController?: AbortController): Promise<void> => {
     try {
@@ -256,6 +261,7 @@ export const App: React.FC = () => {
       const nextDetilerQueryParams: TileQueryParams = {
         minZoom: queryZoom,
         maxZoom: queryZoom,
+        currentState: shouldQueryCurrentState,
         minState: stateRange[0],
         maxState: stateRange[1],
         kits: [selectedKit.name],
@@ -368,6 +374,7 @@ export const App: React.FC = () => {
         selectedMetric={selectedMetric}
         selectedColorScale={selectedColorScale}
         shouldFollowZoom={shouldFollowZoom}
+        shouldQueryCurrentState={shouldQueryCurrentState}
         isPaused={isPaused}
         isLoading={isLoading}
         onKitChange={handleKitChange}
@@ -377,6 +384,7 @@ export const App: React.FC = () => {
         onColorScaleChange={handleColorScaleChange}
         onGoToClicked={goToCoordinates}
         onShouldFollowZoomChange={handleShouldFollowZoomChange}
+        onShouldQueryCurrentStateChange={handleShouldQueryCurrentStateChange}
         onActionClicked={handleActionClicked}
       />
       <CornerTabs statsTableProps={{ stats: statsTable }} overviewMapProps={{ bounds: appHelper.bounds.actual, zoom: appHelper.currentZoomLevel }} />

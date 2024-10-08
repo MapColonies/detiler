@@ -19,6 +19,8 @@ data:
   {{- else }}
   CONFIG_APP_BASEMAP_ENABLED_PLACEHOLDER: "false"
   {{- end }}
+  CONFIG_APP_UI_TILES_PER_PAGE_PLACEHOLDER: {{ .app.tilesPerPage | quote }}
+
   CONFIG_APP_DATA_ALPHA_CHANNEL_PLACEHOLDER: {{ .app.dataAlphaChannel | quote }}
 
   CONFIG_APP_KITS_FETCH_INTERVAL_PLACEHOLDER: {{ .app.kits.fetchInterval | quote }}

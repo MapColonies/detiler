@@ -1,6 +1,8 @@
 import { TileDetails } from '@map-colonies/detiler-common';
 import { MILLISECONDS_IN_SECOND } from './constants';
 
+const SECOND_TO_LAST = 2;
+const THIRD_TO_LAST = 3;
 const DIGITS_AFTER_DECIMAL = 6;
 
 type PresentationType = 'date' | 'string';
@@ -113,13 +115,13 @@ export const updateMinMax = (current: MinMax, metric: Omit<Metric, 'range'> & { 
   }
 };
 
-export const presentifyValue = (value: number | undefined, type: PresentationType = 'string'): string => {
+export const presentifyValue = (value: number | number[] | undefined, type: PresentationType = 'string'): string => {
   if (value === undefined || value === Number.MAX_SAFE_INTEGER || value === Number.MIN_SAFE_INTEGER) {
     return 'N/A';
   }
 
   if (type === 'date') {
-    return `${new Date(value * MILLISECONDS_IN_SECOND).toISOString().split('.')[0]}`;
+    return `${new Date((value as number) * MILLISECONDS_IN_SECOND).toISOString().split('.')[0]}`;
   }
 
   if (typeof value === 'number') {
@@ -127,6 +129,14 @@ export const presentifyValue = (value: number | undefined, type: PresentationTyp
       return value.toString();
     }
     return value.toFixed(DIGITS_AFTER_DECIMAL).toString();
+  }
+
+  if (typeof value === 'object') {
+    const length = value.length;
+    if (length <= THIRD_TO_LAST) {
+      return `[${value.toString()}]`;
+    }
+    return `[...,${value[length - THIRD_TO_LAST]},${value[length - SECOND_TO_LAST]},${value[length - 1]}]`;
   }
 
   return value;
