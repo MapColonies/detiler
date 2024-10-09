@@ -169,7 +169,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
             disabled={shouldFollowZoom}
             track={false}
           />
-          <Stack direction="column" spacing={2}>
+          <Stack direction="column" spacing={1}>
             <FormControl size="small" variant="filled" sx={{ m: 1, minWidth: 120 }}>
               <InputLabel id="select-kit-label" size="small">
                 Kit
@@ -218,7 +218,6 @@ export const Preferences: React.FC<PreferencesProps> = ({
               </Select>
             </FormControl>
             <FormControl size="small">
-              <FormLabel id="color-scale-radio-buttons-group-label">Color Scale</FormLabel>
               <RadioGroup
                 row
                 aria-labelledby="color-scale-radio-buttons-group-label"
@@ -237,7 +236,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
               <FormLabel id="state-input-label">State Range</FormLabel>
             </AccordionSummary>
             <AccordionActions>
-              <Stack direction="column" spacing={3}>
+              <Stack direction="column" spacing={2}>
                 <Box display="flex" justifyContent="center" alignItems="center">
                   <Typography>all</Typography>
                   <Switch checked={shouldQueryCurrentState} onChange={onShouldQueryCurrentStateChange} size="small" />
