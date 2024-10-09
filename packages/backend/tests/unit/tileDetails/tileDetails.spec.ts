@@ -152,7 +152,7 @@ describe('TileDetailsManager', () => {
         minZoom: 0,
         maxZoom: 10,
         minState: 100,
-        currentState: true,
+        shouldMatchCurrentState: true,
         size: 10,
         kits: ['kit1', 'kit2'],
         bbox: { east: 1, north: 2, south: 3, west: 4 },
@@ -206,7 +206,7 @@ describe('TileDetailsManager', () => {
       const params: TilesDetailsQueryParams = {
         minZoom: 0,
         maxZoom: 10,
-        currentState: true,
+        shouldMatchCurrentState: true,
         minState: -1,
         maxState: 100,
         size: 10,

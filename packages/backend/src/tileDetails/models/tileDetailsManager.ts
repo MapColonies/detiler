@@ -30,9 +30,9 @@ export class TileDetailsManager {
 
     this.logger.info({ msg: 'quering tile details', ...params });
 
-    const { cursor, minZoom, maxZoom, minState, maxState, currentState, kits, bbox, size } = params;
+    const { cursor, minZoom, maxZoom, minState, maxState, shouldMatchCurrentState, kits, bbox, size } = params;
 
-    const stateProperty = currentState === true ? 'state' : 'states';
+    const stateProperty = shouldMatchCurrentState === true ? 'state' : 'states';
     const stateFilter = minState !== undefined || maxState !== undefined ? ` @${stateProperty}:[${minState ?? '-inf'} ${maxState ?? '+inf'}] ` : ' ';
 
     const query = `@z:[${minZoom} ${maxZoom}]${stateFilter}@kit:(${kits.join('|')}) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;

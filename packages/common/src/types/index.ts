@@ -56,7 +56,7 @@ export interface TileQueryParams extends BaseQueryParams {
   maxZoom: number;
   minState?: number;
   maxState?: number;
-  currentState?: boolean;
+  shouldMatchCurrentState?: boolean;
   kits: string[];
   bbox: number[];
 }

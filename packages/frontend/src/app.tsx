@@ -261,7 +261,7 @@ export const App: React.FC = () => {
       const nextDetilerQueryParams: TileQueryParams = {
         minZoom: queryZoom,
         maxZoom: queryZoom,
-        currentState: shouldQueryCurrentState,
+        shouldMatchCurrentState: shouldQueryCurrentState,
         minState: stateRange[0],
         maxState: stateRange[1],
         kits: [selectedKit.name],

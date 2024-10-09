@@ -94,7 +94,7 @@ paths:
             maxItems: 4
           required: true
         - in: query
-          name: currentState
+          name: shouldMatchCurrentState
           description: should the state match the current tile's state
           schema:
             type: boolean
