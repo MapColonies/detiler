@@ -11,7 +11,16 @@ export interface AppConfig {
     desaturate?: number;
   };
   style: {
+    tilesPerPage?: number;
     dataAlphaChannel?: number;
+  };
+  kits: {
+    fetchInterval?: number;
+  };
+  tiles: {
+    batchSize?: number;
+    fetchInterval?: number;
+    fetchTimeout?: number;
   };
 }
 
@@ -21,4 +30,7 @@ export interface AppHelper {
   bounds: { actual?: Bounds; query?: Bounds };
   lastDetilerQueryParams?: TileQueryParams;
   shouldOverrideComarator: boolean;
+  shouldFetch: boolean;
+  selectedKit?: string;
+  queryZoom: number;
 }

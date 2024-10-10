@@ -1,7 +1,6 @@
 export const ZOOM_OFFEST = 3;
 export const MIN_ZOOM_LEVEL = 0;
 export const MAX_ZOOM_LEVEL = 21;
-export const FETCH_KITS_INTERVAL = 60000;
 export const MILLISECONDS_IN_SECOND = 1000;
 
 export const MIN_LONGITUDE = -179.99999;
@@ -32,3 +31,10 @@ export const DEFAULT_MIN_STATE = -1;
 export const DEFAULT_MAX_STATE = 1;
 
 export const MAX_KIT_STATE_KEY = 'maxState';
+export const CLIENT_ABORTED_ERROR_CODE = 'ECONNABORTED';
+
+export const DEFAULT_KITS_FETCH_INTERVAL = 60000;
+
+export const DEFAULT_TILES_FETCH_INTERVAL = 2000;
+export const DEFAULT_TILES_BATCH_SIZE = 1000;
+export const DEFAULT_TILES_FETCH_TIMEOUT = 1500;

@@ -24,6 +24,7 @@ export interface TileParamsWithKit extends TileParams {
 
 export interface TileDetails extends TileParamsWithKit {
   state: number;
+  states: number[];
   createdAt: number;
   updatedAt: number;
   renderedAt: number;
@@ -34,6 +35,11 @@ export interface TileDetails extends TileParamsWithKit {
   geoshape: string;
 }
 
+export interface TileQueryResponse {
+  tiles: TileDetails[];
+  cursor?: number;
+}
+
 export interface TileDetailsPayload {
   timestamp: number;
   state?: number;
@@ -41,7 +47,7 @@ export interface TileDetailsPayload {
 }
 
 export interface BaseQueryParams {
-  from?: number;
+  cursor?: number;
   size?: number;
 }
 
@@ -50,6 +56,7 @@ export interface TileQueryParams extends BaseQueryParams {
   maxZoom: number;
   minState?: number;
   maxState?: number;
+  shouldMatchCurrentState?: boolean;
   kits: string[];
   bbox: number[];
 }

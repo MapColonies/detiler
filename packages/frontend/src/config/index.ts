@@ -46,6 +46,15 @@ export const config: IConfig = (function (): IConfig {
     },
     style: {
       dataAlphaChannel: viteConfig.CONFIG_APP_DATA_ALPHA_CHANNEL !== undefined ? parseInt(viteConfig.CONFIG_APP_DATA_ALPHA_CHANNEL) : undefined,
+      tilesPerPage: viteConfig.CONFIG_APP_UI_TILES_PER_PAGE !== undefined ? parseInt(viteConfig.CONFIG_APP_UI_TILES_PER_PAGE) : undefined,
+    },
+    kits: {
+      fetchInterval: viteConfig.CONFIG_APP_KITS_FETCH_INTERVAL !== undefined ? parseInt(viteConfig.CONFIG_APP_KITS_FETCH_INTERVAL) : undefined,
+    },
+    tiles: {
+      batchSize: viteConfig.CONFIG_APP_TILES_BATCH_SIZE !== undefined ? parseInt(viteConfig.CONFIG_APP_TILES_BATCH_SIZE) : undefined,
+      fetchInterval: viteConfig.CONFIG_APP_TILES_FETCH_INTERVAL !== undefined ? parseInt(viteConfig.CONFIG_APP_TILES_FETCH_INTERVAL) : undefined,
+      fetchTimeout: viteConfig.CONFIG_APP_TILES_FETCH_TIMEOUT !== undefined ? parseInt(viteConfig.CONFIG_APP_TILES_FETCH_TIMEOUT) : undefined,
     },
   };
 

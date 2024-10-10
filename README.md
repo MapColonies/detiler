@@ -24,6 +24,7 @@ data is colored in relation to some metric (state, update count, skip count, cur
   "y":5321,
   "kit":"my-default-kit",
   "state":666,
+  "states": [...,664,665,666],
   "updatedAt":1711907506,
   "renderedAt":1711907506,
   "createdAt":1711302106,
@@ -57,7 +58,7 @@ see [.env.production](/packages/frontend/config/.env.production) and [env.sh](/p
 ### redis search index creation:
 ```
 FT.CREATE tileDetailsIdx ON JSON PREFIX 1 tile:
-SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.renderedAt AS renderedAt NUMERIC $.createdAt AS createdAt NUMERIC $.updateCount AS updateCount NUMERIC $.renderCount AS renderCount NUMERIC $.skipCount AS skipCount NUMERIC $.coordiantes AS coordinates GEO $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
+SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.renderedAt AS renderedAt NUMERIC $.createdAt AS createdAt NUMERIC $.updateCount AS updateCount NUMERIC $.renderCount AS renderCount NUMERIC $.skipCount AS skipCount NUMERIC $.coordiantes AS coordinates GEO $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.states[*] AS states NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
 ```
 
 ### redis post processing:

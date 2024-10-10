@@ -16,11 +16,15 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { presentifyValue } from '../utils/metric';
 import { LOAD_TIMEOUT_MS, METATILE_SIZE, ZOOM_OFFEST } from '../utils/constants';
 import { bboxToLonLat, promiseWithTimeout } from '../utils/helpers';
+import { config } from '../config';
+import { AppConfig } from '../utils/interfaces';
 
-const TILES_PER_PAGE = 4;
+const DEFAULT_TILES_PER_PAGE = 4;
 const FIRST_PAGE = 1;
 const DRAWER_WIDTH = 345;
 const SUCCESS_COPY_MESSAGE = 'Copied to Clipboard';
+
+const tilesPerPage = config.get<AppConfig>('app').style.tilesPerPage ?? DEFAULT_TILES_PER_PAGE;
 
 const StyledCardContent = styled(CardContent)(`
   padding: 10px;
@@ -52,8 +56,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
     return null;
   }
 
-  const startIndex = (currentPage - 1) * TILES_PER_PAGE;
-  const endIndex = startIndex + TILES_PER_PAGE;
+  const startIndex = (currentPage - 1) * tilesPerPage;
+  const endIndex = startIndex + tilesPerPage;
   const currentData = data.slice(startIndex, endIndex);
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, page: number): void => {
@@ -137,17 +141,55 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
                     <br />
                     State: {tile.state}
                     <br />
+                    States: {presentifyValue(tile.states)}
+                    <br />
                     Created At: {presentifyValue(tile.createdAt, 'date')}
                     <br />
                     Updated At: {presentifyValue(tile.updatedAt, 'date')}
                     <br />
                     Rendered At: {presentifyValue(tile.renderedAt, 'date')}
                     <br />
-                    Update Count: {tile.updateCount}
-                    <br />
-                    Render Count: {tile.renderCount}
-                    <br />
-                    Skip Count: {tile.skipCount}
+                    Counts:{' '}
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        display: 'inline-block',
+                        bgcolor: '#37b581',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        px: 1,
+                        borderTopLeftRadius: 1,
+                        borderBottomLeftRadius: 1,
+                      }}
+                    >
+                      {tile.updateCount}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        display: 'inline-block',
+                        bgcolor: '#b87cdd',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        px: 1,
+                      }}
+                    >
+                      {tile.renderCount}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        display: 'inline-block',
+                        bgcolor: '#e19017',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        px: 1,
+                        borderTopRightRadius: 1,
+                        borderBottomRightRadius: 1,
+                      }}
+                    >
+                      {tile.skipCount}
+                    </Typography>
                   </Typography>
                   <CopyToClipboard text={JSON.stringify({ ...tile, geojson: WktToGeojson(tile.geoshape) })} onCopy={onCopy}>
                     <IconButton aria-label="copy">
@@ -161,8 +203,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
         </Box>
       )}
       <Box display="flex" justifyContent="center" alignItems="center" margin="auto" marginBottom="10%">
-        {data.length > TILES_PER_PAGE && (
-          <Pagination count={Math.ceil(data.length / TILES_PER_PAGE)} page={currentPage} onChange={handlePageChange} color="primary" />
+        {data.length > tilesPerPage && (
+          <Pagination count={Math.ceil(data.length / tilesPerPage)} page={currentPage} onChange={handlePageChange} color="primary" />
         )}
       </Box>
     </Drawer>
