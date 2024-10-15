@@ -40,6 +40,8 @@ export const compareQueries = (prev: TileQueryParams | undefined, next: TileQuer
     prev.kits[0] !== next.kits[0] ||
     prev.minZoom !== next.minZoom ||
     prev.maxZoom !== next.maxZoom ||
+    prev.minState !== next.minState ||
+    prev.maxState !== next.maxState ||
     prev.bbox[0] !== next.bbox[0] ||
     prev.bbox[1] !== next.bbox[1] ||
     prev.bbox[2] !== next.bbox[2] ||
@@ -105,13 +107,13 @@ export const parseDataToFeatures = (data: TileDetails[]): Feature[] => {
 
 export const insertDummyFeature = (features: Feature[]): Feature[] => {
   if (features.length === 0) {
-    features.push({ type: 'Feature', id: FEATURE_ID_DUMMY, properties: {}, geometry: { type: 'Point', coordinates: [] } });
+    features.push({ type: 'Feature', properties: { id: FEATURE_ID_DUMMY }, geometry: { type: 'Point', coordinates: [] } });
   }
   return features;
 };
 
 export const removeDummyFeature = (features?: Feature[]): Feature[] | undefined => {
-  if (features?.length === 1 && features[0].id === FEATURE_ID_DUMMY) {
+  if (features?.length === 1 && features[0].properties?.id === FEATURE_ID_DUMMY) {
     features.splice(0, 1);
   }
   return features;
@@ -157,4 +159,7 @@ export const appHelper: AppHelper = {
   bounds: {},
   lastDetilerQueryParams: undefined,
   shouldOverrideComarator: false,
+  shouldFetch: false,
+  selectedKit: undefined,
+  queryZoom: ZOOM_OFFEST,
 };

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -16,12 +16,21 @@ import {
   Typography,
   Slider,
   Input,
+  Switch,
+  LinearProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionActions,
+  Box,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import InfoIcon from '@mui/icons-material/Info';
 import { KitMetadata } from '@map-colonies/detiler-common';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import { DEFAULT_MAX_STATE, DEFAULT_MIN_STATE, MAX_KIT_STATE_KEY, ZOOM_OFFEST } from '../utils/constants';
+import PlayCircleFilledWhiteIcon from '@mui/icons-material/PlayCircleFilledWhite';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PauseCircleIcon from '@mui/icons-material/PauseCircle';
+import { DEFAULT_MAX_STATE, DEFAULT_MIN_STATE, MAX_KIT_STATE_KEY, MAX_ZOOM_LEVEL, MIN_ZOOM_LEVEL, ZOOM_OFFEST } from '../utils/constants';
 import './css/styles.css';
 import { TargetetEvent } from '../deck-gl/types';
 import { Metric, METRICS } from '../utils/metric';
@@ -33,36 +42,65 @@ import { GoToModal } from './goToModal';
 const StyledCardContent = styled(CardContent)(`
   padding: 30px;
   &:last-child {
-    padding-bottom: 24px;
+    padding-bottom: 0px;
   }
 `);
 
+const ZOOM_MARKS = [
+  {
+    value: MIN_ZOOM_LEVEL,
+    label: MIN_ZOOM_LEVEL,
+  },
+  {
+    value: MAX_ZOOM_LEVEL,
+    label: MAX_ZOOM_LEVEL,
+  },
+];
+
 interface PreferencesProps {
   kits: KitMetadata[];
-  zoomLevel: number;
   selectedKit?: KitMetadata;
+  zoomLevel: number;
+  queryZoom: number;
+  shouldFollowZoom: boolean;
+  shouldQueryCurrentState: boolean;
   stateRange?: number[];
   selectedMetric?: Metric;
   selectedColorScale: { key: ColorScale; value: ColorScaleFunc };
+  isPaused: boolean;
+  isLoading: boolean;
   onKitChange: (event: TargetetEvent<string>) => void;
   onStateRangeChange: (event: Event, range: number | number[]) => void;
+  onQueryZoomChange: (event: Event, range: number | number[]) => void;
   onMetricChange: (event: TargetetEvent<string>) => void;
   onColorScaleChange: (event: TargetetEvent<string>) => void;
   onGoToClicked: (longitude: number, latitude: number, zoom?: number) => void;
+  onShouldFollowZoomChange: (event: React.ChangeEvent<HTMLInputElement>, shouldFollow: boolean) => void;
+  onShouldQueryCurrentStateChange: (event: React.ChangeEvent<HTMLInputElement>, shouldQueryCurrentState: boolean) => void;
+  onActionClicked: () => void;
 }
 
 export const Preferences: React.FC<PreferencesProps> = ({
   kits,
   zoomLevel: currentZoomLevel,
+  queryZoom,
   selectedKit,
   stateRange,
   selectedMetric,
   selectedColorScale,
+  shouldFollowZoom,
+  shouldQueryCurrentState,
+  isPaused,
+  isLoading,
   onKitChange,
   onStateRangeChange,
+  onQueryZoomChange,
   onMetricChange,
   onColorScaleChange,
   onGoToClicked,
+  onShouldFollowZoomChange,
+  onShouldQueryCurrentStateChange,
+  onActionClicked,
 }) => {
   const colorMode = useContext(colorModeContext);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -104,6 +142,9 @@ export const Preferences: React.FC<PreferencesProps> = ({
       <Card>
         <StyledCardContent>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Tooltip title="resume / pause">
+              <IconButton onClick={onActionClicked}>{isPaused ? <PlayCircleFilledWhiteIcon /> : <PauseCircleIcon />}</IconButton>
+            </Tooltip>
             <Typography variant="h6">Zoom: {currentZoomLevel + ZOOM_OFFEST}</Typography>
             <Tooltip title="go to tile / coordinates">
               <IconButton onClick={handleOpenModal}>
@@ -112,25 +153,60 @@ export const Preferences: React.FC<PreferencesProps> = ({
             </Tooltip>
             <ColorModeSwitch sx={{ m: 1 }} defaultChecked onClick={colorMode.toggleColorMode} />
           </Stack>
-          <br />
-          <Stack direction="column" spacing={2}>
-            <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel id="select-kit-label">Kit</InputLabel>
-              <Select labelId="select-kit-label" id="kit-select" value={selectedKit?.name} onChange={onKitChange} label="Kit">
+          <Box display="flex" justifyContent="center" alignItems="center">
+            <Typography>custom</Typography>
+            <Switch checked={shouldFollowZoom} onChange={onShouldFollowZoomChange} size="small" />
+            <Typography>viewer</Typography>
+          </Box>
+          <Slider
+            getAriaLabel={(): string => 'Query Zoom'}
+            marks={ZOOM_MARKS}
+            min={MIN_ZOOM_LEVEL}
+            max={MAX_ZOOM_LEVEL}
+            value={shouldFollowZoom ? currentZoomLevel + ZOOM_OFFEST : queryZoom}
+            onChange={onQueryZoomChange}
+            valueLabelDisplay="auto"
+            disabled={shouldFollowZoom}
+            track={false}
+          />
+          <Stack direction="column" spacing={1}>
+            <FormControl size="small" variant="filled" sx={{ m: 1, minWidth: 120 }}>
+              <InputLabel id="select-kit-label" size="small">
+                Kit
+              </InputLabel>
+              <Select
+                labelId="select-kit-label"
+                id="kit-select"
+                size="small"
+                value={selectedKit?.name}
+                onChange={onKitChange}
+                label="Kit"
+                sx={{ maxHeight: '50px' }}
+              >
                 {kits
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((kit, index) => (
-                    <MenuItem key={index} value={kit.name}>
+                    <MenuItem key={index} value={kit.name} sx={{ maxHeight: '40px' }}>
                       {kit.name}
                     </MenuItem>
                   ))}
               </Select>
             </FormControl>
-            <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel id="select-metric-label">Metric</InputLabel>
-              <Select labelId="select-metric-label" id="metric-select" value={selectedMetric?.name} onChange={onMetricChange} label="Metric">
+            <FormControl size="small" variant="filled" sx={{ m: 1, minWidth: 120 }}>
+              <InputLabel id="select-metric-label" size="small">
+                Metric
+              </InputLabel>
+              <Select
+                labelId="select-metric-label"
+                id="metric-select"
+                size="small"
+                value={selectedMetric?.name}
+                onChange={onMetricChange}
+                label="Metric"
+                sx={{ maxHeight: '50px' }}
+              >
                 {METRICS.map((metric, index) => (
-                  <MenuItem key={index} value={metric.name}>
+                  <MenuItem key={index} value={metric.name} sx={{ maxHeight: '40px' }}>
                     {metric.name}
                     <Tooltip title={metric.info}>
                       <IconButton>
@@ -141,8 +217,7 @@ export const Preferences: React.FC<PreferencesProps> = ({
                 ))}
               </Select>
             </FormControl>
-            <FormControl>
-              <FormLabel id="color-scale-radio-buttons-group-label">Color Scale</FormLabel>
+            <FormControl size="small">
               <RadioGroup
                 row
                 aria-labelledby="color-scale-radio-buttons-group-label"
@@ -156,42 +231,58 @@ export const Preferences: React.FC<PreferencesProps> = ({
               </RadioGroup>
             </FormControl>
           </Stack>
-          <FormLabel id="stateslider-label">State Range</FormLabel>
-          <Slider
-            getAriaLabel={(): string => 'State range'}
-            marks={marks}
-            min={minStateValue}
-            max={maxStateValue}
-            value={stateRange}
-            onChange={onStateRangeChange}
-            valueLabelDisplay="auto"
-          />
-          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-            <FormLabel id="stateslider-min-label">Min:</FormLabel>
-            <Input
-              value={stateRange !== undefined ? stateRange[0] : minStateValue}
-              size="small"
-              onChange={handleMinInputChange}
-              inputProps={{
-                step: 1,
-                min: minStateValue,
-                max: maxStateValue,
-                type: 'number',
-              }}
-            />
-            <FormLabel id="stateslider-max-label">Max:</FormLabel>
-            <Input
-              value={stateRange !== undefined ? stateRange[1] : maxStateValue}
-              size="small"
-              onChange={handleMaxInputChange}
-              inputProps={{
-                step: 1,
-                min: minStateValue,
-                max: maxStateValue,
-                type: 'number',
-              }}
-            />
-          </Stack>
+          <Accordion defaultExpanded={false}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel3-content" id="panel3-header">
+              <FormLabel id="state-input-label">State Range</FormLabel>
+            </AccordionSummary>
+            <AccordionActions>
+              <Stack direction="column" spacing={2}>
+                <Box display="flex" justifyContent="center" alignItems="center">
+                  <Typography>all</Typography>
+                  <Switch checked={shouldQueryCurrentState} onChange={onShouldQueryCurrentStateChange} size="small" />
+                  <Typography>current</Typography>
+                </Box>
+                <Slider
+                  getAriaLabel={(): string => 'State range'}
+                  marks={marks}
+                  min={minStateValue}
+                  max={maxStateValue}
+                  value={stateRange}
+                  onChange={onStateRangeChange}
+                  valueLabelDisplay="auto"
+                  size="small"
+                />
+                <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+                  <FormLabel id="stateslider-min-label">Min:</FormLabel>
+                  <Input
+                    value={stateRange !== undefined ? stateRange[0] : minStateValue}
+                    size="small"
+                    onChange={handleMinInputChange}
+                    inputProps={{
+                      step: 1,
+                      min: minStateValue,
+                      max: maxStateValue,
+                      type: 'number',
+                    }}
+                  />
+                  <FormLabel id="stateslider-max-label">Max:</FormLabel>
+                  <Input
+                    value={stateRange !== undefined ? stateRange[1] : maxStateValue}
+                    size="small"
+                    onChange={handleMaxInputChange}
+                    inputProps={{
+                      step: 1,
+                      min: minStateValue,
+                      max: maxStateValue,
+                      type: 'number',
+                    }}
+                  />
+                </Stack>
+              </Stack>
+            </AccordionActions>
+          </Accordion>
+          <br />
+          {isLoading ? <LinearProgress /> : null}
         </StyledCardContent>
       </Card>
       <GoToModal isOpen={isModalOpen} onClose={handleCloseModal} onGoToClicked={onGoToClicked} />

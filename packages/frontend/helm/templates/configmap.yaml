@@ -19,7 +19,15 @@ data:
   {{- else }}
   CONFIG_APP_BASEMAP_ENABLED_PLACEHOLDER: "false"
   {{- end }}
+  CONFIG_APP_UI_TILES_PER_PAGE_PLACEHOLDER: {{ .app.tilesPerPage | quote }}
+
   CONFIG_APP_DATA_ALPHA_CHANNEL_PLACEHOLDER: {{ .app.dataAlphaChannel | quote }}
+
+  CONFIG_APP_KITS_FETCH_INTERVAL_PLACEHOLDER: {{ .app.kits.fetchInterval | quote }}
+  CONFIG_APP_TILES_BATCH_SIZE_PLACEHOLDER: {{ .app.tiles.batchSize | quote }}
+  CONFIG_APP_TILES_FETCH_TIMEOUT_PLACEHOLDER: {{ .app.tiles.fetchTimeout | quote }}
+  CONFIG_APP_TILES_FETCH_INTERVAL_PLACEHOLDER:  {{ .app.tiles.fetchInterval | quote }}
+
   CONFIG_DETILER_CLIENT_URL_PLACEHOLDER: {{ .detilerClient.url | quote }}
   CONFIG_DETILER_CLIENT_TIMEOUT_PLACEHOLDER: {{ .detilerClient.timeout | quote }}
   CONFIG_DETILER_CLIENT_ENABLE_RETRY_STRATEGY_PLACEHOLDER: {{ .detilerClient.retryStrategy.enabled | quote }}

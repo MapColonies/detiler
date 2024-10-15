@@ -7,7 +7,7 @@ import { MAX_ZOOM_LEVEL, MIN_ZOOM_LEVEL } from '../utils/constants';
 
 export const BASEMAP_LAYER_ID = 'main-basemap-layer';
 export const GEOJSON_LAYER_ID = 'main-geojson-layer';
-export const OVERVIEW_BASEMAP_LAYER_ID = 'overview-geojson-layer';
+export const OVERVIEW_BASEMAP_LAYER_ID = 'overview-basemap-layer';
 export const OVERVIEW_GEOJSON_LAYER_ID = 'overview-geojson-layer';
 
 export const CONSTANT_GEOJSON_LAYER_PROPERTIES: Partial<GeoJsonLayerProps & DataFilterExtensionProps> = {

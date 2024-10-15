@@ -68,7 +68,14 @@ env:
     basemapTileSize: 256
     basemapTileOffset: 0
     basemapDesaturate: 0
+    tilesPerPage: 5
     dataAlphaChannel: 75
+    kits:
+      fetchInterval: 60000
+    tiles:
+      batchSize: 1000
+      fetchTimeout: 5000
+      fetchInterval: 5000
   detilerClient:
     url: http://detiler.com
     timeout: 60000

@@ -3,6 +3,7 @@ import { AxiosError } from 'axios';
 import httpStatusCodes from 'http-status-codes';
 import { TileDetails, TileDetailsPayload, TileParams, TileParamsWithKit, TileQueryParams } from '@map-colonies/detiler-common';
 import { DetilerClient } from '../../src';
+import { DEFAULT_PAGE_SIZE } from '../../src/client/config';
 
 const MOCK_DETILER_URL = 'http://detiler.com';
 
@@ -72,34 +73,37 @@ describe('Client', () => {
 
   describe('#queryTilesDetailsAsyncGenerator', () => {
     it('should query generate details according to params including extra empty res call', async function () {
-      const details1 = { a: 1 };
-      const details2 = { a: 2 };
-      const details3 = { a: 3 };
+      const details1 = { tiles: [{ a: 1 }], cursor: 2 };
+      const details2 = { tiles: [{ a: 2 }], cursor: 3 };
+      const details3 = { tiles: [{ a: 3 }], cursor: 4 };
+      const details4 = { tiles: [], cursor: undefined };
+
       let data: TileDetails[] = [];
-      const params1: TileQueryParams = { size: 1, from: 0, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
-      const params2: TileQueryParams = { size: 1, from: 1, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
-      const params3: TileQueryParams = { size: 1, from: 2, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
-      const lastParams: TileQueryParams = { size: 1, from: 3, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
+
+      const params1: TileQueryParams = { size: 1, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
+      const params2: TileQueryParams = { size: 1, cursor: 2, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
+      const params3: TileQueryParams = { size: 1, cursor: 3, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
+      const lastParams: TileQueryParams = { size: 1, cursor: 4, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
 
       nock(MOCK_DETILER_URL)
         .get(`/detail`)
         .query({ ...params1 })
         .once()
-        .reply(httpStatusCodes.OK, [details1]);
+        .reply(httpStatusCodes.OK, details1);
       nock(MOCK_DETILER_URL)
         .get(`/detail`)
         .query({ ...params2 })
         .twice()
-        .reply(httpStatusCodes.OK, [details2]);
+        .reply(httpStatusCodes.OK, details2);
       nock(MOCK_DETILER_URL)
         .get(`/detail`)
         .query({ ...params3 })
         .thrice()
-        .reply(httpStatusCodes.OK, [details3]);
+        .reply(httpStatusCodes.OK, details3);
       nock(MOCK_DETILER_URL)
         .get(`/detail`)
         .query({ ...lastParams })
-        .reply(httpStatusCodes.OK, []);
+        .reply(httpStatusCodes.OK, details4);
       const getSpy = jest.spyOn(detiler['axios'], 'get');
 
       const queryGenerator = detiler.queryTilesDetailsAsyncGenerator(params1);
@@ -108,18 +112,20 @@ describe('Client', () => {
         data = [...data, ...pageData];
       }
 
-      expect(data).toMatchObject([details1, details2, details3]);
+      expect(data).toMatchObject([details1.tiles[0], details2.tiles[0], details3.tiles[0]]);
       expect(getSpy).toHaveBeenCalledTimes(4);
     });
 
     it('should query generate details according to params until done', async function () {
-      const details1 = [{ a: 1 }, { a: 2 }];
-      const details2 = [{ a: 3 }, { a: 4 }];
-      const details3 = [{ a: 5 }];
+      const details1 = { tiles: [{ a: 1 }, { a: 2 }], cursor: 2 };
+      const details2 = { tiles: [{ a: 3 }, { a: 4 }], cursor: 3 };
+      const details3 = { tiles: [{ a: 5 }], cursor: 0 };
+
       let data: TileDetails[] = [];
-      const params1: TileQueryParams = { size: 2, from: 0, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
-      const params2: TileQueryParams = { size: 2, from: 2, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
-      const params3: TileQueryParams = { size: 2, from: 4, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
+
+      const params1: TileQueryParams = { size: 2, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
+      const params2: TileQueryParams = { size: 2, cursor: 2, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
+      const params3: TileQueryParams = { size: 2, cursor: 3, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
 
       nock(MOCK_DETILER_URL)
         .get(`/detail`)
@@ -144,18 +150,18 @@ describe('Client', () => {
         data = [...data, ...pageData];
       }
 
-      expect(data).toMatchObject([...details1, ...details2, ...details3]);
+      expect(data).toMatchObject([...details1.tiles, ...details2.tiles, ...details3.tiles]);
       expect(getSpy).toHaveBeenCalledTimes(3);
     });
 
-    it('should query generate details according to params with default size and from', async function () {
-      const details = [{ a: 1 }];
+    it('should query generate details according to params with default size', async function () {
+      const details = { tiles: [{ a: 1 }], cursor: undefined };
       let data: TileDetails[] = [];
       const params: TileQueryParams = { kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
 
       nock(MOCK_DETILER_URL)
         .get(`/detail`)
-        .query({ ...params, from: 0, size: 100 })
+        .query({ ...params, size: DEFAULT_PAGE_SIZE })
         .once()
         .reply(httpStatusCodes.OK, details);
       const getSpy = jest.spyOn(detiler['axios'], 'get');
@@ -166,12 +172,12 @@ describe('Client', () => {
         data = [...data, ...pageData];
       }
 
-      expect(data).toMatchObject(details);
+      expect(data).toMatchObject(details.tiles);
       expect(getSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should throw an error if the http get request has errored', async function () {
-      const params: TileQueryParams = { from: 0, size: 10, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
+      const params: TileQueryParams = { size: 10, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
       nock(MOCK_DETILER_URL)
         .get(`/detail`)
         .query({ ...params })

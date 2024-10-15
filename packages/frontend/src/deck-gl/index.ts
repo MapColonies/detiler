@@ -2,25 +2,40 @@ import { Feature } from 'geojson';
 import { differenceWith } from 'lodash';
 import { insertDummyFeature, removeDummyFeature } from '../utils/helpers';
 import { Stats } from '../utils/stats';
-import { Metric } from '../utils/metric';
+import { findNumericMinMax, Metric, updateMinMax } from '../utils/metric';
 import { normalizeValue } from '../utils/style';
-import { MAX_ZOOM_LEVEL, ZOOM_OFFEST } from '../utils/constants';
-import { AppHelper } from '../utils/interfaces';
-
-type TransformFunc<T> = (data: T) => T;
+import { MAX_ZOOM_LEVEL } from '../utils/constants';
+import { appHelper } from '../utils/helpers';
 
 type ComparatorFunc<T> = (nextData: T, prevData: T) => boolean;
+
+export type TransformFunc<T> = (data: T) => T;
 
 export const transformFuncWrapper = (metric: Metric | undefined): TransformFunc<Feature[]> => {
   const transformFunc = (data: Feature[]): Feature[] => {
     if (metric !== undefined) {
-      data.forEach((feature) => {
-        if (feature.properties !== null) {
-          const value = feature.properties[metric.property] as number;
-          const normalizedValue = normalizeValue(value, metric.range);
-          feature.properties['score'] = normalizedValue;
+      const metricPropertyArr = data
+        .map((feature) => {
+          if (feature.properties?.[metric.property] !== undefined) {
+            return feature.properties[metric.property] as number;
+          }
+        })
+        .filter((property) => property !== undefined);
+
+      if (metricPropertyArr.length !== 0) {
+        const currentMinMax = findNumericMinMax(metricPropertyArr as unknown[] as number[]);
+        if (currentMinMax !== null) {
+          updateMinMax(currentMinMax, metric);
         }
-      });
+
+        data.forEach((feature) => {
+          if (feature.properties !== null) {
+            const value = feature.properties[metric.property] as number;
+            const normalizedValue = normalizeValue(value, metric.range);
+            feature.properties['score'] = normalizedValue;
+          }
+        });
+      }
     }
 
     // to accomplish rendering empty data
@@ -34,12 +49,13 @@ export const transformFuncWrapper = (metric: Metric | undefined): TransformFunc<
   return transformFunc;
 };
 
-export const comparatorFuncWrapper = (helper: AppHelper, setStatsTable: (value: React.SetStateAction<Stats>) => void): ComparatorFunc<Feature[]> => {
+export const comparatorFuncWrapper = (setStatsTable: (value: React.SetStateAction<Stats>) => void): ComparatorFunc<Feature[]> => {
   const comparatorFunc = (nextData: Feature[], prevData: Feature[]): boolean => {
     let shouldSkipRedering = false;
+
     // render if override flag is enabled or next data is greater than prev
-    if (helper.shouldOverrideComarator || prevData.length < nextData.length) {
-      helper.shouldOverrideComarator = false;
+    if (appHelper.shouldOverrideComarator || prevData.length < nextData.length) {
+      appHelper.shouldOverrideComarator = false;
     } else {
       // render if new data is not contained in prev data
       const comparator = (tile1: Feature, tile2: Feature): boolean => tile1.properties?.id === tile2.properties?.id;
@@ -74,5 +90,5 @@ export const comparatorFuncWrapper = (helper: AppHelper, setStatsTable: (value: 
 };
 
 export const filterRangeFuncWrapper = (zoom: number): [number, number] => {
-  return [Math.min(zoom + ZOOM_OFFEST, MAX_ZOOM_LEVEL), Math.min(zoom + ZOOM_OFFEST, MAX_ZOOM_LEVEL)];
+  return [Math.min(zoom, MAX_ZOOM_LEVEL), Math.min(zoom, MAX_ZOOM_LEVEL)];
 };

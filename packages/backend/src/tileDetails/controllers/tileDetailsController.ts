@@ -1,4 +1,4 @@
-import { TileDetails, TileDetailsPayload, TileQueryParams } from '@map-colonies/detiler-common';
+import { TileDetails, TileDetailsPayload, TileQueryParams, TileQueryResponse } from '@map-colonies/detiler-common';
 import { Logger } from '@map-colonies/js-logger';
 import { BoundingBox, TILEGRID_WEB_MERCATOR, validateTileGridBoundingBox } from '@map-colonies/tile-calc';
 import { RequestHandler } from 'express';
@@ -10,7 +10,7 @@ import { numerifyTileRequestParams, UpsertStatus } from '../../common/util';
 import { KitNotFoundError, TileDetailsNotFoundError } from '../models/errors';
 import { TileDetailsManager } from '../models/tileDetailsManager';
 
-type GetTilesDetailsHandler = RequestHandler<undefined, TileDetails[], unknown, Required<TileQueryParams>>;
+type GetTilesDetailsHandler = RequestHandler<undefined, TileQueryResponse, unknown, Required<TileQueryParams>>;
 type GetMultiKitsTilesDetailsHandler = RequestHandler<TileRequestParams, TileDetails[], unknown, { kits?: string[] }>;
 type GetTileDetailsByKitHandler = RequestHandler<TileRequestParams & { kit: string }, TileDetails>;
 type PutTileDetailsByKitHandler = RequestHandler<TileRequestParams & { kit: string }, undefined, TileDetailsPayload>;
@@ -34,18 +34,19 @@ export class TileDetailController {
         bbox: [west, south, east, north],
         minZoom,
         maxZoom,
-        from,
+        cursor,
         size,
         ...queryParams
       } = req.query;
+
       const bbox: BoundingBox = { west: +west, south: +south, east: +east, north: +north };
       validateTileGridBoundingBox(bbox, TILEGRID_WEB_MERCATOR);
 
       const tilesDetails = await this.manager.queryTilesDetails({
         bbox,
         minZoom: +minZoom,
-        maxZoom: +minZoom,
-        from: +from,
+        maxZoom: +maxZoom,
+        cursor: cursor ? +cursor : cursor,
         size: +size,
         ...queryParams,
       });
