@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.2.0](https://github.com/MapColonies/detiler/compare/v1.0.0...v1.2.0) (2024-10-15)
+
+
+### Features
+
+* **frontend,backend,client:** improved data managing ([#2](https://github.com/MapColonies/detiler/issues/2)) ([772e347](https://github.com/MapColonies/detiler/commit/772e347d051c20a56b73fdc7d7135cc19e1a472a))
+
+
+
+
+
 # 1.0.0 (2024-08-13)
 
 
