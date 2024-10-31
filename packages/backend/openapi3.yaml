@@ -52,6 +52,93 @@ paths:
           $ref: '#/components/responses/Conflict'
         5XX:
           $ref: '#/components/responses/UnexpectedError'
+  /cooldown:
+    get:
+      operationId: getCooldowns
+      tags:
+        - cooldown
+      summary: Get a list of cooldowns according to query
+      parameters:
+        - in: query
+          name: kits
+          description: return cooldowns in specified kits
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/kitName'
+            minItems: 0
+            default: []
+            uniqueItems: true
+        - in: query
+          name: minZoom
+          description: min zoom level
+          schema:
+            $ref: '#/components/schemas/z'
+        - in: query
+          name: maxZoom
+          description: max zoom level
+          schema:
+            $ref: '#/components/schemas/z'
+        - in: query
+          name: bbox
+          description: cooldowns consisting the bounding box
+          schema:
+            type: array
+            items:
+              anyOf:
+                - $ref: '#/components/schemas/longitude'
+                - $ref: '#/components/schemas/latitude'
+            minItems: 4
+            maxItems: 4
+        - in: query
+          name: enabled
+          description: cooldowns which are enabled or disabled
+          schema:
+            type: boolean
+        - in: query
+          name: size
+          description: pagination query size limitation
+          schema:
+            $ref: '#/components/schemas/size'
+        - in: query
+          name: from
+          description: pagination query from
+          schema:
+            $ref: '#/components/schemas/from'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/cooldownResponse'
+        4XX:
+          $ref: '#/components/responses/BadRequest'
+        5XX:
+          $ref: '#/components/responses/UnexpectedError'
+    post:
+      summary: Register a new cooldown
+      requestBody:
+        description: cooldown to be created
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - $ref: '#/components/schemas/baseCooldown'
+                - $ref: '#/components/schemas/cooldownWithBboxRequest'
+                - $ref: '#/components/schemas/cooldownWithGeometryRequest'
+      operationId: createCooldown
+      tags:
+        - cooldown
+      responses:
+        '201':
+          description: created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        5XX:
+          $ref: '#/components/responses/UnexpectedError'
   /detail:
     get:
       operationId: getTileDetails
@@ -301,6 +388,130 @@ components:
       properties:
         message:
           type: string
+    Geometry:
+      type: object
+      description: Geojson geometry
+      discriminator:
+        propertyName: type
+      required:
+        - type
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#geometry-objects
+      properties:
+        type:
+          type: string
+          enum:
+            - Point
+            - LineString
+            - Polygon
+            - MultiPoint
+            - MultiLineString
+            - MultiPolygon
+          description: the geometry type
+    Point3D:
+      type: array
+      description: Point in 3D space
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id2
+      minItems: 2
+      maxItems: 3
+      items:
+        type: number
+    Point:
+      type: object
+      description: Geojson geometry
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id2
+      allOf:
+        - $ref: '#/components/schemas/Geometry'
+        - properties:
+            coordinates:
+              $ref: '#/components/schemas/Point3D'
+    LineString:
+      type: object
+      description: Geojson geometry
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id3
+      allOf:
+        - $ref: '#/components/schemas/Geometry'
+        - properties:
+            coordinates:
+              type: array
+              items:
+                $ref: '#/components/schemas/Point3D'
+    Polygon:
+      type: object
+      description: Geojson geometry
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id4
+      allOf:
+        - $ref: '#/components/schemas/Geometry'
+        - properties:
+            coordinates:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Point3D'
+    MultiPoint:
+      type: object
+      description: Geojson geometry
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id5
+      allOf:
+        - $ref: '#/components/schemas/Geometry'
+        - properties:
+            coordinates:
+              type: array
+              items:
+                $ref: '#/components/schemas/Point3D'
+    MultiLineString:
+      type: object
+      description: Geojson geometry
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id6
+      allOf:
+        - $ref: '#/components/schemas/Geometry'
+        - properties:
+            coordinates:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Point3D'
+    MultiPolygon:
+      type: object
+      description: Geojson geometry
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id6
+      allOf:
+        - $ref: '#/components/schemas/Geometry'
+        - properties:
+            coordinates:
+              type: array
+              items:
+                type: array
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Point3D'
+    Feature:
+      type: object
+      description: Geojson Feature
+      required:
+        - type
+        - geometry
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.2
+      properties:
+        type:
+          type: string
+          enum:
+            - Feature
+        geometry:
+          $ref: '#/components/schemas/Geometry'
+        properties:
+          type: object
     longitude:
       type: number
       minimum: -180
@@ -315,6 +526,10 @@ components:
       minimum: 0
       maximum: 1000
       default: 100
+    from:
+      type: number
+      minimum: 0
+      default: 0
     cursor:
       type: number
     z:
@@ -366,6 +581,82 @@ components:
       additionalProperties: true
       allOf:
         - $ref: '#/components/schemas/kit'
+    baseCooldown:
+      type: object
+      required:
+        - duration
+        - kits
+        - minZoom
+        - maxZoom
+        - enabled
+      properties:
+        duration:
+          type: integer
+          minimum: 1
+          example: 3600
+        kits:
+          type: array
+          items:
+            $ref: '#/components/schemas/kitName'
+        minZoom:
+          $ref: '#/components/schemas/z'
+        maxZoom:
+          $ref: '#/components/schemas/z'
+        enabled:
+          type: boolean
+          default: true
+        ttl:
+          type: integer
+          minimum: 1
+          example: 666
+        description:
+          type: string
+    cooldownWithBboxRequest:
+      allOf:
+        - $ref: '#/components/schemas/baseCooldown'
+        - type: object
+          required:
+            - area
+          properties:
+            area:
+              type: array
+              description: WGS84 bbox
+              items:
+                type: number
+              minItems: 4
+              maxItems: 4
+              example:
+                - -85
+                - -85
+                - 85
+                - 85
+    cooldownWithGeometryRequest:
+      allOf:
+        - $ref: '#/components/schemas/baseCooldown'
+        - type: object
+          required:
+            - area
+          properties:
+            area:
+              $ref: '#/components/schemas/Geometry'
+    cooldownResponse:
+      allOf:
+        - $ref: '#/components/schemas/baseCooldown'
+        - type: object
+          required:
+            - duration
+            - kits
+            - minZoom
+            - maxZoom
+            - createdAt
+            - updatedAt
+          properties:
+            geoshape:
+              type: string
+            createdAt:
+              $ref: '#/components/schemas/unixTimestamp'
+            updatedAt:
+              $ref: '#/components/schemas/unixTimestamp'
     getTileDetailsResponse:
       type: object
       additionalProperties: false

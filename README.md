@@ -55,10 +55,15 @@ to achieve runtime variables we inject for each variable it's value in runtime i
 see [.env.production](/packages/frontend/config/.env.production) and [env.sh](/packages/frontend/env.sh).
 
 ## Redis
-### redis search index creation:
+### redis search tile details index creation:
 ```
 FT.CREATE tileDetailsIdx ON JSON PREFIX 1 tile:
 SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.renderedAt AS renderedAt NUMERIC $.createdAt AS createdAt NUMERIC $.updateCount AS updateCount NUMERIC $.renderCount AS renderCount NUMERIC $.skipCount AS skipCount NUMERIC $.coordiantes AS coordinates GEO $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.states[*] AS states NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
+```
+
+### redis search cooldowns index creation:
+```
+FT.CREATE cooldownIdx ON JSON PREFIX 1 cooldown: SCHEMA $.duration AS duration NUMERIC $.kits[*] AS kits TAG $.minZoom AS minZoom NUMERIC $.maxZoom AS maxZoom NUMERIC $.enabled AS enabled TAG $.geoshape AS geoshape GEOSHAPE SPHERICAL
 ```
 
 ### redis post processing:

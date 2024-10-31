@@ -11,6 +11,8 @@ import {
   TileParamsWithKit,
   TileQueryParams,
   TileQueryResponse,
+  Cooldown,
+  CooldownQueryParams,
 } from '@map-colonies/detiler-common';
 import { DEFAULT_PAGE_SIZE, DEFAULT_RETRY_STRATEGY_DELAY, DetilerClientConfig, DetilerOptions, RetryStrategy } from './config';
 
@@ -21,6 +23,7 @@ export interface IDetilerClient {
   getTileDetails: (params: TileParamsWithKit) => Promise<TileDetails | null>;
   getTilesDetails: (params: TileParams & { kits?: string[] }) => Promise<TileDetails[]>;
   setTileDetails: (params: TileParamsWithKit, payload: TileDetailsPayload) => Promise<void>;
+  queryCooldownsAsyncGenerator: (params: CooldownQueryParams) => AsyncGenerator<Cooldown[]>;
 }
 
 export class DetilerClient implements IDetilerClient {
@@ -185,6 +188,45 @@ export class DetilerClient implements IDetilerClient {
       });
 
       throw axiosError;
+    }
+  }
+
+  public async *queryCooldownsAsyncGenerator(params: CooldownQueryParams): AsyncGenerator<Cooldown[]> {
+    let currentPage = params.from ?? 0;
+    const pageSize = params.size ?? DEFAULT_PAGE_SIZE;
+
+    this.logger?.debug({ msg: `getting cooldowns`, url: this.config.url, pageSize, ...params });
+
+    /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */ // get the next page unconditionally until done
+    while (true) {
+      const pageParams: CooldownQueryParams = { ...params, from: currentPage * pageSize, size: pageSize };
+      try {
+        const res = await this.axios.get<Cooldown[]>(`${this.config.url}/cooldown`, {
+          params: pageParams,
+          paramsSerializer: (params) => stringify(params),
+        });
+
+        if (res.data.length < pageSize) {
+          if (res.data.length !== 0) {
+            yield res.data;
+          }
+          break;
+        }
+
+        yield res.data;
+        currentPage++;
+      } catch (error) {
+        const axiosError = error as AxiosError;
+
+        this.logger?.error({
+          msg: `failed to get cooldowns page ${currentPage}`,
+          err: axiosError,
+          url: this.config.url,
+          params: pageParams,
+        });
+
+        throw axiosError;
+      }
     }
   }
 

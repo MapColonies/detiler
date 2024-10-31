@@ -10,7 +10,7 @@ import { numerifyTileRequestParams, UpsertStatus } from '../../common/util';
 import { KitNotFoundError, TileDetailsNotFoundError } from '../models/errors';
 import { TileDetailsManager } from '../models/tileDetailsManager';
 
-type GetTilesDetailsHandler = RequestHandler<undefined, TileQueryResponse, unknown, Required<TileQueryParams>>;
+type GetTilesDetailsHandler = RequestHandler<undefined, TileQueryResponse, undefined, Required<TileQueryParams>>;
 type GetMultiKitsTilesDetailsHandler = RequestHandler<TileRequestParams, TileDetails[], unknown, { kits?: string[] }>;
 type GetTileDetailsByKitHandler = RequestHandler<TileRequestParams & { kit: string }, TileDetails>;
 type PutTileDetailsByKitHandler = RequestHandler<TileRequestParams & { kit: string }, undefined, TileDetailsPayload>;

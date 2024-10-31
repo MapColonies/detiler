@@ -13,6 +13,7 @@ import { tileDetailsRouterFactory, TILE_DETAILS_ROUTER_SYMBOL } from './tileDeta
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { healthCheckFunctionFactory, RedisClient, redisClientFactory } from './redis';
 import { kitRouterFactory, KIT_ROUTER_SYMBOL } from './kit/routes/kitRouter';
+import { COOLDOWN_ROUTER_SYMBOL, cooldownRouterFactory } from './cooldown/routes/cooldownRouter';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -45,6 +46,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
       { token: TILE_DETAILS_ROUTER_SYMBOL, provider: { useFactory: tileDetailsRouterFactory } },
       { token: KIT_ROUTER_SYMBOL, provider: { useFactory: kitRouterFactory } },
+      { token: COOLDOWN_ROUTER_SYMBOL, provider: { useFactory: cooldownRouterFactory } },
       {
         token: SERVICES.REDIS,
         provider: { useFactory: instancePerContainerCachingFactory(redisClientFactory) },

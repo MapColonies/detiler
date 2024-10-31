@@ -2,7 +2,13 @@
 import { KitMetadata, TileDetailsPayload, TileParams, TileParamsWithKit, UNSPECIFIED_STATE } from '@map-colonies/detiler-common';
 import jsLogger from '@map-colonies/js-logger';
 import { createClient, WatchError } from 'redis';
-import { REDIS_INDEX_NAME, REDIS_KITS_HASH_PREFIX, SEARCHED_GEOSHAPE_NAME, TILE_DETAILS_KEY_PREFIX } from '../../../src/common/constants';
+import {
+  REDIS_KITS_HASH_PREFIX,
+  REDIS_SEARCH_DIALECT,
+  REDIS_TILE_INDEX_NAME,
+  SEARCHED_GEOSHAPE_NAME,
+  TILE_DETAILS_KEY_PREFIX,
+} from '../../../src/common/constants';
 import { bboxToWktPolygon, UpsertStatus } from '../../../src/common/util';
 import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '../../../src/redis';
 import { KitNotFoundError, TileDetailsNotFoundError } from '../../../src/tileDetails/models/errors';
@@ -78,10 +84,10 @@ describe('TileDetailsManager', () => {
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
       aggregateWithCursorMock.mockResolvedValue({ results: [], cursor: undefined });
-      const index = REDIS_INDEX_NAME;
+      const index = REDIS_TILE_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @kit:(kit1) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
       const options = {
-        DIALECT: 3,
+        DIALECT: REDIS_SEARCH_DIALECT,
         PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
         LOAD: LOAD_FIELDS,
         TIMEOUT: 0,
@@ -104,10 +110,10 @@ describe('TileDetailsManager', () => {
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
       aggregateWithCursorMock.mockResolvedValue({ results: [{ a: '1' }], cursor: undefined });
-      const index = REDIS_INDEX_NAME;
+      const index = REDIS_TILE_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @kit:(kit1) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
       const options = {
-        DIALECT: 3,
+        DIALECT: REDIS_SEARCH_DIALECT,
         PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
         LOAD: LOAD_FIELDS,
         TIMEOUT: 0,
@@ -130,10 +136,10 @@ describe('TileDetailsManager', () => {
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
       aggregateWithCursorMock.mockResolvedValue({ total: 2, results: [{ a: '1' }, { a: '2' }], cursor: undefined });
-      const index = REDIS_INDEX_NAME;
+      const index = REDIS_TILE_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @kit:(kit1|kit2) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
       const searchParams = {
-        DIALECT: 3,
+        DIALECT: REDIS_SEARCH_DIALECT,
         PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
         LOAD: LOAD_FIELDS,
         TIMEOUT: 0,
@@ -158,10 +164,10 @@ describe('TileDetailsManager', () => {
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
       aggregateWithCursorMock.mockResolvedValue({ results: [{ a: '1' }, { a: 'abc' }] });
-      const index = REDIS_INDEX_NAME;
+      const index = REDIS_TILE_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @state:[${params.minState} +inf] @kit:(kit1|kit2) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
       const searchParams = {
-        DIALECT: 3,
+        DIALECT: REDIS_SEARCH_DIALECT,
         PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
         LOAD: LOAD_FIELDS,
         TIMEOUT: 0,
@@ -185,10 +191,10 @@ describe('TileDetailsManager', () => {
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
       aggregateWithCursorMock.mockResolvedValue({ results: [{ a: '1' }, { a: '2' }], cursor: undefined });
-      const index = REDIS_INDEX_NAME;
+      const index = REDIS_TILE_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @states:[-inf ${params.maxState}] @kit:(kit1|kit2) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
       const searchParams = {
-        DIALECT: 3,
+        DIALECT: REDIS_SEARCH_DIALECT,
         PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
         LOAD: LOAD_FIELDS,
         TIMEOUT: 0,
@@ -214,10 +220,10 @@ describe('TileDetailsManager', () => {
         bbox: { east: 1, north: 2, south: 3, west: 4 },
       };
       aggregateWithCursorMock.mockResolvedValue({ results: [{ a: '1' }, { a: '2' }], cursor: undefined });
-      const index = REDIS_INDEX_NAME;
+      const index = REDIS_TILE_INDEX_NAME;
       const query = `@z:[${params.minZoom} ${params.maxZoom}] @state:[${params.minState} ${params.maxState}] @kit:(kit1|kit2) @geoshape:[WITHIN $${SEARCHED_GEOSHAPE_NAME}]`;
       const searchParams = {
-        DIALECT: 3,
+        DIALECT: REDIS_SEARCH_DIALECT,
         PARAMS: { [SEARCHED_GEOSHAPE_NAME]: bboxToWktPolygon(params.bbox) },
         LOAD: LOAD_FIELDS,
         TIMEOUT: 0,
@@ -241,7 +247,7 @@ describe('TileDetailsManager', () => {
         cursor: 666,
       };
       cursorReadMock.mockResolvedValue({ results: [{ a: '1' }, { a: '2' }], cursor: 667 });
-      const index = REDIS_INDEX_NAME;
+      const index = REDIS_TILE_INDEX_NAME;
 
       const response = await manager.queryTilesDetails(params);
 
@@ -259,7 +265,7 @@ describe('TileDetailsManager', () => {
         cursor: 666,
       };
       cursorReadMock.mockResolvedValue({ results: [{ a: '1' }, { a: '2' }], cursor: 667 });
-      const index = REDIS_INDEX_NAME;
+      const index = REDIS_TILE_INDEX_NAME;
 
       const response = await manager.queryTilesDetails(params);
 
@@ -327,7 +333,7 @@ describe('TileDetailsManager', () => {
       expect(response).toMatchObject([{ a: 1 }]);
       expect(searchMock).toHaveBeenCalledTimes(1);
       expect(searchMock).toHaveBeenCalledWith(
-        REDIS_INDEX_NAME,
+        REDIS_TILE_INDEX_NAME,
         `@z:[${params.z} ${params.z}] @x:[${params.x} ${params.x}] @y:[${params.y} ${params.y}]`,
         { LIMIT: DEFAULT_LIMIT }
       );
@@ -342,7 +348,7 @@ describe('TileDetailsManager', () => {
       expect(response).toMatchObject([{ a: 1 }, { a: 2 }]);
       expect(searchMock).toHaveBeenCalledTimes(1);
       expect(searchMock).toHaveBeenCalledWith(
-        REDIS_INDEX_NAME,
+        REDIS_TILE_INDEX_NAME,
         `@z:[${params.z} ${params.z}] @x:[${params.x} ${params.x}] @y:[${params.y} ${params.y}]`,
         { LIMIT: DEFAULT_LIMIT }
       );
@@ -357,7 +363,7 @@ describe('TileDetailsManager', () => {
       expect(response).toMatchObject([]);
       expect(searchMock).toHaveBeenCalledTimes(1);
       expect(searchMock).toHaveBeenCalledWith(
-        REDIS_INDEX_NAME,
+        REDIS_TILE_INDEX_NAME,
         `@z:[${params.z} ${params.z}] @x:[${params.x} ${params.x}] @y:[${params.y} ${params.y}]`,
         { LIMIT: DEFAULT_LIMIT }
       );
