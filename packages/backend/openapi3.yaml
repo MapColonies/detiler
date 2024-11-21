@@ -495,23 +495,6 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/Point3D'
-    Feature:
-      type: object
-      description: Geojson Feature
-      required:
-        - type
-        - geometry
-      externalDocs:
-        url: https://tools.ietf.org/html/rfc7946#section-3.2
-      properties:
-        type:
-          type: string
-          enum:
-            - Feature
-        geometry:
-          $ref: '#/components/schemas/Geometry'
-        properties:
-          type: object
     longitude:
       type: number
       minimum: -180
