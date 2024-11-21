@@ -12,6 +12,9 @@ export default defineConfig({
     commonjsOptions: {
       include: ['packages/client', 'packages/common', /node_modules/],
     },
+    rollupOptions: {
+      external: ['@terraformer/wkt'],
+    },
   },
   esbuild: {
     jsxInject: `import React from 'react'`,
