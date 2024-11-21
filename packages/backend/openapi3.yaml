@@ -80,8 +80,8 @@ paths:
           schema:
             $ref: '#/components/schemas/z'
         - in: query
-          name: bbox
-          description: cooldowns consisting the bounding box
+          name: area
+          description: cooldowns consisting the area
           schema:
             type: array
             items:
@@ -564,8 +564,9 @@ components:
           $ref: '#/components/schemas/unixTimestamp'
         state:
           $ref: '#/components/schemas/state'
-        hasSkipped:
-          type: boolean
+        status:
+          type: string
+          enum: [rendered, skipped, cooled]
       required:
         - timestamp
       additionalProperties: false
@@ -697,6 +698,8 @@ components:
           $ref: '#/components/schemas/counter'
         skipCount:
           $ref: '#/components/schemas/counter'
+        coolCount:
+          $ref: '#/components/schemas/counter'
         coordinates:
           $ref: '#/components/schemas/coordinates'
       required:
@@ -712,4 +715,5 @@ components:
         - updateCount
         - renderCount
         - skipCount
+        - coolCount
         - coordinates

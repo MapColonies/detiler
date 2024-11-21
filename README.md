@@ -31,6 +31,7 @@ data is colored in relation to some metric (state, update count, skip count, cur
   "updateCount":13,
   "renderCount":11,
   "skipCount":2,
+  "coolCount":0,
   "geoshape":"POLYGON ((34.453125 31.541748046875, 34.453125 31.53076171875, 34.464111328125 31.53076171875, 34.464111328125 31.541748046875, 34.453125 31.541748046875))",
   "coordinates":"34.458618, 31.536255"
 }

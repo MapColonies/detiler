@@ -22,7 +22,7 @@ export class CooldownController {
 
   public getCooldowns: GetCooldownsHandler = async (req, res, next) => {
     try {
-      const { area, from, size, minZoom, maxZoom, ...queryParams } = req.query;
+      const { area, from, size, ...queryParams } = req.query;
 
       if (area !== undefined && Array.isArray(area)) {
         const [west, south, east, north] = area;

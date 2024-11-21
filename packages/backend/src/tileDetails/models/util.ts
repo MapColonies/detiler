@@ -19,6 +19,7 @@ export const LOAD_FIELDS: LoadField[] = [
   { identifier: '$.updateCount', AS: 'updateCount' },
   { identifier: '$.renderCount', AS: 'renderCount' },
   { identifier: '$.skipCount', AS: 'skipCount' },
+  { identifier: '$.coolCount', AS: 'coolCount' },
   { identifier: '$.geoshape', AS: 'geoshape' },
   { identifier: '$.coordinates', AS: 'coordinates' },
 ];
@@ -42,4 +43,11 @@ export const transformDocument = (input: Record<string, string>): Record<string,
   });
 
   return result;
+};
+
+export const NEWLY_INSERTED_TILE_COUNTERS = {
+  updateCount: 1,
+  renderCount: 1,
+  skipCount: 0,
+  coolCount: 0,
 };

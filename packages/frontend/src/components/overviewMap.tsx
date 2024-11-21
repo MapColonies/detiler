@@ -43,7 +43,7 @@ export const OverviewMap: React.FC<OverviewMapProps> = ({ bounds, zoom }) => {
       id: OVERVIEW_GEOJSON_LAYER_ID,
       ...CONSTANT_GEOJSON_LAYER_PROPERTIES,
       getFillColor: theme.palette.mode === 'dark' ? [...DARK_MODE_MAIN_RGB, DEFAULT_COLORED_ALPHA] : [...LIGHT_MODE_MAIN_RGB, DEFAULT_COLORED_ALPHA],
-      pickable: true,
+      pickable: false,
       getLineWidth: 2,
       getLineColor: BACKGROUND_RGBA,
       data: overviewData,

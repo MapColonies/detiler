@@ -16,6 +16,7 @@ import {
   REDIS_WILDCARD,
 } from '../../common/constants';
 import { RedisClient } from '../../redis';
+import { HALF_GLOBE_BBOX } from './constants';
 
 @injectable()
 export class CooldownManager {
@@ -102,8 +103,12 @@ export class CooldownManager {
       cooldown.geoshape = bboxToWktPolygon(bbox);
     }
 
-    if (params.area !== undefined && isGeojson(area as Geometry)) {
+    if (area !== undefined && isGeojson(area as Geometry)) {
       cooldown.geoshape = geojsonToWKT(area as Geometry);
+    }
+
+    if (area === undefined) {
+      cooldown.geoshape = bboxToWktPolygon(HALF_GLOBE_BBOX);
     }
 
     const key = `${COOLDOWN_KEY_PREFIX}:${hashValue(cooldown)}`;

@@ -22,7 +22,7 @@ import {
   REDIS_SEARCH_DIALECT,
 } from '../../common/constants';
 import { KitNotFoundError, TileDetailsNotFoundError } from './errors';
-import { LOAD_FIELDS, transformDocument } from './util';
+import { LOAD_FIELDS, NEWLY_INSERTED_TILE_COUNTERS, transformDocument } from './util';
 
 export interface TilesDetailsQueryParams extends Omit<TileQueryParams, 'bbox'> {
   bbox: BoundingBox;
@@ -200,10 +200,7 @@ export class TileDetailsManager {
           updatedAt: payload.timestamp,
           createdAt: payload.timestamp,
           renderedAt: payload.timestamp,
-          updateCount: 1,
-          renderCount: 1,
-          skipCount: 0,
-          coolCount: 0,
+          ...NEWLY_INSERTED_TILE_COUNTERS,
           geoshape: wkt,
           coordinates: stringifyCoordinates(tileCoordinates),
         };

@@ -3,7 +3,7 @@ import { BitmapLayer } from '@deck.gl/layers';
 import { COORDINATE_SYSTEM } from '@deck.gl/core';
 import { config } from '../config';
 import { AppConfig } from '../utils/interfaces';
-import { CONSTANT_TILE_LAYER_PROPERTIES } from './constants';
+import { CONSTANT_BASEMAP_LAYER_PROPERTIES } from './constants';
 
 const X_API_KEY_HEADER = 'x-api-key';
 
@@ -13,7 +13,7 @@ const appConfig = config.get<AppConfig>('app');
 export const basemapLayerFactory = (id?: string): TileLayer | undefined => {
   return appConfig.basemap.enabled
     ? new TileLayer({
-        ...CONSTANT_TILE_LAYER_PROPERTIES,
+        ...CONSTANT_BASEMAP_LAYER_PROPERTIES,
         id,
         data: appConfig.basemap.url,
         tileSize: appConfig.basemap.tileSize,

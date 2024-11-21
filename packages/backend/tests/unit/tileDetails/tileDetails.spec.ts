@@ -13,7 +13,7 @@ import { bboxToWktPolygon, UpsertStatus } from '../../../src/common/util';
 import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '../../../src/redis';
 import { KitNotFoundError, TileDetailsNotFoundError } from '../../../src/tileDetails/models/errors';
 import { TileDetailsManager, TilesDetailsQueryParams } from '../../../src/tileDetails/models/tileDetailsManager';
-import { LOAD_FIELDS } from '../../../src/tileDetails/models/util';
+import { LOAD_FIELDS, NEWLY_INSERTED_TILE_COUNTERS } from '../../../src/tileDetails/models/util';
 
 const mGetMock = jest.fn();
 const searchMock = jest.fn();
@@ -421,7 +421,14 @@ describe('TileDetailsManager', () => {
       expect(setMock).toHaveBeenCalledWith(
         `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`,
         '$',
-        expect.objectContaining({ ...params, state: UNSPECIFIED_STATE, createdAt: payload.timestamp, updatedAt: payload.timestamp, updateCount: 1 })
+        expect.objectContaining({
+          ...params,
+          state: UNSPECIFIED_STATE,
+          states: [UNSPECIFIED_STATE],
+          createdAt: payload.timestamp,
+          updatedAt: payload.timestamp,
+          ...NEWLY_INSERTED_TILE_COUNTERS,
+        })
       );
       expect(execMock).toHaveBeenCalledTimes(1);
     });
@@ -456,7 +463,15 @@ describe('TileDetailsManager', () => {
       expect(setMock).toHaveBeenCalledWith(
         `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`,
         '$',
-        expect.objectContaining({ ...params, state: 666, createdAt: payload.timestamp, updatedAt: payload.timestamp, updateCount: 1 })
+        expect.objectContaining({
+          ...params,
+          state: 666,
+          states: [666],
+          createdAt: payload.timestamp,
+          updatedAt: payload.timestamp,
+          renderedAt: payload.timestamp,
+          ...NEWLY_INSERTED_TILE_COUNTERS,
+        })
       );
       expect(execMock).toHaveBeenCalledTimes(1);
     });
@@ -474,7 +489,7 @@ describe('TileDetailsManager', () => {
         x: 0,
         y: 0,
       };
-      const payload: TileDetailsPayload = { timestamp: 1000 };
+      const payload: TileDetailsPayload = { status: 'rendered', timestamp: 1000 };
 
       const response = await manager.upsertTilesDetails(params, payload);
 
@@ -513,7 +528,7 @@ describe('TileDetailsManager', () => {
         x: 0,
         y: 0,
       };
-      const payload: TileDetailsPayload = { state: 666, timestamp: 1000 };
+      const payload: TileDetailsPayload = { status: 'rendered', state: 666, timestamp: 1000 };
 
       const response = await manager.upsertTilesDetails(params, payload);
 
@@ -539,7 +554,7 @@ describe('TileDetailsManager', () => {
       expect(execMock).toHaveBeenCalledTimes(1);
     });
 
-    it('should update in transaction the tile according to params and payload with skip flag', async () => {
+    it('should update in transaction the tile according to params and payload with skipped status', async () => {
       executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
       multiMock.mockReturnValue(mockedRedis);
       const exisingKits: KitMetadata[] = [{ name: 'kit1' }];
@@ -552,7 +567,7 @@ describe('TileDetailsManager', () => {
         x: 0,
         y: 0,
       };
-      const payload: TileDetailsPayload = { hasSkipped: true, state: 666, timestamp: 1000 };
+      const payload: TileDetailsPayload = { status: 'skipped', state: 666, timestamp: 1000 };
 
       const response = await manager.upsertTilesDetails(params, payload);
 
@@ -577,6 +592,44 @@ describe('TileDetailsManager', () => {
       expect(execMock).toHaveBeenCalledTimes(1);
     });
 
+    it('should update in transaction the tile according to params and payload with cooled status', async () => {
+      executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
+      multiMock.mockReturnValue(mockedRedis);
+      const exisingKits: KitMetadata[] = [{ name: 'kit1' }];
+      hGetMock.mockResolvedValue(exisingKits);
+      existsMock.mockResolvedValue(1);
+
+      const params: TileParamsWithKit = {
+        kit: 'kit1',
+        z: 1,
+        x: 0,
+        y: 0,
+      };
+      const payload: TileDetailsPayload = { status: 'cooled', state: 666, timestamp: 1000 };
+
+      const response = await manager.upsertTilesDetails(params, payload);
+
+      expect(response).toBe(UpsertStatus.UPDATED);
+      expect(hGetMock).toHaveBeenCalledTimes(1);
+      expect(hGetMock).toHaveBeenCalledWith(`${REDIS_KITS_HASH_PREFIX}:${params.kit}`, 'name');
+      expect(executeIsolatedMock).toHaveBeenCalledTimes(1);
+      expect(watchMock).toHaveBeenCalledTimes(1);
+      expect(existsMock).toHaveBeenCalledTimes(1);
+      expect(multiMock).toHaveBeenCalledTimes(1);
+      expect(mSetMock).toHaveBeenCalledTimes(1);
+      expect(mSetMock).toHaveBeenCalledWith([
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.state', value: payload.state },
+        { key: `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, path: '$.updatedAt', value: payload.timestamp },
+      ]);
+      expect(numIncrByMock).toHaveBeenCalledTimes(2);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(1, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.updateCount', 1);
+      expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.coolCount', 1);
+      expect(arrAppendMock).toHaveBeenCalledTimes(1);
+      expect(arrAppendMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.states', payload.state);
+      expect(setMock).not.toHaveBeenCalled();
+      expect(execMock).toHaveBeenCalledTimes(1);
+    });
+
     it('should throw if watch error detected', async () => {
       executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
       multiMock.mockReturnValue(mockedRedis);
@@ -592,7 +645,7 @@ describe('TileDetailsManager', () => {
         x: 0,
         y: 0,
       };
-      const payload: TileDetailsPayload = { state: 666, timestamp: 1000 };
+      const payload: TileDetailsPayload = { status: 'rendered', state: 666, timestamp: 1000 };
 
       await expect(manager.upsertTilesDetails(params, payload)).rejects.toThrow(expected);
 
@@ -630,7 +683,7 @@ describe('TileDetailsManager', () => {
         x: 0,
         y: 0,
       };
-      const payload: TileDetailsPayload = { state: 666, timestamp: 1000 };
+      const payload: TileDetailsPayload = { status: 'rendered', state: 666, timestamp: 1000 };
 
       await expect(manager.upsertTilesDetails(params, payload)).rejects.toThrow(expected);
 

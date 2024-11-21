@@ -1,6 +1,6 @@
 import { TileDetails, TileQueryParams } from '@map-colonies/detiler-common';
 import { BoundingBox, LonLat, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
-import { Feature } from 'geojson';
+import { Feature, Geometry } from 'geojson';
 import { FEATURE_ID_DUMMY, MAX_LATITUDE, MAX_LONGITUDE, MIN_LATITUDE, MIN_LONGITUDE, ZOOM_OFFEST } from './constants';
 import { AppHelper } from './interfaces';
 
@@ -103,6 +103,14 @@ export const parseDataToFeatures = (data: TileDetails[]): Feature[] => {
         },
       };
     });
+};
+
+export const geometryToFeature = (geometry: Geometry): Feature => {
+  return {
+    type: 'Feature',
+    properties: {},
+    geometry,
+  };
 };
 
 export const insertDummyFeature = (features: Feature[]): Feature[] => {

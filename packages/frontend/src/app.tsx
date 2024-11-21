@@ -7,13 +7,15 @@ import { GeoJsonLayer } from '@deck.gl/layers';
 import { ViewStateChangeParameters } from '@deck.gl/core/src/controllers/controller';
 import { PickingInfo } from '@deck.gl/core/src/lib/picking/pick-info';
 import { Feature, Geometry } from 'geojson';
-import { KitMetadata, TileDetails, TileParams, TileQueryParams } from '@map-colonies/detiler-common';
+import { Cooldown, KitMetadata, TileDetails, TileParams, TileQueryParams } from '@map-colonies/detiler-common';
 import { setIntervalAsync, clearIntervalAsync } from 'set-interval-async';
 import { useSnackbar } from 'notistack';
 import pTimeout from 'p-timeout';
 import { uniqBy } from 'lodash';
+import { TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import { AxiosError } from 'axios';
-import { appHelper, compareQueries, parseDataToFeatures, timerify, querifyBounds } from './utils/helpers';
+import { wktToGeoJSON } from '@terraformer/wkt';
+import { appHelper, compareQueries, parseDataToFeatures, timerify, querifyBounds, geometryToFeature } from './utils/helpers';
 import {
   ZOOM_OFFEST,
   INITIAL_VIEW_STATE,
@@ -27,25 +29,29 @@ import {
   DEFAULT_TILES_BATCH_SIZE,
   MIN_ZOOM_LEVEL,
   MAX_ZOOM_LEVEL,
+  METATILE_SIZE,
+  NOT_FOUND_INDEX,
 } from './utils/constants';
 import { colorFactory, ColorScale, colorScaleParser, ColorScaleFunc, DEFAULT_TILE_COLOR } from './utils/style';
 import { METRICS, INITIAL_MIN_MAX, Metric } from './utils/metric';
 import { INIT_STATS, calcHttpStat, Stats } from './utils/stats';
-import { Preferences, Sidebar, Tooltip, CornerTabs } from './components';
+import { Preferences, Sidebar, Tooltip, CornerTabs, ExtendedCooldown } from './components';
 import { comparatorFuncWrapper, filterRangeFuncWrapper, transformFuncWrapper } from './deck-gl';
-import { CONSTANT_GEOJSON_LAYER_PROPERTIES, GEOJSON_LAYER_ID, BASEMAP_LAYER_ID } from './deck-gl/constants';
+import { CONSTANT_GEOJSON_LAYER_PROPERTIES, TILES_LAYER_ID, BASEMAP_LAYER_ID } from './deck-gl/constants';
 import { basemapLayerFactory } from './deck-gl/basemap';
 import { logger } from './logger';
 import { config } from './config';
 import { client } from './client';
 import { MapLibreGL, TargetetEvent } from './deck-gl/types';
 import { AppConfig } from './utils/interfaces';
+import { cooldownLayerFactory } from './deck-gl/cooldown';
 
 const appConfig = config.get<AppConfig>('app');
 
 export const App: React.FC = () => {
   const [viewState, setViewState] = useState<MapViewState>(INITIAL_VIEW_STATE);
   const [loadedData, setLoadedData] = useState<Feature[]>([]);
+  const [cooldownData, setCooldownData] = useState<Feature[]>([]);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo>();
   const [selectedKit, setSelectedKit] = useState<KitMetadata | undefined>();
   const [stateRange, setStateRange] = useState<number[]>([DEFAULT_MIN_STATE, DEFAULT_MAX_STATE]);
@@ -56,7 +62,7 @@ export const App: React.FC = () => {
     value: colorScaleParser('heat'),
   });
   const [statsTable, setStatsTable] = useState<Stats>(INIT_STATS);
-  const [sidebarData, setSidebarData] = useState<TileDetails[]>([]);
+  const [sidebarData, setSidebarData] = useState<{ details: TileDetails[]; cooldowns: Cooldown[] }>({ details: [], cooldowns: [] });
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -143,14 +149,16 @@ export const App: React.FC = () => {
     handleQueryZoomChangeByViewport(nextZoom);
   };
 
-  const handleOpenSidebar = (data: TileDetails[]): void => {
+  const handleOpenSidebar = (data: { details: TileDetails[]; cooldowns: Cooldown[] }): void => {
     setSidebarData(data);
     setIsSidebarOpen(true);
+    setCooldownData([]);
   };
 
   const handleCloseSidebar = (): void => {
-    setSidebarData([]);
+    setSidebarData({ details: [], cooldowns: [] });
     setIsSidebarOpen(false);
+    setCooldownData([]);
   };
 
   const handleActionClicked = (): void => {
@@ -312,7 +320,7 @@ export const App: React.FC = () => {
 
   const fetchTile = async (tile: TileParams): Promise<void> => {
     try {
-      const [result, duration] = await timerify<Awaited<ReturnType<typeof client.getTilesDetails>>, [TileParams]>(
+      const [details, duration] = await timerify<Awaited<ReturnType<typeof client.getTilesDetails>>, [TileParams]>(
         client.getTilesDetails.bind(client),
         tile
       );
@@ -321,17 +329,43 @@ export const App: React.FC = () => {
         return { ...prevStatsTable, httpInvokes: { ...prevStatsTable.httpInvokes, tile: nextHttpStat } };
       });
 
-      handleOpenSidebar(result);
+      const { west, south, east, north } = tileToBoundingBox({ ...tile, metatile: METATILE_SIZE }, TILEGRID_WORLD_CRS84, true);
+      const cooldownsGenerator = client.queryCooldownsAsyncGenerator({
+        enabled: true,
+        minZoom: tile.z,
+        maxZoom: tile.z,
+        area: [west, south, east, north],
+      });
+      const cooldowns: Cooldown[] = [];
+      for await (const pageCooldowns of cooldownsGenerator) {
+        cooldowns.push(...pageCooldowns);
+      }
+
+      handleOpenSidebar({ details, cooldowns });
     } catch (err) {
       logger.error({ msg: 'error getting tile details', err, tile });
       enqueueSnackbar(JSON.stringify(err), { variant: 'error' });
     }
   };
 
+  const handleCooldownToggle = (cooldown: ExtendedCooldown): void => {
+    setCooldownData((prev) => {
+      const index = prev.findIndex((f) => f.id === cooldown.id);
+
+      if (index === NOT_FOUND_INDEX) {
+        const geometry = wktToGeoJSON(cooldown.geoshape!);
+        const feature = { ...geometryToFeature(geometry as Geometry), id: cooldown.id };
+        return [...prev, feature];
+      } else {
+        return prev.filter((f) => f.id !== cooldown.id);
+      }
+    });
+  };
+
   const basemapLayer = basemapLayerFactory(BASEMAP_LAYER_ID);
 
-  const layer = new GeoJsonLayer({
-    id: GEOJSON_LAYER_ID,
+  const tilesLayer = new GeoJsonLayer({
+    id: TILES_LAYER_ID,
     ...CONSTANT_GEOJSON_LAYER_PROPERTIES,
     data: loadedData,
     dataTransform: transformFuncWrapper(statsTable.metric),
@@ -359,9 +393,16 @@ export const App: React.FC = () => {
     },
   });
 
+  const cooldownsLayer = cooldownLayerFactory(cooldownData);
+
   return (
     <div>
-      <DeckGL initialViewState={viewState} controller={true} layers={[basemapLayer, layer]} onViewStateChange={handleViewportChange}>
+      <DeckGL
+        initialViewState={viewState}
+        controller={true}
+        layers={[basemapLayer, tilesLayer, cooldownsLayer]}
+        onViewStateChange={handleViewportChange}
+      >
         <Map id="map" reuseMaps={true} mapLib={maplibregl as unknown as MapLibreGL} attributionControl={false} />
         <Tooltip hoverInfo={hoverInfo} />
       </DeckGL>
@@ -388,7 +429,14 @@ export const App: React.FC = () => {
         onActionClicked={handleActionClicked}
       />
       <CornerTabs statsTableProps={{ stats: statsTable }} overviewMapProps={{ bounds: appHelper.bounds.actual, zoom: appHelper.currentZoomLevel }} />
-      <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} data={sidebarData} onGoToClicked={goToCoordinates} onRefreshClicked={fetchTile} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={handleCloseSidebar}
+        data={sidebarData}
+        onGoToClicked={goToCoordinates}
+        onRefreshClicked={fetchTile}
+        onCooldownClicked={handleCooldownToggle}
+      />
     </div>
   );
 };

@@ -43,6 +43,7 @@ export const METRICS: Metric[] = [
     info: "tile's last update time to current system time ratio",
   },
   { name: 'Skip Count', property: 'skipCount', range: INITIAL_MIN_MAX, info: 'the number of times a tile rerendering has been skipped' },
+  { name: 'Cooldown Count', property: 'coolCount', range: INITIAL_MIN_MAX, info: 'the number of times a tile rerendering has been cooldowned' },
 ];
 
 export const findMinMax = <T>(arr: T[], property: keyof T): MinMax | null => {
