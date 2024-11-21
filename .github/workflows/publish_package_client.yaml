@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: "20"
       - run: npm ci
-      - run: npx lerna run build --scope=@map-colonies/detiler-client
+      - run: npx lerna run build --scope '{@map-colonies/detiler-common,@map-colonies/detiler-client}'
       - uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
