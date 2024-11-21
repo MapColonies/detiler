@@ -173,10 +173,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
             Tile: {data.details[0].z}/{data.details[0].x}/{data.details[0].y}
           </Typography>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-            {/* <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+            <Typography variant="h6" sx={{ color: 'text.secondary' }}>
               ({data.details.length} tile{data.details.length === 1 ? '' : 's'}, {data.cooldowns.length} cooldown
               {data.cooldowns.length === 1 ? '' : 's'})
-            </Typography> */}
+            </Typography>
             <Tooltip title="refresh">
               <IconButton onClick={wrappedRefresh}>
                 <RefreshIcon fontSize="small" />
