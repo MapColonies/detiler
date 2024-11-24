@@ -58,39 +58,45 @@ see [.env.production](/packages/frontend/config/.env.production) and [env.sh](/p
 ## Redis
 ### redis search tile details index creation:
 ```
-FT.CREATE tileDetailsIdx ON JSON PREFIX 1 tile:
-SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.renderedAt AS renderedAt NUMERIC $.createdAt AS createdAt NUMERIC $.updateCount AS updateCount NUMERIC $.renderCount AS renderCount NUMERIC $.skipCount AS skipCount NUMERIC $.coordiantes AS coordinates GEO $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.states[*] AS states NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
+FT.CREATE tileDetailsIdx ON JSON PREFIX 1 tile: SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.renderedAt AS renderedAt NUMERIC $.createdAt AS createdAt NUMERIC $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.states[*] AS states NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
 ```
 
 ### redis search cooldowns index creation:
 ```
-FT.CREATE cooldownIdx ON JSON PREFIX 1 cooldown: SCHEMA $.duration AS duration NUMERIC $.kits[*] AS kits TAG $.minZoom AS minZoom NUMERIC $.maxZoom AS maxZoom NUMERIC $.enabled AS enabled TAG $.geoshape AS geoshape GEOSHAPE SPHERICAL
+FT.CREATE cooldownIdx ON JSON PREFIX 1 cooldown: SCHEMA $.kits[*] AS kits TAG $.minZoom AS minZoom NUMERIC $.maxZoom AS maxZoom NUMERIC $.enabled AS enabled TAG $.geoshape AS geoshape GEOSHAPE SPHERICAL
 ```
 
 ### redis post processing:
-preferably we would use the `Redis Gears` module, but in the meantime the deprecated `Triggers and Functions` module is in use.
-
-the following post processing function is being used to maintain additional metadata for each kit - it's `maxState` and `maxUpdatedAt`
+using `Redis Gears` the following post processing function is being used to maintain additional metadata for each kit - it's `maxState` and `maxUpdatedAt` see [maintain_kit_metadata.py](/packages/backend/gears/maintain_kit_metadata.py) for full documented python code
 
 execute with `redis-cli`
 ```
-TFUNCTION LOAD REPLACE "#!js name=LibName api_version=1.0\n
-   function getMaximum(client, data) {
-       currentKit = client.call('json.get', data.key, 'kit');
-       currentState = client.call('json.get', data.key, 'state');
-       currentUpdatedAt = client.call('json.get', data.key, 'updatedAt');
-       key = 'kit:' + currentKit.slice(1, currentKit.length - 1);
-       maxState = client.call('hget', key, 'maxState');
-       if(maxState < currentState) {
-           client.call('hset', key, 'maxState', currentState);
-       }
-       maxUpdatedAt = client.call('hget', key, 'maxUpdatedAt');
-       if(maxUpdatedAt < currentUpdatedAt) {
-           client.call('hset', key, 'maxUpdatedAt', currentUpdatedAt);
-       }
-   }
+RG.PYEXECUTE "
+def extract_data(record):\n
+    data_key = record['key']\n
 
-   redis.registerKeySpaceTrigger('KitLibrary', 'tile:', getMaximum);"
+    kit = execute('JSON.GET', data_key, 'kit')\n
+    state = execute('JSON.GET', data_key, 'state')\n
+    updated_at = execute('JSON.GET', data_key, 'updatedAt')\n
+    return { 'kit': kit[1:-1], 'state': int(state), 'updated_at': int(updated_at) }\n
+
+def update_maximums(data):\n
+    kit_key = 'kit:' + data['kit']\n
+
+    max_state = execute('HGET', kit_key, 'maxState')\n
+    max_state = int(max_state) if max_state else 0\n
+    if data['state'] > max_state:\n
+        execute('HSET', kit_key, 'maxState', data['state'])\n
+
+    max_updated_at = execute('HGET', kit_key, 'maxUpdatedAt')\n
+    max_updated_at = int(max_updated_at) if max_updated_at else 0\n
+    if data['updated_at'] > max_updated_at:\n
+        execute('HSET', kit_key, 'maxUpdatedAt', data['updated_at'])\n
+
+gb = GearsBuilder()\n
+gb.map(extract_data)\n
+gb.foreach(update_maximums)\n
+gb.register('tile:*')"
 ```
 
 ## Development
