@@ -9,7 +9,7 @@ def extract_data(record):
     state = execute('JSON.GET', data_key, 'state')
     updated_at = execute('JSON.GET', data_key, 'updatedAt')
 
-    return { 'kit': kit[1:-1], 'state': int(state), 'updated_at': int(updated_at) } #trim kit without `""` at the beginning and the end
+    return { 'kit': kit[1:-1], 'state': int(state), 'updated_at': int(updated_at) } #trim kit without `"` at the beginning and the end
 
 def update_maximums(data):
     """
