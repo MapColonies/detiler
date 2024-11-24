@@ -50,7 +50,7 @@ export const stringifyCoordinates = (coordinates: LonLat): string =>
 export const keyfy = (params: TileParamsWithKit): string => `${TILE_DETAILS_KEY_PREFIX}:${params.kit}:${params.z}/${params.x}/${params.y}`;
 
 export const hashValue = (value: unknown): string => {
-  const hash = createHash('md5');
+  const hash = createHash('sha256');
   hash.update(JSON.stringify(value));
   return hash.digest('hex');
 };
