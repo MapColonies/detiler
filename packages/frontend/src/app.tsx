@@ -14,7 +14,7 @@ import pTimeout from 'p-timeout';
 import { uniqBy } from 'lodash';
 import { TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import { AxiosError } from 'axios';
-import { wktToGeoJSON } from '@terraformer/wkt';
+import { parse as WktToGeojson } from 'wellknown';
 import { appHelper, compareQueries, parseDataToFeatures, timerify, querifyBounds, geometryToFeature } from './utils/helpers';
 import {
   ZOOM_OFFEST,
@@ -353,7 +353,7 @@ export const App: React.FC = () => {
       const index = prev.findIndex((f) => f.id === cooldown.id);
 
       if (index === NOT_FOUND_INDEX) {
-        const geometry = wktToGeoJSON(cooldown.geoshape!);
+        const geometry = WktToGeojson(cooldown.geoshape!);
         const feature = { ...geometryToFeature(geometry as Geometry), id: cooldown.id };
         return [...prev, feature];
       } else {

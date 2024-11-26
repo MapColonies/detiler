@@ -5,7 +5,7 @@ import { BoundingBox } from '@map-colonies/tile-calc';
 import { Cooldown, CooldownCreationRequest, CooldownQueryParams } from '@map-colonies/detiler-common';
 import isGeojson from '@turf/boolean-valid';
 import { Geometry } from 'geojson';
-import { geojsonToWKT } from '@terraformer/wkt';
+import { stringify as geojsonToWkt, GeoJSONGeometry } from 'wellknown';
 import { bboxToWktPolygon, hashValue } from '../../common/util';
 import {
   SERVICES,
@@ -104,7 +104,7 @@ export class CooldownManager {
     }
 
     if (area !== undefined && isGeojson(area as Geometry)) {
-      cooldown.geoshape = geojsonToWKT(area as Geometry);
+      cooldown.geoshape = geojsonToWkt(area as GeoJSONGeometry);
     }
 
     if (area === undefined) {
