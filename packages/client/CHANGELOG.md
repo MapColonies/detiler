@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.3.0](https://github.com/MapColonies/detiler/compare/v1.2.0...v1.3.0) (2024-12-08)
+
+
+### Features
+
+* tile cooldown support ([#5](https://github.com/MapColonies/detiler/issues/5)) ([cbcd578](https://github.com/MapColonies/detiler/commit/cbcd5789c906295b8275435f4f7676e2818f4bd2))
+
+
+
+
+
 # [1.2.0](https://github.com/MapColonies/detiler/compare/v1.0.0...v1.2.0) (2024-10-15)
 
 
