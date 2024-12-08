@@ -13,6 +13,7 @@ import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
 import { TILE_DETAILS_ROUTER_SYMBOL } from './tileDetails/routes/tileDetailsRouter';
 import { KIT_ROUTER_SYMBOL } from './kit/routes/kitRouter';
+import { COOLDOWN_ROUTER_SYMBOL } from './cooldown/routes/cooldownRouter';
 
 @injectable()
 export class ServerBuilder {
@@ -22,7 +23,8 @@ export class ServerBuilder {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(TILE_DETAILS_ROUTER_SYMBOL) private readonly tileDetailsRouter: Router,
-    @inject(KIT_ROUTER_SYMBOL) private readonly kitRouter: Router
+    @inject(KIT_ROUTER_SYMBOL) private readonly kitRouter: Router,
+    @inject(COOLDOWN_ROUTER_SYMBOL) private readonly cooldownRouter: Router
   ) {
     this.serverInstance = express();
   }
@@ -47,6 +49,7 @@ export class ServerBuilder {
   private buildRoutes(): void {
     this.serverInstance.use('/kits', this.kitRouter);
     this.serverInstance.use('/detail', this.tileDetailsRouter);
+    this.serverInstance.use('/cooldown', this.cooldownRouter);
     this.buildDocsRoutes();
   }
 

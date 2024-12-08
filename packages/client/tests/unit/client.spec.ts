@@ -1,11 +1,21 @@
 import nock from 'nock';
 import { AxiosError } from 'axios';
 import httpStatusCodes from 'http-status-codes';
-import { TileDetails, TileDetailsPayload, TileParams, TileParamsWithKit, TileQueryParams } from '@map-colonies/detiler-common';
+import {
+  Cooldown,
+  CooldownQueryParams,
+  TileDetails,
+  TileDetailsPayload,
+  TileParams,
+  TileParamsWithKit,
+  TileQueryParams,
+} from '@map-colonies/detiler-common';
 import { DetilerClient } from '../../src';
 import { DEFAULT_PAGE_SIZE } from '../../src/client/config';
 
 const MOCK_DETILER_URL = 'http://detiler.com';
+const TILE_DETAILS_ENDPOINT = '/detail';
+const COOLDOWN_ENDPOINT = '/cooldown';
 
 describe('Client', () => {
   let detiler: DetilerClient;
@@ -45,7 +55,7 @@ describe('Client', () => {
       const details = { a: 1 };
       const params: TileQueryParams = { kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params })
         .reply(httpStatusCodes.OK, details);
       const getSpy = jest.spyOn(detiler['axios'], 'get');
@@ -60,7 +70,7 @@ describe('Client', () => {
     it('should throw an error if the http get request has errored', async function () {
       const params: TileQueryParams = { kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params })
         .reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
       const getSpy = jest.spyOn(detiler['axios'], 'get');
@@ -86,22 +96,22 @@ describe('Client', () => {
       const lastParams: TileQueryParams = { size: 1, cursor: 4, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
 
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params1 })
         .once()
         .reply(httpStatusCodes.OK, details1);
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params2 })
         .twice()
         .reply(httpStatusCodes.OK, details2);
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params3 })
         .thrice()
         .reply(httpStatusCodes.OK, details3);
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...lastParams })
         .reply(httpStatusCodes.OK, details4);
       const getSpy = jest.spyOn(detiler['axios'], 'get');
@@ -128,17 +138,17 @@ describe('Client', () => {
       const params3: TileQueryParams = { size: 2, cursor: 3, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
 
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params1 })
         .once()
         .reply(httpStatusCodes.OK, details1);
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params2 })
         .twice()
         .reply(httpStatusCodes.OK, details2);
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params3 })
         .thrice()
         .reply(httpStatusCodes.OK, details3);
@@ -160,7 +170,7 @@ describe('Client', () => {
       const params: TileQueryParams = { kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
 
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params, size: DEFAULT_PAGE_SIZE })
         .once()
         .reply(httpStatusCodes.OK, details);
@@ -179,7 +189,7 @@ describe('Client', () => {
     it('should throw an error if the http get request has errored', async function () {
       const params: TileQueryParams = { size: 10, kits: ['a'], minZoom: 1, maxZoom: 2, bbox: [1, 2, 3, 4] };
       nock(MOCK_DETILER_URL)
-        .get(`/detail`)
+        .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params })
         .reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
       const getSpy = jest.spyOn(detiler['axios'], 'get');
@@ -276,6 +286,127 @@ describe('Client', () => {
 
       expect(putSpy).toHaveBeenCalledTimes(1);
       expect(putSpy).toHaveBeenCalledWith(`${MOCK_DETILER_URL}/detail/${params.kit}/${params.z}/${params.x}/${params.y}`, payload);
+    });
+  });
+
+  describe('#queryCooldownsAsyncGenerator', () => {
+    it('should query generate cooldowns according to params including extra empty res call', async function () {
+      const cooldown1 = [{ duration: 100 }];
+      const cooldown2 = [{ duration: 100 }];
+      const cooldown3 = [{ duration: 100 }];
+      const cooldown4: Cooldown[] = [];
+
+      let data: Cooldown[] = [];
+
+      const params1: CooldownQueryParams = { enabled: true, minZoom: 1, maxZoom: 2, area: [1, 2, 3, 4], size: 1, from: 0 };
+      const params2: CooldownQueryParams = { ...params1, from: 1 };
+      const params3: CooldownQueryParams = { ...params1, from: 2 };
+      const lastParams: CooldownQueryParams = { ...params1, from: 3 };
+
+      nock(MOCK_DETILER_URL)
+        .get(COOLDOWN_ENDPOINT)
+        .query({ ...params1 })
+        .once()
+        .reply(httpStatusCodes.OK, cooldown1);
+      nock(MOCK_DETILER_URL)
+        .get(COOLDOWN_ENDPOINT)
+        .query({ ...params2 })
+        .twice()
+        .reply(httpStatusCodes.OK, cooldown2);
+      nock(MOCK_DETILER_URL)
+        .get(COOLDOWN_ENDPOINT)
+        .query({ ...params3 })
+        .thrice()
+        .reply(httpStatusCodes.OK, cooldown3);
+      nock(MOCK_DETILER_URL)
+        .get(COOLDOWN_ENDPOINT)
+        .query({ ...lastParams })
+        .reply(httpStatusCodes.OK, cooldown4);
+      const getSpy = jest.spyOn(detiler['axios'], 'get');
+
+      const queryGenerator = detiler.queryCooldownsAsyncGenerator(params1);
+
+      for await (const pageData of queryGenerator) {
+        data = [...data, ...pageData];
+      }
+
+      expect(data).toMatchObject([...cooldown1, ...cooldown2, ...cooldown3]);
+      expect(getSpy).toHaveBeenCalledTimes(4);
+    });
+
+    it('should query generate details according to params until done', async function () {
+      const cooldown1 = [{ a: 1 }, { a: 2 }];
+      const cooldown2 = [{ a: 3 }, { a: 4 }];
+      const cooldown3 = [{ a: 5 }];
+
+      let data: Cooldown[] = [];
+
+      const params1: CooldownQueryParams = { from: 0, size: 2 };
+      const params2: CooldownQueryParams = { from: 2, size: 2 };
+      const params3: CooldownQueryParams = { from: 4, size: 2 };
+
+      nock(MOCK_DETILER_URL)
+        .get(COOLDOWN_ENDPOINT)
+        .query({ ...params1 })
+        .once()
+        .reply(httpStatusCodes.OK, cooldown1);
+      nock(MOCK_DETILER_URL)
+        .get(COOLDOWN_ENDPOINT)
+        .query({ ...params2 })
+        .twice()
+        .reply(httpStatusCodes.OK, cooldown2);
+      nock(MOCK_DETILER_URL)
+        .get(COOLDOWN_ENDPOINT)
+        .query({ ...params3 })
+        .thrice()
+        .reply(httpStatusCodes.OK, cooldown3);
+      const getSpy = jest.spyOn(detiler['axios'], 'get');
+
+      const queryGenerator = detiler.queryCooldownsAsyncGenerator({ size: 2 });
+
+      for await (const pageData of queryGenerator) {
+        data = [...data, ...pageData];
+      }
+
+      expect(data).toMatchObject([...cooldown1, ...cooldown2, ...cooldown3]);
+      expect(getSpy).toHaveBeenCalledTimes(3);
+    });
+
+    it('should query generate details according to params with default size', async function () {
+      const cooldowns = [{ a: 1 }];
+      let data: Cooldown[] = [];
+      const params: CooldownQueryParams = { kits: ['a'], minZoom: 1, maxZoom: 2, area: [1, 2, 3, 4] };
+
+      nock(MOCK_DETILER_URL)
+        .get(COOLDOWN_ENDPOINT)
+        .query({ ...params, from: 0, size: DEFAULT_PAGE_SIZE })
+        .once()
+        .reply(httpStatusCodes.OK, cooldowns);
+      const getSpy = jest.spyOn(detiler['axios'], 'get');
+
+      const queryGenerator = detiler.queryCooldownsAsyncGenerator(params);
+
+      for await (const pageData of queryGenerator) {
+        data = [...data, ...pageData];
+      }
+
+      expect(data).toMatchObject(cooldowns);
+      expect(getSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw an error if the http get request has errored', async function () {
+      const params: CooldownQueryParams = { from: 0, size: 10, kits: ['a'], minZoom: 1, maxZoom: 2, area: [1, 2, 3, 4] };
+      nock(MOCK_DETILER_URL)
+        .get(COOLDOWN_ENDPOINT)
+        .query({ ...params })
+        .reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
+      const getSpy = jest.spyOn(detiler['axios'], 'get');
+
+      const queryGenerator = detiler.queryCooldownsAsyncGenerator(params);
+
+      await expect(queryGenerator.next()).rejects.toThrow(AxiosError);
+      expect(getSpy).toHaveBeenCalledTimes(1);
+      expect(getSpy).toHaveBeenCalledWith(`${MOCK_DETILER_URL}${COOLDOWN_ENDPOINT}`, expect.objectContaining({ params }));
     });
   });
 

@@ -13,9 +13,16 @@ import { WatchError } from 'redis';
 import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import { AggregateReply, DEFAULT_LIMIT, DEFAULT_PAGE_SIZE, RedisClient } from '../../redis';
 import { keyfy, stringifyCoordinates, bboxToWktPolygon, UpsertStatus, bboxToLonLat } from '../../common/util';
-import { REDIS_KITS_HASH_PREFIX, METATILE_SIZE, SERVICES, REDIS_INDEX_NAME, SEARCHED_GEOSHAPE_NAME } from '../../common/constants';
+import {
+  REDIS_KITS_HASH_PREFIX,
+  METATILE_SIZE,
+  SERVICES,
+  REDIS_TILE_INDEX_NAME,
+  SEARCHED_GEOSHAPE_NAME,
+  REDIS_SEARCH_DIALECT,
+} from '../../common/constants';
 import { KitNotFoundError, TileDetailsNotFoundError } from './errors';
-import { LOAD_FIELDS, transformDocument } from './util';
+import { LOAD_FIELDS, NEWLY_INSERTED_TILE_COUNTERS, transformDocument } from './util';
 
 export interface TilesDetailsQueryParams extends Omit<TileQueryParams, 'bbox'> {
   bbox: BoundingBox;
@@ -40,7 +47,7 @@ export class TileDetailsManager {
     const geoshape = bboxToWktPolygon(bbox);
     /* eslint-disable @typescript-eslint/naming-convention */ // node-redis does not follow eslint naming convention
     const options = {
-      DIALECT: 3,
+      DIALECT: REDIS_SEARCH_DIALECT,
       PARAMS: { [SEARCHED_GEOSHAPE_NAME]: geoshape },
       LOAD: LOAD_FIELDS,
       TIMEOUT: 0,
@@ -48,9 +55,9 @@ export class TileDetailsManager {
     };
 
     if (cursor === undefined) {
-      response = await this.redis.ft.aggregateWithCursor(REDIS_INDEX_NAME, query, options);
+      response = await this.redis.ft.aggregateWithCursor(REDIS_TILE_INDEX_NAME, query, options);
     } else {
-      response = await this.redis.ft.cursorRead(REDIS_INDEX_NAME, cursor, { COUNT: size ?? DEFAULT_PAGE_SIZE });
+      response = await this.redis.ft.cursorRead(REDIS_TILE_INDEX_NAME, cursor, { COUNT: size ?? DEFAULT_PAGE_SIZE });
     }
     /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -104,7 +111,7 @@ export class TileDetailsManager {
     const { z, x, y } = tileParams;
 
     /* eslint-disable @typescript-eslint/naming-convention */ // node-redis does not follow eslint nmaing convention
-    const result = await this.redis.ft.search(REDIS_INDEX_NAME, `@z:[${z} ${z}] @x:[${x} ${x}] @y:[${y} ${y}]`, {
+    const result = await this.redis.ft.search(REDIS_TILE_INDEX_NAME, `@z:[${z} ${z}] @x:[${x} ${x}] @y:[${y} ${y}]`, {
       LIMIT: DEFAULT_LIMIT,
     });
 
@@ -161,11 +168,13 @@ export class TileDetailsManager {
             ],
           ];
 
-          if (payload.hasSkipped !== true) {
+          if (payload.status === 'rendered') {
             transaction.json.numIncrBy(key, '$.renderCount', 1);
             jsonMSetItems[0].push({ key, path: '$.renderedAt', value: payload.timestamp });
-          } else {
+          } else if (payload.status === 'skipped') {
             transaction.json.numIncrBy(key, '$.skipCount', 1);
+          } else if (payload.status === 'cooled') {
+            transaction.json.numIncrBy(key, '$.coolCount', 1);
           }
 
           transaction.json.mSet(jsonMSetItems.flat());
@@ -191,9 +200,7 @@ export class TileDetailsManager {
           updatedAt: payload.timestamp,
           createdAt: payload.timestamp,
           renderedAt: payload.timestamp,
-          updateCount: 1,
-          renderCount: 1,
-          skipCount: 0,
+          ...NEWLY_INSERTED_TILE_COUNTERS,
           geoshape: wkt,
           coordinates: stringifyCoordinates(tileCoordinates),
         };

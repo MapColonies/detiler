@@ -14,6 +14,7 @@ const TOOLTIP_PROPERTIES: (Detail | CalculatedDetail)[] = [
   'updateCount',
   'renderCount',
   'skipCount',
+  'coolCount',
   'createdAt',
   'updatedAt',
   'renderedAt',

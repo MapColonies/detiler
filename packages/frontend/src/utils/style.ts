@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-magic-numbers */
 import * as d3 from 'd3';
 import { config } from '../config';
 import { INITIAL_MIN_MAX, MinMax } from './metric';
@@ -13,6 +14,9 @@ export const RGBA_MIN = 0;
 export const RGBA_MAX = 255;
 
 export const DEFAULT_TILE_COLOR: [number, number, number, number] = [RGBA_MIN, RGBA_MIN, RGBA_MIN, DEFAULT_EMPTY_TILE_ALPHA];
+
+export const COOLDOWN_COLOR = '#fa5c3c';
+export const COOLDOWN_COLOR_RGB = d3.color(COOLDOWN_COLOR) as d3.RGBColor;
 
 export type ColorScale = 'heat' | 'r2g' | 'virdis';
 export type ColorScaleFunc = ReturnType<typeof colorScaleParser>;

@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        node: [18.x, 20.x]
+        node: [20.x]
 
     steps:
       - name: Check out TS Project Git repository
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [18.x, 20.x]
+        node: [20.x]
 
     steps:
       - name: Check out Git repository
