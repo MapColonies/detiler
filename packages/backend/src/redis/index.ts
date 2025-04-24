@@ -4,7 +4,8 @@ import { HealthCheck } from '@godaddy/terminus';
 import { createClient, RedisClientOptions } from 'redis';
 import { DependencyContainer, FactoryFunction } from 'tsyringe';
 import { SERVICES } from '../common/constants';
-import { RedisConfig, IConfig } from '../common/interfaces';
+import { RedisConfig } from '../common/interfaces';
+import { ConfigType } from '../common/config';
 import { promiseTimeout } from '../common/util';
 
 const DEFAULT_LIMIT_FROM = 0;
@@ -41,8 +42,8 @@ export interface AggregateReply {
 
 export const redisClientFactory: FactoryFunction<RedisClient> = (container: DependencyContainer): RedisClient => {
   const logger = container.resolve<ILogger>(SERVICES.LOGGER);
-  const config = container.resolve<IConfig>(SERVICES.CONFIG);
-  const dbConfig = config.get<RedisConfig>('redis');
+  const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+  const dbConfig = config.get('redis') as RedisConfig;
   const connectionOptions = createConnectionOptions(dbConfig);
 
   const redisClient = createClient(connectionOptions)

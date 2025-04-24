@@ -5,24 +5,12 @@ interface LogFn {
   (msg: string, ...args: unknown[]): void;
 }
 
-export interface IConfig {
-  get: <T>(setting: string) => T;
-  has: (setting: string) => boolean;
-}
-
 export type RedisConfig = {
   host: string;
   port: number;
   enableSslAuth: boolean;
   sslPaths: { ca: string; cert: string; key: string };
 } & RedisClientOptions;
-
-export interface OpenApiConfig {
-  filePath: string;
-  basePath: string;
-  jsonPath: string;
-  uiPath: string;
-}
 
 export interface ILogger {
   trace?: LogFn;

@@ -1,14 +1,18 @@
+const { pathsToModuleNameMapper } = require('ts-jest');
+const { compilerOptions } = require('../../../tsconfig.json');
+
+/** @type {import('jest').Config} */
 module.exports = {
     transform: {
-        '^.+\\.ts$': 'ts-jest'
+        '^.+\\.ts$': ['@swc/jest'],
     },
+    moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
     coverageReporters: ['text', 'html'],
     collectCoverage: true,
     collectCoverageFrom: [
         '<rootDir>/src/**/*.ts', '!*/node_modules/', '!/vendor/**', '!*/common/**', '!<rootDir>/src/*', '!**/DAL/**'
     ],
     moduleDirectories: ['node_modules', 'src'],
-    preset: 'ts-jest',
     testEnvironment: 'node',
     coverageThreshold: {
         global: {
