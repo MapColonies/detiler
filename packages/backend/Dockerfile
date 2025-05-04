@@ -14,7 +14,7 @@ COPY ./tsconfig.json ./tsconfig.build.json ./
 
 RUN npm run build
 
-FROM node:20.3.1-alpine3.17 as production
+FROM node:20.19.0-alpine3.21 as production
 
 ARG package=backend
 

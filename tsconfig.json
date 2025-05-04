@@ -10,11 +10,18 @@
     "moduleResolution": "NodeNext",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
     "sourceMap": true,
     "declarationMap": true,
     "noEmit": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+  //   "baseUrl": ".",
+  //   "paths": {
+  //     "@backend-src/*": ["packages/backend/src/*"],
+  //     "@backend-tests/*": ["packages/backend/tests/*"],
+  //     "@backend-common/*": ["packages/backend/src/common/*"]
+  //   }
   },
-  "include": ["src", "tests"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["packages/*/src", "packages/*/tests"],
+  "exclude": ["node_modules", "dist", "packages/*/node_modules", "packages/*/dist"]
 }

@@ -9,9 +9,14 @@ import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from './common/constan
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { getTracing } from './common/tracing';
 import { ConfigType, getConfig } from './common/config';
+// import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from '@backend-common/constants';
+// import { InjectionObject, registerDependencies } from '@backend-common/dependencyRegistration';
+// import { getTracing } from '@backend-common/tracing';
+// import { ConfigType, getConfig } from '@backend-common/config';
 import { tileDetailsRouterFactory, TILE_DETAILS_ROUTER_SYMBOL } from './tileDetails/routes/tileDetailsRouter';
 import { instancePerContainerCachingFactory } from 'tsyringe';
 import { healthCheckFunctionFactory, RedisClient, redisClientFactory } from './redis/index';
+// import { healthCheckFunctionFactory, RedisClient, redisClientFactory } from '@backend-src/redis/index';
 import { kitRouterFactory, KIT_ROUTER_SYMBOL } from './kit/routes/kitRouter';
 import { COOLDOWN_ROUTER_SYMBOL, cooldownRouterFactory } from './cooldown/routes/cooldownRouter';
 

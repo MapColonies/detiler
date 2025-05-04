@@ -1,1 +1,1 @@
-# npx --no -- lerna run lint
+npx --no -- lerna run lint

@@ -2,6 +2,18 @@
 import { KitMetadata, TileDetailsPayload, TileParams, TileParamsWithKit, UNSPECIFIED_STATE } from '@map-colonies/detiler-common';
 import jsLogger from '@map-colonies/js-logger';
 import { createClient, WatchError } from 'redis';
+// import {
+//   REDIS_KITS_HASH_PREFIX,
+//   REDIS_SEARCH_DIALECT,
+//   REDIS_TILE_INDEX_NAME,
+//   SEARCHED_GEOSHAPE_NAME,
+//   TILE_DETAILS_KEY_PREFIX,
+// } from '@backend-common/constants';
+// import { bboxToWktPolygon, UpsertStatus } from '@backend-common/util';
+// import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '@backend-src/redis';
+// import { KitNotFoundError, TileDetailsNotFoundError } from '@backend-src/tileDetails/models/errors';
+// import { TileDetailsManager, TilesDetailsQueryParams } from '@backend-src/tileDetails/models/tileDetailsManager';
+// import { LOAD_FIELDS, NEWLY_INSERTED_TILE_COUNTERS } from '@backend-src/tileDetails/models/util';
 import {
   REDIS_KITS_HASH_PREFIX,
   REDIS_SEARCH_DIALECT,

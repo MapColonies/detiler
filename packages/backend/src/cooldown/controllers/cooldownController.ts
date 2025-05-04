@@ -6,10 +6,12 @@ import { BoundingBox, TILEGRID_WEB_MERCATOR, validateTileGridBoundingBox } from 
 import { Cooldown, CooldownCreationRequest, CooldownQueryParams } from '@map-colonies/detiler-common';
 import mime from 'mime-types';
 import isGeojson from '@turf/boolean-valid';
+// import { SERVICES } from '@backend-common/constants';
 import { SERVICES } from '../../common/constants';
 import { CooldownManager } from '../models/cooldownManager';
 import { RequestValidationError } from '../models/errors';
 import { DEFAULT_PAGE_SIZE } from '../../redis';
+// import { DEFAULT_PAGE_SIZE } from '@backend-src/redis';
 
 const txtplain = mime.contentType('text/plain') as string;
 
@@ -18,7 +20,10 @@ type PostCooldownHandler = RequestHandler<undefined, string, CooldownCreationReq
 
 @injectable()
 export class CooldownController {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(CooldownManager) private readonly manager: CooldownManager) {}
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(CooldownManager) private readonly manager: CooldownManager
+  ) {}
 
   public getCooldowns: GetCooldownsHandler = async (req, res, next) => {
     try {

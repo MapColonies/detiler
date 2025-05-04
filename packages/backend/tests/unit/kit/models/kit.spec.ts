@@ -1,6 +1,10 @@
 import { KitMetadata } from '@map-colonies/detiler-common';
 import jsLogger from '@map-colonies/js-logger';
 import { createClient } from 'redis';
+// import { REDIS_KITS_HASH_PREFIX, REDIS_KITS_SET } from '@backend-common/constants';
+// import { KitAlreadyExistsError } from '@backend-src/kit/models/errors';
+// import { Kit } from '@backend-src/kit/models/kit';
+// import { KitManager } from '@backend-src/kit/models/kitManager';
 import { REDIS_KITS_HASH_PREFIX, REDIS_KITS_SET } from '../../../../src/common/constants';
 import { KitAlreadyExistsError } from '../../../../src/kit/models/errors';
 import { Kit } from '../../../../src/kit/models/kit';

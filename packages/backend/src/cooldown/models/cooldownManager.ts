@@ -6,6 +6,7 @@ import { Cooldown, CooldownCreationRequest, CooldownQueryParams } from '@map-col
 import isGeojson from '@turf/boolean-valid';
 import { Geometry } from 'geojson';
 import { stringify as geojsonToWkt, GeoJSONGeometry } from 'wellknown';
+// import { bboxToWktPolygon, hashValue } from '@backend-common/util';
 import { bboxToWktPolygon, hashValue } from '../../common/util';
 import {
   SERVICES,
@@ -14,13 +15,18 @@ import {
   SEARCHED_GEOSHAPE_NAME,
   REDIS_SEARCH_DIALECT,
   REDIS_WILDCARD,
+// } from '@backend-common/constants';
 } from '../../common/constants';
+// import { RedisClient } from '@backend-src/redis';
 import { RedisClient } from '../../redis';
 import { HALF_GLOBE_BBOX } from './constants';
 
 @injectable()
 export class CooldownManager {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.REDIS) private readonly redis: RedisClient) {}
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.REDIS) private readonly redis: RedisClient
+  ) {}
 
   public async queryCooldowns(params: CooldownQueryParams & Required<Pick<CooldownQueryParams, 'from' | 'size'>>): Promise<Cooldown[]> {
     this.logger.info('quering cooldowns', params);

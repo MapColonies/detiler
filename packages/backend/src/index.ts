@@ -6,6 +6,8 @@ import { Logger } from '@map-colonies/js-logger';
 import { DependencyContainer } from 'tsyringe';
 import { ConfigType } from './common/config';
 import { HEALTHCHECK, ON_SIGNAL, SERVICES } from './common/constants';
+// import { ConfigType } from '@backend-common/config';
+// import { HEALTHCHECK, ON_SIGNAL, SERVICES } from '@backend-common/constants';
 import { getApp } from './app';
 
 let depContainer: DependencyContainer | undefined;
@@ -19,7 +21,6 @@ void getApp()
     const port = config.get('server.port');
 
     const server = createTerminus(createServer(app), {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       healthChecks: { '/liveness': depContainer.resolve(HEALTHCHECK) },
       onSignal: depContainer.resolve(ON_SIGNAL),
     });

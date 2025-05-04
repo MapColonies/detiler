@@ -1,32 +1,32 @@
 {
-    "name": "detiler",
-    "version": "1.0.0",
-    "description": "tile details service",
-    "scripts": {
-        "prepare": "node .husky/install.mjs"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/MapColonies/detiler.git"
-    },
-    "author": "MapColonies",
-    "license": "ISC",
-    "bugs": {
-        "url": "https://github.com/MapColonies/detiler/issues"
-    },
-    "homepage": "https://github.com/MapColonies/detiler#readme",
-    "workspaces": [
-        "packages/*"
-    ],
-    "devDependencies": {
-        "@commitlint/cli": "^19.8.0",
-        "@commitlint/config-conventional": "^19.2.2",
-        "@types/node": "^20.12.7",
-        "commitlint": "^19.2.2",
-        "husky": "^9.1.7",
-        "jest": "^29.7.0",
-        "lerna": "^8.2.2",
-        "ts-jest": "^29.2.6",
-        "typescript": "^5.8.2"
-    }
+  "name": "detiler",
+  "version": "1.0.0",
+  "description": "tile details service",
+  "scripts": {
+    "prepare": "node .husky/install.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MapColonies/detiler.git"
+  },
+  "author": "MapColonies",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MapColonies/detiler/issues"
+  },
+  "homepage": "https://github.com/MapColonies/detiler#readme",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@types/node": "^20.12.7",
+    "commitlint": "^19.2.2",
+    "husky": "^9.1.7",
+    "jest": "^29.7.0",
+    "lerna": "^8.2.2",
+    "ts-jest": "^29.2.6",
+    "typescript": "^5.8.2"
+  }
 }
