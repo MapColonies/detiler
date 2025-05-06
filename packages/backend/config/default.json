@@ -9,6 +9,9 @@
     "tracing": {
       "isEnabled": false
     },
+    "metrics": {
+      "enabled": false
+    },
     "shared": {},
     "logger": {
       "level": "info",
@@ -34,12 +37,12 @@
     "port": 6379,
     "username": "",
     "password": "",
-    "enableSslAuth": false,
-    "sslPaths": {
+    "tls": {
+      "enabled": false,
       "ca": "",
       "key": "",
       "cert": ""
     },
-    "database": 0
+    "dbIndex": 0
   }
 }

@@ -11,15 +11,15 @@ import { promiseTimeout } from '../common/util';
 const DEFAULT_LIMIT_FROM = 0;
 
 const createConnectionOptions = (redisConfig: RedisConfig): Partial<RedisClientOptions> => {
-  const { host, port, enableSslAuth, sslPaths, ...clientOptions } = redisConfig;
+  const { host, port, tls, ...clientOptions } = redisConfig;
   clientOptions.socket = { host, port };
-  if (enableSslAuth) {
+  if (tls.enabled) {
     clientOptions.socket = {
       ...clientOptions.socket,
       tls: true,
-      key: sslPaths.key !== '' ? readFileSync(sslPaths.key) : undefined,
-      cert: sslPaths.cert !== '' ? readFileSync(sslPaths.cert) : undefined,
-      ca: sslPaths.ca !== '' ? readFileSync(sslPaths.ca) : undefined,
+      key: tls.key !== '' ? readFileSync(tls.key) : undefined,
+      cert: tls.cert !== '' ? readFileSync(tls.cert) : undefined,
+      ca: tls.ca !== '' ? readFileSync(tls.ca) : undefined,
     };
   }
 
@@ -43,7 +43,7 @@ export interface AggregateReply {
 export const redisClientFactory: FactoryFunction<RedisClient> = (container: DependencyContainer): RedisClient => {
   const logger = container.resolve<ILogger>(SERVICES.LOGGER);
   const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-  const dbConfig = config.get('redis') as RedisConfig;
+  const dbConfig = config.get('redis');
   const connectionOptions = createConnectionOptions(dbConfig);
 
   const redisClient = createClient(connectionOptions)
