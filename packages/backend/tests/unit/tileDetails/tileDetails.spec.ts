@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */ // redis commands and args do not follow convention
 import { KitMetadata, TileDetailsPayload, TileParams, TileParamsWithKit, UNSPECIFIED_STATE } from '@map-colonies/detiler-common';
 import jsLogger from '@map-colonies/js-logger';
-import { createClient, WatchError } from 'redis';
+// import { WatchError } from 'redis';
+import { WatchError } from '@redis/client/dist/lib/errors';
 // import {
 //   REDIS_KITS_HASH_PREFIX,
 //   REDIS_SEARCH_DIALECT,
@@ -22,64 +23,94 @@ import {
   TILE_DETAILS_KEY_PREFIX,
 } from '../../../src/common/constants';
 import { bboxToWktPolygon, UpsertStatus } from '../../../src/common/util';
-import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '../../../src/redis';
+import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE, RedisClient } from '../../../src/redis';
 import { KitNotFoundError, TileDetailsNotFoundError } from '../../../src/tileDetails/models/errors';
 import { TileDetailsManager, TilesDetailsQueryParams } from '../../../src/tileDetails/models/tileDetailsManager';
 import { LOAD_FIELDS, NEWLY_INSERTED_TILE_COUNTERS } from '../../../src/tileDetails/models/util';
+import redisMock from '../../mocks/tileDetails';
 
-const mGetMock = jest.fn();
-const searchMock = jest.fn();
-const hGetMock = jest.fn();
-const mSetMock = jest.fn();
-const setMock = jest.fn();
-const numIncrByMock = jest.fn();
-const arrAppendMock = jest.fn();
+// const mGetMock = jest.fn();
+// const searchMock = jest.fn();
+// const hGetMock = jest.fn();
+// const mSetMock = jest.fn();
+// const setMock = jest.fn();
+// const numIncrByMock = jest.fn();
+// const arrAppendMock = jest.fn();
 
-const executeIsolatedMock = jest.fn();
-const watchMock = jest.fn();
-const existsMock = jest.fn();
-const multiMock = jest.fn();
-const execMock = jest.fn();
-const aggregateWithCursorMock = jest.fn();
-const cursorReadMock = jest.fn();
+// const executeIsolatedMock = jest.fn();
+// const watchMock = jest.fn();
+// const existsMock = jest.fn();
+// const multiMock = jest.fn();
+// const execMock = jest.fn();
+// const aggregateWithCursorMock = jest.fn();
+// const cursorReadMock = jest.fn();
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-jest.mock('redis', () => ({
-  ...jest.requireActual('redis'),
-  ...jest.requireActual('@redis/client/dist/lib/errors'),
-  createClient: jest.fn().mockImplementation(() => ({
-    hGet: hGetMock,
-    executeIsolated: executeIsolatedMock,
-    watch: watchMock,
-    exists: existsMock,
-    multi: multiMock,
-    exec: execMock,
-    json: {
-      mGet: mGetMock,
-      MGET: mGetMock,
-      set: setMock,
-      mSet: mSetMock,
-      numIncrBy: numIncrByMock,
-      arrAppend: arrAppendMock,
-    },
-    ft: {
-      search: searchMock,
-      SEARCH: searchMock,
-      aggregateWithCursor: aggregateWithCursorMock,
-      cursorRead: cursorReadMock,
-    },
-  })),
-}));
+// // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+// jest.mock('redis', () => ({
+//   ...jest.requireActual('redis'),
+//   ...jest.requireActual('@redis/client/dist/lib/errors'),
+//   createClient: jest.fn().mockImplementation(() => ({
+//     hGet: hGetMock,
+//     executeIsolated: executeIsolatedMock,
+//     watch: watchMock,
+//     exists: existsMock,
+//     multi: multiMock,
+//     exec: execMock,
+//     json: {
+//       mGet: mGetMock,
+//       set: setMock,
+//       mSet: mSetMock,
+//       numIncrBy: numIncrByMock,
+//       arrAppend: arrAppendMock,
+//     },
+//     ft: {
+//       search: searchMock,
+//       aggregateWithCursor: aggregateWithCursorMock,
+//       cursorRead: cursorReadMock,
+//     },
+//   })),
+// }));
 
-type RedisClient = ReturnType<typeof createClient>;
+// type RedisClient = ReturnType<typeof createClient>;
 
 describe('TileDetailsManager', () => {
   let manager: TileDetailsManager;
   let mockedRedis: jest.Mocked<RedisClient>;
+  let aggregateWithCursorMock = redisMock.aggregateWithCursorMock;
+  let executeIsolatedMock = redisMock.executeIsolatedMock;
+  let hGetMock = redisMock.hGetMock;
+  let multiMock = redisMock.multiMock;
+  let existsMock = redisMock.existsMock;
+  let watchMock = redisMock.watchMock;
+  // let watchMock: jest.Mocked<WatchError>;
+  let execMock = redisMock.execMock;
+  let mSetMock = redisMock.mSetMock;
+  let setMock = redisMock.setMock;
+  let searchMock = redisMock.searchMock;
+  let mGetMock = redisMock.mGetMock;
+  let cursorReadMock = redisMock.cursorReadMock;
+  let numIncrByMock = redisMock.numIncrByMock;
+  let arrAppendMock = redisMock.arrAppendMock;
 
   beforeAll(() => {
-    mockedRedis = createClient() as jest.Mocked<RedisClient>;
+    // mockedRedis = createClient() as jest.Mocked<RedisClient>;
+    mockedRedis = redisMock.mockRedisClient as unknown as jest.Mocked<RedisClient>;
     manager = new TileDetailsManager(jsLogger({ enabled: false }), mockedRedis);
+    aggregateWithCursorMock = redisMock.aggregateWithCursorMock;
+    executeIsolatedMock = redisMock.executeIsolatedMock;
+    hGetMock = redisMock.hGetMock;
+    multiMock = redisMock.multiMock;
+    existsMock = redisMock.existsMock;
+    watchMock = redisMock.watchMock;
+    // watchMock = redisMock.watchMock as unknown as jest.Mocked<WatchError>;
+    execMock = redisMock.execMock;
+    mSetMock = redisMock.mSetMock;
+    setMock = redisMock.setMock;
+    searchMock = redisMock.searchMock;
+    mGetMock = redisMock.mGetMock;
+    cursorReadMock = redisMock.cursorReadMock;
+    numIncrByMock = redisMock.numIncrByMock;
+    arrAppendMock = redisMock.arrAppendMock;
   });
 
   beforeEach(() => {

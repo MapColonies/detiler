@@ -15,12 +15,7 @@
     "declarationMap": true,
     "noEmit": true,
     "resolveJsonModule": true,
-  //   "baseUrl": ".",
-  //   "paths": {
-  //     "@backend-src/*": ["packages/backend/src/*"],
-  //     "@backend-tests/*": ["packages/backend/tests/*"],
-  //     "@backend-common/*": ["packages/backend/src/common/*"]
-  //   }
+    "paths": {}
   },
   "include": ["packages/*/src", "packages/*/tests"],
   "exclude": ["node_modules", "dist", "packages/*/node_modules", "packages/*/dist"]

@@ -9,7 +9,8 @@ import {
   TileQueryResponse,
   UNSPECIFIED_STATE,
 } from '@map-colonies/detiler-common';
-import { WatchError } from 'redis';
+// import { WatchError } from 'redis';
+import { WatchError } from '@redis/client/dist/lib/errors';
 import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 // import { AggregateReply, DEFAULT_LIMIT, DEFAULT_PAGE_SIZE, RedisClient } from '@backend-src/redis';
 // import { keyfy, stringifyCoordinates, bboxToWktPolygon, UpsertStatus, bboxToLonLat } from '@backend-common/util';
@@ -40,10 +41,7 @@ export interface TilesDetailsQueryParams extends Omit<TileQueryParams, 'bbox'> {
 
 @injectable()
 export class TileDetailsManager {
-  public constructor(
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(SERVICES.REDIS) private readonly redis: RedisClient
-  ) {}
+  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.REDIS) private readonly redis: RedisClient) {}
 
   public async queryTilesDetails(params: TilesDetailsQueryParams): Promise<TileQueryResponse> {
     let response: AggregateReply;

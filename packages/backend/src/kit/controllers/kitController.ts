@@ -3,7 +3,7 @@ import { RequestHandler } from 'express';
 import httpStatus, { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { KitMetadata } from '@map-colonies/detiler-common';
-import mime from 'mime-types';
+import { contentType } from 'mime-types';
 // import { SERVICES } from '@backend-common/constants';
 // import { HttpError } from '@backend-common/errors';
 import { SERVICES } from '../../common/constants';
@@ -12,17 +12,14 @@ import { KitAlreadyExistsError } from '../models/errors';
 import { Kit } from '../models/kit';
 import { KitManager } from '../models/kitManager';
 
-const txtplain = mime.contentType('text/plain') as string;
+const txtplain = contentType('text/plain') as string;
 
 type GetAllKitsHandler = RequestHandler<undefined, KitMetadata[]>;
 type PostKitHandler = RequestHandler<undefined, string, Kit>;
 
 @injectable()
 export class KitController {
-  public constructor(
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(KitManager) private readonly manager: KitManager
-  ) {}
+  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(KitManager) private readonly manager: KitManager) {}
 
   public getKits: GetAllKitsHandler = async (req, res, next) => {
     try {

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */ // due to redis package
 import { Cooldown, CooldownCreationRequest } from '@map-colonies/detiler-common';
 import jsLogger from '@map-colonies/js-logger';
-import { createClient } from 'redis';
+// import { createClient } from 'redis';
 // import {
 //   COOLDOWN_KEY_PREFIX,
 //   REDIS_COOLDOWN_INDEX_NAME,
@@ -22,42 +22,57 @@ import {
 import { CooldownManager } from '../../../../src/cooldown/models/cooldownManager';
 import { bboxToWktPolygon, hashValue } from '../../../../src/common/util';
 import { HALF_GLOBE_BBOX } from '../../../../src/cooldown/models/constants';
+import redisMock from '../../../mocks/cooldown';
+import { RedisClient } from '../../../../src/redis';
 
 const NOW_MOCK = 1000;
 
-const executeIsolatedMock = jest.fn();
-const multiMock = jest.fn();
-const expireMock = jest.fn();
-const execMock = jest.fn();
-const searchMock = jest.fn();
-const setMock = jest.fn();
+// const executeIsolatedMock = jest.fn();
+// const multiMock = jest.fn();
+// const expireMock = jest.fn();
+// const execMock = jest.fn();
+// const searchMock = jest.fn();
+// const setMock = jest.fn();
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-jest.mock('redis', () => ({
-  ...jest.requireActual('redis'),
-  createClient: jest.fn().mockImplementation(() => ({
-    executeIsolated: executeIsolatedMock,
-    multi: multiMock,
-    expire: expireMock,
-    exec: execMock,
-    json: {
-      set: setMock,
-    },
-    ft: {
-      search: searchMock,
-    },
-  })),
-}));
+// // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+// jest.mock('redis', () => ({
+//   ...jest.requireActual('redis'),
+//   createClient: jest.fn().mockImplementation(() => ({
+//     executeIsolated: executeIsolatedMock,
+//     multi: multiMock,
+//     expire: expireMock,
+//     exec: execMock,
+//     json: {
+//       set: setMock,
+//     },
+//     ft: {
+//       search: searchMock,
+//     },
+//   })),
+// }));
 
-type RedisClient = ReturnType<typeof createClient>;
+// type RedisClient = ReturnType<typeof createClient>;
 
 describe('CooldownManager', () => {
   let cooldownManager: CooldownManager;
   let mockedRedis: jest.Mocked<RedisClient>;
+  let searchMock = redisMock.searchMock;
+  let executeIsolatedMock = redisMock.executeIsolatedMock;
+  let multiMock = redisMock.multiMock;
+  let setMock = redisMock.setMock;
+  let expireMock = redisMock.expireMock;
+  let execMock = redisMock.execMock;
 
   beforeAll(() => {
-    mockedRedis = createClient({}) as jest.Mocked<RedisClient>;
+    // mockedRedis = createClient({}) as jest.Mocked<RedisClient>;
+    mockedRedis = redisMock.mockRedisClient as unknown as jest.Mocked<RedisClient>;
     cooldownManager = new CooldownManager(jsLogger({ enabled: false }), mockedRedis);
+    searchMock = redisMock.searchMock;
+    executeIsolatedMock = redisMock.executeIsolatedMock;
+    multiMock = redisMock.multiMock;
+    setMock = redisMock.setMock;
+    expireMock = redisMock.expireMock;
+    execMock = redisMock.execMock;
   });
 
   beforeEach(() => {

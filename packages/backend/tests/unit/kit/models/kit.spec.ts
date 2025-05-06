@@ -1,6 +1,6 @@
 import { KitMetadata } from '@map-colonies/detiler-common';
 import jsLogger from '@map-colonies/js-logger';
-import { createClient } from 'redis';
+// import { createClient } from 'redis';
 // import { REDIS_KITS_HASH_PREFIX, REDIS_KITS_SET } from '@backend-common/constants';
 // import { KitAlreadyExistsError } from '@backend-src/kit/models/errors';
 // import { Kit } from '@backend-src/kit/models/kit';
@@ -9,27 +9,46 @@ import { REDIS_KITS_HASH_PREFIX, REDIS_KITS_SET } from '../../../../src/common/c
 import { KitAlreadyExistsError } from '../../../../src/kit/models/errors';
 import { Kit } from '../../../../src/kit/models/kit';
 import { KitManager } from '../../../../src/kit/models/kitManager';
+import redisMock from '../../../mocks/kit';
+import { RedisClient } from '../../../../src/redis';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-jest.mock('redis', () => ({
-  ...jest.requireActual('redis'),
-  createClient: jest.fn().mockImplementation(() => ({
-    hGet: jest.fn(),
-    hGetAll: jest.fn(),
-    hSet: jest.fn(),
-    sMembers: jest.fn(),
-    sAdd: jest.fn(),
-  })),
-}));
+// // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+// jest.mock('redis', () => ({
+//   ...jest.requireActual('redis'),
+//   createClient: jest.fn().mockImplementation(() => ({
+//     hGet: jest.fn(),
+//     hGetAll: jest.fn(),
+//     hSet: jest.fn(),
+//     sMembers: jest.fn(),
+//     sAdd: jest.fn(),
+//   })),
+// }));
 
-type RedisClient = ReturnType<typeof createClient>;
+// type RedisClient = ReturnType<typeof createClient>;
 
 describe('KitManager', () => {
   let kitManager: KitManager;
   let mockedRedis: jest.Mocked<RedisClient>;
 
   beforeAll(() => {
-    mockedRedis = createClient({}) as jest.Mocked<RedisClient>;
+    // jest.resetModules();
+    // // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    // jest.doMock('redis', () => ({
+    //   ...jest.requireActual('redis'),
+    //   createClient: jest.fn().mockImplementation(() => ({
+    //     hGet: jest.fn(),
+    //     hGetAll: jest.fn(),
+    //     hSet: jest.fn(),
+    //     sMembers: jest.fn(),
+    //     sAdd: jest.fn(),
+    //   })),
+    // }));
+
+    // const { createClient } = await import('redis');
+
+    // mockedRedis = createClient({}) as jest.Mocked<RedisClient>;
+    mockedRedis = redisMock.mockRedisClient as unknown as jest.Mocked<RedisClient>;
+
     kitManager = new KitManager(jsLogger({ enabled: false }), mockedRedis);
   });
 
