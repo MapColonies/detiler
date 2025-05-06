@@ -10,13 +10,8 @@ import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from './common/constan
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { getTracing } from './common/tracing';
 import { ConfigType, getConfig } from './common/config';
-// import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from '@backend-common/constants';
-// import { InjectionObject, registerDependencies } from '@backend-common/dependencyRegistration';
-// import { getTracing } from '@backend-common/tracing';
-// import { ConfigType, getConfig } from '@backend-common/config';
 import { tileDetailsRouterFactory, TILE_DETAILS_ROUTER_SYMBOL } from './tileDetails/routes/tileDetailsRouter';
 import { healthCheckFunctionFactory, RedisClient, redisClientFactory } from './redis/index';
-// import { healthCheckFunctionFactory, RedisClient, redisClientFactory } from '@backend-src/redis/index';
 import { kitRouterFactory, KIT_ROUTER_SYMBOL } from './kit/routes/kitRouter';
 import { COOLDOWN_ROUTER_SYMBOL, cooldownRouterFactory } from './cooldown/routes/cooldownRouter';
 
@@ -32,15 +27,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     const dependencies: InjectionObject<unknown>[] = [
       { token: SERVICES.CONFIG, provider: { useValue: getConfig() } },
       {
-        //   token: SERVICES.REDIS,
-        //   provider: { useFactory: redisClientFactory },
-        //   postInjectionHook: async (deps: DependencyContainer): Promise<void> => {
-        //     const redis = deps.resolve<RedisClient>(SERVICES.REDIS);
-        //     cleanupRegistry.register({ func: redis.disconnect.bind(redis), id: SERVICES.REDIS });
-        //     await redis.connect();
-        //   },
-        // },
-        // {
         token: SERVICES.CLEANUP_REGISTRY,
         provider: { useValue: cleanupRegistry },
         afterAllInjectionHook(container): void {
@@ -88,20 +74,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       { token: TILE_DETAILS_ROUTER_SYMBOL, provider: { useFactory: tileDetailsRouterFactory } },
       { token: KIT_ROUTER_SYMBOL, provider: { useFactory: kitRouterFactory } },
       { token: COOLDOWN_ROUTER_SYMBOL, provider: { useFactory: cooldownRouterFactory } },
-      // {
-      //   token: SERVICES.REDIS,
-      //   provider: { useFactory: instancePerContainerCachingFactory(redisClientFactory) },
-      //   postInjectionHook: async (deps: DependencyContainer): Promise<void> => {
-      //     const logger = container.resolve<Logger>(SERVICES.LOGGER);
-      //     try {
-      //       const redis = deps.resolve<RedisClient>(SERVICES.REDIS);
-      //       cleanupRegistry.register({ func: redis.disconnect.bind(redis), id: SERVICES.REDIS });
-      //       await redis.connect();
-      //     } catch (error) {
-      //       logger.error({ msg: 'Connection to redis failed', error });
-      //     }
-      //   },
-      // },
       {
         token: SERVICES.REDIS,
         provider: { useFactory: instancePerContainerCachingFactory(redisClientFactory) },

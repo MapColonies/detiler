@@ -113,6 +113,3 @@ dist
 # Jest
 jest_html_reporters.html
 reports
-
-# TO REMOVE!
-temp.tsconfig.json

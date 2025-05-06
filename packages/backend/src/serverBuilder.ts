@@ -13,8 +13,6 @@ import { collectMetricsExpressMiddleware } from '@map-colonies/telemetry/prom-me
 import { Registry } from 'prom-client';
 import type { ConfigType } from './common/config';
 import { SERVICES } from './common/constants';
-// import type { ConfigType } from '@backend-common/config';
-// import { SERVICES } from '@backend-common/constants';
 import { TILE_DETAILS_ROUTER_SYMBOL } from './tileDetails/routes/tileDetailsRouter';
 import { KIT_ROUTER_SYMBOL } from './kit/routes/kitRouter';
 import { COOLDOWN_ROUTER_SYMBOL } from './cooldown/routes/cooldownRouter';

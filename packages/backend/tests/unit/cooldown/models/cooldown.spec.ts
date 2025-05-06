@@ -2,16 +2,6 @@
 import { Cooldown, CooldownCreationRequest } from '@map-colonies/detiler-common';
 import jsLogger from '@map-colonies/js-logger';
 // import { createClient } from 'redis';
-// import {
-//   COOLDOWN_KEY_PREFIX,
-//   REDIS_COOLDOWN_INDEX_NAME,
-//   REDIS_SEARCH_DIALECT,
-//   REDIS_WILDCARD,
-//   SEARCHED_GEOSHAPE_NAME,
-// } from '@backend-common/constants';
-// import { CooldownManager } from '@backend-src/cooldown/models/cooldownManager';
-// import { bboxToWktPolygon, hashValue } from '@backend-common/util';
-// import { HALF_GLOBE_BBOX } from '@backend-src/cooldown/models/constants';
 import {
   COOLDOWN_KEY_PREFIX,
   REDIS_COOLDOWN_INDEX_NAME,

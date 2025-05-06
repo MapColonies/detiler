@@ -3,18 +3,6 @@ import { KitMetadata, TileDetailsPayload, TileParams, TileParamsWithKit, UNSPECI
 import jsLogger from '@map-colonies/js-logger';
 // import { WatchError } from 'redis';
 import { WatchError } from '@redis/client/dist/lib/errors';
-// import {
-//   REDIS_KITS_HASH_PREFIX,
-//   REDIS_SEARCH_DIALECT,
-//   REDIS_TILE_INDEX_NAME,
-//   SEARCHED_GEOSHAPE_NAME,
-//   TILE_DETAILS_KEY_PREFIX,
-// } from '@backend-common/constants';
-// import { bboxToWktPolygon, UpsertStatus } from '@backend-common/util';
-// import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '@backend-src/redis';
-// import { KitNotFoundError, TileDetailsNotFoundError } from '@backend-src/tileDetails/models/errors';
-// import { TileDetailsManager, TilesDetailsQueryParams } from '@backend-src/tileDetails/models/tileDetailsManager';
-// import { LOAD_FIELDS, NEWLY_INSERTED_TILE_COUNTERS } from '@backend-src/tileDetails/models/util';
 import {
   REDIS_KITS_HASH_PREFIX,
   REDIS_SEARCH_DIALECT,
@@ -35,7 +23,6 @@ const hGetMock = redisMock.hGetMock;
 const multiMock = redisMock.multiMock;
 const existsMock = redisMock.existsMock;
 const watchMock = redisMock.watchMock;
-// let watchMock: jest.Mocked<WatchError>;
 const execMock = redisMock.execMock;
 const mSetMock = redisMock.mSetMock;
 const setMock = redisMock.setMock;

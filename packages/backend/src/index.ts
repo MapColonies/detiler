@@ -6,8 +6,6 @@ import { Logger } from '@map-colonies/js-logger';
 import { DependencyContainer } from 'tsyringe';
 import { ConfigType } from './common/config';
 import { HEALTHCHECK, ON_SIGNAL, SERVICES } from './common/constants';
-// import { ConfigType } from '@backend-common/config';
-// import { HEALTHCHECK, ON_SIGNAL, SERVICES } from '@backend-common/constants';
 import { getApp } from './app';
 
 let depContainer: DependencyContainer | undefined;
