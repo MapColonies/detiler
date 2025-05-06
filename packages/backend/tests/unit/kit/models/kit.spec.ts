@@ -12,43 +12,12 @@ import { KitManager } from '../../../../src/kit/models/kitManager';
 import redisMock from '../../../mocks/kit';
 import { RedisClient } from '../../../../src/redis';
 
-// // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-// jest.mock('redis', () => ({
-//   ...jest.requireActual('redis'),
-//   createClient: jest.fn().mockImplementation(() => ({
-//     hGet: jest.fn(),
-//     hGetAll: jest.fn(),
-//     hSet: jest.fn(),
-//     sMembers: jest.fn(),
-//     sAdd: jest.fn(),
-//   })),
-// }));
-
-// type RedisClient = ReturnType<typeof createClient>;
-
 describe('KitManager', () => {
   let kitManager: KitManager;
   let mockedRedis: jest.Mocked<RedisClient>;
 
   beforeAll(() => {
-    // jest.resetModules();
-    // // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    // jest.doMock('redis', () => ({
-    //   ...jest.requireActual('redis'),
-    //   createClient: jest.fn().mockImplementation(() => ({
-    //     hGet: jest.fn(),
-    //     hGetAll: jest.fn(),
-    //     hSet: jest.fn(),
-    //     sMembers: jest.fn(),
-    //     sAdd: jest.fn(),
-    //   })),
-    // }));
-
-    // const { createClient } = await import('redis');
-
-    // mockedRedis = createClient({}) as jest.Mocked<RedisClient>;
     mockedRedis = redisMock.mockRedisClient as unknown as jest.Mocked<RedisClient>;
-
     kitManager = new KitManager(jsLogger({ enabled: false }), mockedRedis);
   });
 
