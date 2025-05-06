@@ -17,10 +17,7 @@ type PostKitHandler = RequestHandler<undefined, string, Kit>;
 
 @injectable()
 export class KitController {
-  public constructor(
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(KitManager) private readonly manager: KitManager
-  ) {}
+  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(KitManager) private readonly manager: KitManager) {}
 
   public getKits: GetAllKitsHandler = async (req, res, next) => {
     try {

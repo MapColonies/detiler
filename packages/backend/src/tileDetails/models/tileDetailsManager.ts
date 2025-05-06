@@ -31,10 +31,7 @@ export interface TilesDetailsQueryParams extends Omit<TileQueryParams, 'bbox'> {
 
 @injectable()
 export class TileDetailsManager {
-  public constructor(
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(SERVICES.REDIS) private readonly redis: RedisClient
-  ) {}
+  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.REDIS) private readonly redis: RedisClient) {}
 
   public async queryTilesDetails(params: TilesDetailsQueryParams): Promise<TileQueryResponse> {
     let response: AggregateReply;

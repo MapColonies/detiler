@@ -8,10 +8,7 @@ import { Kit, ExtendedKit } from './kit';
 
 @injectable()
 export class KitManager {
-  public constructor(
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(SERVICES.REDIS) private readonly redis: RedisClient
-  ) {}
+  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.REDIS) private readonly redis: RedisClient) {}
 
   public async getAllKits(): Promise<KitMetadata[]> {
     this.logger.info('getting all kits');

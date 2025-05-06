@@ -67,18 +67,18 @@ jobs:
       - name: OpenAPI Lint Checks
         uses: nwestfall/openapi-action@v1.0.2
         with:
-         github_token: ${{ secrets.GITHUB_TOKEN }}
-         file: ./packages/${{ matrix.package }}/openapi3.yaml
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./packages/${{ matrix.package }}/openapi3.yaml
 
   security:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: Run Snyk to check for vulnerabilities
-      uses: snyk/actions/node@master
-      continue-on-error: true
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   tests:
     name: Run Tests
