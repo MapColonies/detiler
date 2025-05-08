@@ -106,7 +106,7 @@ jobs:
       - name: Run tests
         run: npx lerna run test
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Test Reporters
           path: packages/**/reports/**
