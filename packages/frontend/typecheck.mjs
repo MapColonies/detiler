@@ -40,7 +40,7 @@ const emitResult = program.emit();
 const buildInfoEmitResult = program.emitBuildInfo();
 
 const diagnostics = [...preEmitDiagnostics, ...emitResult.diagnostics, ...buildInfoEmitResult.diagnostics].filter(
-  (it) => it.file.fileName.startsWith(projectPath + path.sep) && !it.file.fileName.includes('node_modules')
+  (it) => it.file?.fileName?.startsWith(projectPath + path.sep) && !it.file.fileName.includes('node_modules')
 );
 
 //
