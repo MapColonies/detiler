@@ -91,7 +91,7 @@ paths:
             minItems: 4
             maxItems: 4
         - in: query
-          name: enabled
+          name: isEnabled
           description: cooldowns which are enabled or disabled
           schema:
             type: boolean
@@ -572,7 +572,7 @@ components:
         - kits
         - minZoom
         - maxZoom
-        - enabled
+        - isEnabled
       properties:
         duration:
           type: integer
@@ -586,7 +586,7 @@ components:
           $ref: '#/components/schemas/z'
         maxZoom:
           $ref: '#/components/schemas/z'
-        enabled:
+        isEnabled:
           type: boolean
           default: true
         ttl:
