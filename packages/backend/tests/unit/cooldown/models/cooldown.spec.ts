@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */ // due to redis package
 import { Cooldown, CooldownCreationRequest } from '@map-colonies/detiler-common';
 import jsLogger from '@map-colonies/js-logger';
-// import { createClient } from 'redis';
 import {
   COOLDOWN_KEY_PREFIX,
   REDIS_COOLDOWN_INDEX_NAME,

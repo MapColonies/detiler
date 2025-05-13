@@ -9,7 +9,6 @@ import {
   TileQueryResponse,
   UNSPECIFIED_STATE,
 } from '@map-colonies/detiler-common';
-// import { WatchError } from 'redis';
 import { WatchError } from '@redis/client/dist/lib/errors';
 import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import { AggregateReply, DEFAULT_LIMIT, DEFAULT_PAGE_SIZE, RedisClient } from '../../redis';

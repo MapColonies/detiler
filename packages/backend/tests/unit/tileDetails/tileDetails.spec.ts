@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */ // redis commands and args do not follow convention
 import { KitMetadata, TileDetailsPayload, TileParams, TileParamsWithKit, UNSPECIFIED_STATE } from '@map-colonies/detiler-common';
 import jsLogger from '@map-colonies/js-logger';
-// import { WatchError } from 'redis';
 import { WatchError } from '@redis/client/dist/lib/errors';
 import {
   REDIS_KITS_HASH_PREFIX,
