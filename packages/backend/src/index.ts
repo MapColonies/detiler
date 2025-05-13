@@ -8,20 +8,18 @@ import { ConfigType } from './common/config';
 import { HEALTHCHECK, ON_SIGNAL, SERVICES } from './common/constants';
 import { getApp } from './app';
 
-let depContainer: DependencyContainer | undefined;
+let container: DependencyContainer | undefined;
 
 void getApp()
   .then(([app, container]) => {
-    depContainer = container;
-
-    const logger = depContainer.resolve<Logger>(SERVICES.LOGGER);
+    const logger = container.resolve<Logger>(SERVICES.LOGGER);
     const config = container.resolve<ConfigType>(SERVICES.CONFIG);
     const port = config.get('server.port');
 
     const server = createTerminus(createServer(app), {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      healthChecks: { '/liveness': depContainer.resolve(HEALTHCHECK) },
-      onSignal: depContainer.resolve(ON_SIGNAL),
+      healthChecks: { '/liveness': container.resolve(HEALTHCHECK) },
+      onSignal: container.resolve(ON_SIGNAL),
     });
 
     server.listen(port, () => {
@@ -32,8 +30,8 @@ void getApp()
     console.error('😢 - failed initializing the server');
     console.error(error);
 
-    if (depContainer?.isRegistered(ON_SIGNAL) == true) {
-      const shutDown: () => Promise<void> = depContainer.resolve(ON_SIGNAL);
+    if (container?.isRegistered(ON_SIGNAL) == true) {
+      const shutDown: () => Promise<void> = container.resolve(ON_SIGNAL);
       await shutDown();
     }
 
