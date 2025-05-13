@@ -105,7 +105,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Test Reporters
+          name: Test Reporters ${{ matrix.node }}
           path: packages/**/reports/**
 
   build_image:
