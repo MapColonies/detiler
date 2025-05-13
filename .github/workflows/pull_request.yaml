@@ -4,19 +4,23 @@ on: [pull_request]
 
 jobs:
   eslint:
-    name: Run eslint
+    name: Run TS Project eslint
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node: [20.x, 22.x]
+
     steps:
-      - name: Check out Git repository
+      - name: Check out TS Project Git repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: ${{ matrix.node }}
 
-      - name: Install dependencies
+      - name: Install TS Project dependencies
         run: npm ci
 
       - name: Build Lerna
@@ -25,14 +29,20 @@ jobs:
       - name: Run typecheck
         run: npx lerna run typecheck
 
-      - name: Run linters
-        run: npm run lint
+      - name: Run TS Project linters
+        uses: wearerequired/lint-action@v2
+        with:
+          github_token: ${{ secrets.github_token }}
+          # Enable linters
+          eslint: true
+          prettier: true
+          eslint_extensions: ts
 
       - name: Run local linters
         run: npx lerna run lint:fix
 
   openapi-lint:
-    name: Run openapi-lint
+    name: Run OpenAPI lint Check
     runs-on: ubuntu-latest
 
     strategy:
@@ -40,22 +50,19 @@ jobs:
         package: [backend]
 
     steps:
-      - name: Check out Git repository
+      - name: Check out TS Project Git repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Install TS Project dependencies
         run: npm ci
 
       - name: Build Lerna
         run: npx lerna run build
-
-      - name: Run linters
-        run: npm run lint
 
       - name: OpenAPI Lint Checks
         run: npx @redocly/cli lint --format=github-actions ./packages/${{ matrix.package }}/openapi3.yaml
