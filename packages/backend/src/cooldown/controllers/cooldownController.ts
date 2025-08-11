@@ -18,7 +18,10 @@ type PostCooldownHandler = RequestHandler<undefined, string, CooldownCreationReq
 
 @injectable()
 export class CooldownController {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(CooldownManager) private readonly manager: CooldownManager) {}
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(CooldownManager) private readonly manager: CooldownManager
+  ) {}
 
   public getCooldowns: GetCooldownsHandler = async (req, res, next) => {
     try {
