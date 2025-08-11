@@ -1,4 +1,5 @@
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { WrappedApp } from './appWrapper';
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(<WrappedApp />);
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+createRoot(document.getElementById('root') as HTMLElement).render(<WrappedApp />);

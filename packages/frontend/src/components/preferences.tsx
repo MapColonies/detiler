@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { useContext, useState } from 'react';
 import {
   Card,

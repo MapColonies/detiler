@@ -39,7 +39,7 @@ export class TileDetailController {
         ...queryParams
       } = req.query;
 
-      const bbox: BoundingBox = { west: +west!, south: +south!, east: +east!, north: +north! };
+      const bbox: BoundingBox = { west: +west, south: +south, east: +east, north: +north };
       validateTileGridBoundingBox(bbox, TILEGRID_WEB_MERCATOR);
 
       const tilesDetails = await this.manager.queryTilesDetails({

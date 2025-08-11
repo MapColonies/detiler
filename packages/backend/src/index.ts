@@ -18,7 +18,6 @@ void getApp()
     const port = config.get('server.port');
 
     const server = createTerminus(createServer(app), {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       healthChecks: { '/liveness': container.resolve(HEALTHCHECK) },
       onSignal: container.resolve(ON_SIGNAL),
     });

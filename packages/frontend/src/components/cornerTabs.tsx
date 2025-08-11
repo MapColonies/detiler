@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import React, { useState } from 'react';
 import { Tabs, Tab, Paper } from '@mui/material';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';

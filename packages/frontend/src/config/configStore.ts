@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/naming-convention
 import Lodash from 'lodash';
 import { NOT_FOUND_INDEX } from '../utils/constants';
 

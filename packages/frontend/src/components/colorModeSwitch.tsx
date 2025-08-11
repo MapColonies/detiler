@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { useTheme } from '@mui/material/styles';
 import { Switch } from '@mui/material';
