@@ -1,3 +1,5 @@
+import { RedisClient } from '../../src/redis';
+
 const executeIsolatedMock = jest.fn();
 const multiMock = jest.fn();
 const expireMock = jest.fn();
@@ -16,7 +18,7 @@ const mockRedisClient = {
   ft: {
     search: searchMock,
   },
-};
+} as unknown as jest.Mocked<RedisClient>;
 
 const createClient = jest.fn().mockReturnValue(mockRedisClient);
 

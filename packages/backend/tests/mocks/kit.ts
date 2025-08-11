@@ -1,3 +1,5 @@
+import { RedisClient } from '../../src/redis';
+
 const hGet = jest.fn();
 const hGetAll = jest.fn();
 const hSet = jest.fn();
@@ -10,7 +12,7 @@ const mockRedisClient = {
   hSet,
   sMembers,
   sAdd,
-};
+} as unknown as jest.Mocked<RedisClient>;
 
 const createClient = jest.fn().mockReturnValue(mockRedisClient);
 

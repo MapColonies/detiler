@@ -36,7 +36,7 @@ describe('TileDetailsManager', () => {
   let mockedRedis: jest.Mocked<RedisClient>;
 
   beforeAll(() => {
-    mockedRedis = redisMock.mockRedisClient as unknown as jest.Mocked<RedisClient>;
+    mockedRedis = redisMock.mockRedisClient;
     manager = new TileDetailsManager(jsLogger({ enabled: false }), mockedRedis);
   });
 

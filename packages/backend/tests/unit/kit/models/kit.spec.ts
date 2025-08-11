@@ -12,7 +12,7 @@ describe('KitManager', () => {
   let mockedRedis: jest.Mocked<RedisClient>;
 
   beforeAll(() => {
-    mockedRedis = redisMock.mockRedisClient as unknown as jest.Mocked<RedisClient>;
+    mockedRedis = redisMock.mockRedisClient;
     kitManager = new KitManager(jsLogger({ enabled: false }), mockedRedis);
   });
 

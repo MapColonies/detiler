@@ -28,7 +28,7 @@ describe('CooldownManager', () => {
   let mockedRedis: jest.Mocked<RedisClient>;
 
   beforeAll(() => {
-    mockedRedis = redisMock.mockRedisClient as unknown as jest.Mocked<RedisClient>;
+    mockedRedis = redisMock.mockRedisClient;
     cooldownManager = new CooldownManager(jsLogger({ enabled: false }), mockedRedis);
   });
 

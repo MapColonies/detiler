@@ -1,3 +1,5 @@
+import { RedisClient } from '../../src/redis';
+
 const mGetMock = jest.fn();
 const searchMock = jest.fn();
 const hGetMock = jest.fn();
@@ -33,7 +35,7 @@ const mockRedisClient = {
     aggregateWithCursor: aggregateWithCursorMock,
     cursorRead: cursorReadMock,
   },
-};
+} as unknown as jest.Mocked<RedisClient>;
 
 const createClient = jest.fn().mockReturnValue(mockRedisClient);
 
