@@ -5,7 +5,6 @@ ARG package=backend
 WORKDIR /tmp/buildApp
 
 COPY ./packages/${package}/package.json ./
-COPY ../../.husky/ .husky/
 
 RUN npm install
 
@@ -26,7 +25,6 @@ ENV SERVER_PORT=8080
 WORKDIR /usr/src/app
 
 COPY --chown=node:node ./packages/${package}/package.json ./
-COPY ../../.husky/ .husky/
 
 RUN npm install --omit=dev
 
