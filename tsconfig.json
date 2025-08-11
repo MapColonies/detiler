@@ -1,20 +1,10 @@
 {
+  "extends": "@map-colonies/tsconfig/tsconfig-app",
   "compilerOptions": {
-    "target": "es2021",
-    "module": "NodeNext",
     "declaration": true,
-    "outDir": "dist",
-    "strict": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "moduleResolution": "NodeNext",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "skipLibCheck": true,
-    "sourceMap": true,
     "declarationMap": true,
     "noEmit": true,
-    "resolveJsonModule": true,
     "paths": {}
   },
   "include": ["packages/*/src", "packages/*/tests"],

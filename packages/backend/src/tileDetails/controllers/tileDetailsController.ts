@@ -1,5 +1,5 @@
 import { TileDetails, TileDetailsPayload, TileQueryParams, TileQueryResponse } from '@map-colonies/detiler-common';
-import { Logger } from '@map-colonies/js-logger';
+import type { Logger } from '@map-colonies/js-logger';
 import { BoundingBox, TILEGRID_WEB_MERCATOR, validateTileGridBoundingBox } from '@map-colonies/tile-calc';
 import { RequestHandler } from 'express';
 import httpStatus, { StatusCodes } from 'http-status-codes';
@@ -39,7 +39,7 @@ export class TileDetailController {
         ...queryParams
       } = req.query;
 
-      const bbox: BoundingBox = { west: +west, south: +south, east: +east, north: +north };
+      const bbox: BoundingBox = { west: +west!, south: +south!, east: +east!, north: +north! };
       validateTileGridBoundingBox(bbox, TILEGRID_WEB_MERCATOR);
 
       const tilesDetails = await this.manager.queryTilesDetails({

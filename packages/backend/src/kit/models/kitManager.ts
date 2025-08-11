@@ -1,8 +1,8 @@
-import { Logger } from '@map-colonies/js-logger';
+import type { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import { KitMetadata } from '@map-colonies/detiler-common';
 import { REDIS_KITS_SET, REDIS_KITS_HASH_PREFIX, SERVICES } from '../../common/constants';
-import { RedisClient } from '../../redis';
+import type { RedisClient } from '../../redis';
 import { KitAlreadyExistsError } from './errors';
 import { Kit, ExtendedKit } from './kit';
 

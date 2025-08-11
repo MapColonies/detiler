@@ -65,7 +65,7 @@ export interface TileQueryParams extends BaseQueryParams {
   maxState?: number;
   shouldMatchCurrentState?: boolean;
   kits: string[];
-  bbox: number[];
+  bbox: BBox;
 }
 
 export interface KitMetadata {

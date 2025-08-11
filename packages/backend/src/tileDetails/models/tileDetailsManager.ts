@@ -1,4 +1,4 @@
-import { Logger } from '@map-colonies/js-logger';
+import type { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import {
   TileDetails,
@@ -11,7 +11,8 @@ import {
 } from '@map-colonies/detiler-common';
 import { WatchError } from '@redis/client/dist/lib/errors';
 import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
-import { AggregateReply, DEFAULT_LIMIT, DEFAULT_PAGE_SIZE, RedisClient } from '../../redis';
+import { AggregateReply, DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '../../redis';
+import type { RedisClient } from '../../redis';
 import { keyfy, stringifyCoordinates, bboxToWktPolygon, UpsertStatus, bboxToLonLat } from '../../common/util';
 import {
   REDIS_KITS_HASH_PREFIX,
@@ -92,7 +93,7 @@ export class TileDetailsManager {
       throw new TileDetailsNotFoundError(`kit's ${kit} tile ${params.z}/${params.x}/${params.y} details were not found`);
     }
 
-    return result[0];
+    return result[0]!;
   }
 
   public async getTilesDetailsByKits(params: TileParams & { kits: string[] }): Promise<TileDetails[]> {
