@@ -6,11 +6,14 @@
     "useDefineForClassFields": true,
     "jsx": "react-jsx",
     "noImplicitAny": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["node", "vite/client"],
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "moduleResolution": "nodenext"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["**/node_modules", "**/dist"]

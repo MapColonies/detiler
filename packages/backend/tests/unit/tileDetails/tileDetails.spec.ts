@@ -365,7 +365,7 @@ describe('TileDetailsManager', () => {
       executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
       multiMock.mockReturnValue(mockedRedis);
       const exisingKits: KitMetadata[] = [{ name: 'kit1' }];
-      hGetMock.mockResolvedValue(exisingKits[0].name);
+      hGetMock.mockResolvedValue(exisingKits[0]!.name);
       existsMock.mockResolvedValue(0);
 
       const params: TileParamsWithKit = {

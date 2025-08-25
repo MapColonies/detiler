@@ -5,7 +5,7 @@ interface LogFn {
   (msg: string, ...args: unknown[]): void;
 }
 
-type BBox = [number, number, number, number];
+export type BBox = [number, number, number, number];
 
 export interface ILogger {
   trace?: LogFn;
