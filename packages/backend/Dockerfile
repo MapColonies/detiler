@@ -10,7 +10,8 @@ COPY .husky/ .husky/
 RUN npm install
 
 COPY ./packages/${package} ./
-COPY ./tsconfig.json ./tsconfig.build.json ./
+COPY ./tsconfig.json ./ 
+COPY ./tsconfig.build.json ./
 
 RUN npm run build
 
