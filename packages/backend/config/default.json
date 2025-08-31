@@ -6,13 +6,20 @@
     "uiPath": "/api"
   },
   "telemetry": {
+    "tracing": {
+      "isEnabled": false
+    },
+    "metrics": {
+      "enabled": false
+    },
+    "shared": {},
     "logger": {
       "level": "info",
       "prettyPrint": false
     }
   },
   "server": {
-    "port": "8080",
+    "port": 8080,
     "request": {
       "payload": {
         "limit": "1mb"
@@ -30,12 +37,12 @@
     "port": 6379,
     "username": "",
     "password": "",
-    "enableSslAuth": false,
-    "sslPaths": {
+    "tls": {
+      "enabled": false,
       "ca": "",
       "key": "",
       "cert": ""
     },
-    "database": 0
+    "dbIndex": 0
   }
 }

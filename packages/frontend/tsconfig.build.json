@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.build.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "target": "es2022",
     "module": "es2022",
@@ -13,7 +13,10 @@
     "noImplicitAny": false,
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node", "vite/client"]
+    "types": ["node", "vite/client"],
+    "sourceMap": true,
+    "noUncheckedIndexedAccess": false,
+    "paths": {}
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["**/node_modules", "**/dist"]

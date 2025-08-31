@@ -25,14 +25,14 @@ jobs:
         with:
           files: helm/**
 
-# If files in Helm dir changed, init var as yes
+      # If files in Helm dir changed, init var as yes
       - name: Set output if any file(s) in the helm folder change
         id: set
         if: steps.changed-files-specific.outputs.any_changed == 'true'
         run: |
           echo "::set-output name=files_changed::yes"
     outputs:
-          files_changed: ${{ steps.set.outputs.files_changed }}
+      files_changed: ${{ steps.set.outputs.files_changed }}
 
   chart-update:
     runs-on: ubuntu-latest
@@ -58,15 +58,14 @@ jobs:
         run: |
           echo "New Version: ${{ steps.bump_version.outputs.NEW_VERSION }}"
     outputs:
-          new_version: ${{ steps.bump_version.outputs.NEW_VERSION }}
-
+      new_version: ${{ steps.bump_version.outputs.NEW_VERSION }}
 
   build:
     name: publish acr
     runs-on: ubuntu-latest
     environment: prod
     needs: chart-update
-    steps:    
+    steps:
       - uses: actions/checkout@v2
         name: checkout repo
 
@@ -77,7 +76,7 @@ jobs:
 
       - name: login to acr using helm
         run: |
-          helm registry login ${{ secrets.ACR_URL }} --username ${{ secrets.ACR_PUSH_USER }} --password ${{ secrets.ACR_PUSH_TOKEN }} 
+          helm registry login ${{ secrets.ACR_URL }} --username ${{ secrets.ACR_PUSH_USER }} --password ${{ secrets.ACR_PUSH_TOKEN }}
 
       - name: Get Chart name
         id: get_chart
@@ -90,9 +89,8 @@ jobs:
         run: |
           helm chart save . '${{ secrets.ACR_URL }}/helm/${{ env.CHART }}:${{ needs.chart-update.outputs.new_version }}'
         working-directory: ./helm
-      
+
       - name: publish chart to acr
         run: |
           helm chart push ${{ secrets.ACR_URL }}/helm/${{ env.CHART }}:${{ needs.chart-update.outputs.new_version }}
         working-directory: ./helm
-

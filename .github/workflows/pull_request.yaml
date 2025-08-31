@@ -9,11 +9,11 @@ jobs:
 
     strategy:
       matrix:
-        node: [20.x]
+        node: [20.x, 22.x]
 
     steps:
       - name: Check out TS Project Git repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -30,7 +30,7 @@ jobs:
         run: npx lerna run typecheck
 
       - name: Run TS Project linters
-        uses: wearerequired/lint-action@v1
+        uses: wearerequired/lint-action@v2
         with:
           github_token: ${{ secrets.github_token }}
           # Enable linters
@@ -51,7 +51,7 @@ jobs:
 
     steps:
       - name: Check out TS Project Git repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -65,31 +65,28 @@ jobs:
         run: npx lerna run build
 
       - name: OpenAPI Lint Checks
-        uses: nwestfall/openapi-action@v1.0.2
-        with:
-         github_token: ${{ secrets.GITHUB_TOKEN }}
-         file: ./packages/${{ matrix.package }}/openapi3.yaml
+        run: npx @redocly/cli lint --format=github-actions ./packages/${{ matrix.package }}/openapi3.yaml
 
   security:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: Run Snyk to check for vulnerabilities
-      uses: snyk/actions/node@master
-      continue-on-error: true
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   tests:
     name: Run Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [20.x]
+        node: [20.x, 22.x]
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -106,9 +103,9 @@ jobs:
       - name: Run tests
         run: npx lerna run test
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: Test Reporters
+          name: Test Reporters ${{ matrix.node }}
           path: packages/**/reports/**
 
   build_image:
@@ -121,7 +118,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: build Docker image
         run: docker build -f ./packages/${{ matrix.package }}/Dockerfile -t ${{ matrix.package }}:latest .

@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/naming-convention */
 import React, { useState, useEffect } from 'react';
-import { Cooldown, TileDetails } from '@map-colonies/detiler-common';
+import { Cooldown, TileDetails, TileParams } from '@map-colonies/detiler-common';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import FileCopy from '@mui/icons-material/FileCopy';
@@ -23,7 +25,6 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
-import { TileParams } from '@map-colonies/detiler-common';
 import { TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -144,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
   };
 
   /* eslint-disable @typescript-eslint/no-misused-promises */
-  /* eslint-disable @typescript-eslint/naming-convention */
+
   return (
     <Drawer
       sx={{
@@ -303,8 +304,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
                       Zoom: {cooldown.minZoom} - {cooldown.maxZoom}
                       <br />
                     </Typography>
-                    <IconButton aria-label="toggle visibility" onClick={(): void => handleCooldownClick(cooldown.id!)}>
-                      {selectedCooldowns.includes(cooldown.id!) ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                    <IconButton aria-label="toggle visibility" onClick={(): void => handleCooldownClick(cooldown.id)}>
+                      {selectedCooldowns.includes(cooldown.id) ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
                     </IconButton>
                   </Stack>
                 </StyledCardContent>
@@ -326,5 +327,5 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, data, onClose, onGoToC
     </Drawer>
   );
 };
-/* eslint-enable @typescript-eslint/naming-convention */
+
 /* eslint-enable @typescript-eslint/no-misused-promises */
