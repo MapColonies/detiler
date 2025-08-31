@@ -10,6 +10,7 @@ jobs:
     strategy:
       matrix:
         node: [20.x, 22.x]
+        package: [frontend]
 
     steps:
       - name: Check out TS Project Git repository
@@ -37,6 +38,17 @@ jobs:
           eslint: true
           prettier: true
           eslint_extensions: ts
+          eslint_args: "--ignore-pattern './packages/${{ matrix.package }}/**' ."
+
+      - name: Run TS Project linters on ${{ matrix.package }}
+        uses: wearerequired/lint-action@v2
+        with:
+          github_token: ${{ secrets.github_token }}
+          # Enable linters
+          eslint: true
+          prettier: true
+          eslint_extensions: ts
+          eslint_args: '--config ./packages/${{ matrix.package }}/eslint.config.mjs ./packages/${{ matrix.package }}'
 
       - name: Run local linters
         run: npx lerna run lint:fix
