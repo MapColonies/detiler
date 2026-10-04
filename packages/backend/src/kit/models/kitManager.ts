@@ -6,6 +6,24 @@ import { RedisClient } from '../../redis';
 import { KitAlreadyExistsError } from './errors';
 import { Kit, ExtendedKit } from './kit';
 
+// atomically raises kit:<name>'s maxState/maxUpdatedAt hash fields, never lowering them; replaces the legacy
+// RedisGears v1 (Python) script, which cannot run on RedisGears v2 (JS-only) bundled with current Redis Stack images
+export const UPDATE_MAX_VALUES_SCRIPT = `
+local hashKey = KEYS[1]
+local candidateState = tonumber(ARGV[1])
+local candidateUpdatedAt = tonumber(ARGV[2])
+
+local currentState = tonumber(redis.call('HGET', hashKey, 'maxState'))
+if currentState == nil or candidateState > currentState then
+  redis.call('HSET', hashKey, 'maxState', candidateState)
+end
+
+local currentUpdatedAt = tonumber(redis.call('HGET', hashKey, 'maxUpdatedAt'))
+if currentUpdatedAt == nil or candidateUpdatedAt > currentUpdatedAt then
+  redis.call('HSET', hashKey, 'maxUpdatedAt', candidateUpdatedAt)
+end
+`;
+
 @injectable()
 export class KitManager {
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.REDIS) private readonly redis: RedisClient) {}
@@ -36,5 +54,14 @@ export class KitManager {
     await this.redis.sAdd(REDIS_KITS_SET, kit.name);
 
     await this.redis.hSet(`${REDIS_KITS_HASH_PREFIX}:${kit.name}`, { ...extendedKit });
+  }
+
+  public async updateMaxValues(kitName: string, state: number, updatedAt: number): Promise<void> {
+    this.logger.debug({ msg: 'updating kit max values if greater', kitName, state, updatedAt });
+
+    await this.redis.eval(UPDATE_MAX_VALUES_SCRIPT, {
+      keys: [`${REDIS_KITS_HASH_PREFIX}:${kitName}`],
+      arguments: [state.toString(), updatedAt.toString()],
+    });
   }
 }

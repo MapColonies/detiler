@@ -66,38 +66,10 @@ FT.CREATE tileDetailsIdx ON JSON PREFIX 1 tile: SCHEMA $.kit AS kit TEXT $.updat
 FT.CREATE cooldownIdx ON JSON PREFIX 1 cooldown: SCHEMA $.kits[*] AS kits TAG $.minZoom AS minZoom NUMERIC $.maxZoom AS maxZoom NUMERIC $.enabled AS enabled TAG $.geoshape AS geoshape GEOSHAPE SPHERICAL
 ```
 
-### redis post processing:
-using `Redis Gears` the following post processing function is being used to maintain additional metadata for each kit - it's `maxState` and `maxUpdatedAt` see [maintain_kit_metadata.py](/packages/backend/gears/maintain_kit_metadata.py) for full documented python code
+### kit metadata maintenance:
+each kit's `maxState` and `maxUpdatedAt` (used by the frontend to bound its state-range filter) are maintained directly by `detiler-backend` itself, on every tile upsert — see `KitManager.updateMaxValues` in [kitManager.ts](/packages/backend/src/kit/models/kitManager.ts). it atomically raises those two fields via a Lua script (`EVAL`), so no separate Redis module or out-of-process script is required.
 
-execute with `redis-cli`
-```
-RG.PYEXECUTE "
-def extract_data(record):\n
-    data_key = record['key']\n
-
-    kit = execute('JSON.GET', data_key, 'kit')\n
-    state = execute('JSON.GET', data_key, 'state')\n
-    updated_at = execute('JSON.GET', data_key, 'updatedAt')\n
-    return { 'kit': kit[1:-1], 'state': int(state), 'updated_at': int(updated_at) }\n
-
-def update_maximums(data):\n
-    kit_key = 'kit:' + data['kit']\n
-
-    max_state = execute('HGET', kit_key, 'maxState')\n
-    max_state = int(max_state) if max_state else 0\n
-    if data['state'] > max_state:\n
-        execute('HSET', kit_key, 'maxState', data['state'])\n
-
-    max_updated_at = execute('HGET', kit_key, 'maxUpdatedAt')\n
-    max_updated_at = int(max_updated_at) if max_updated_at else 0\n
-    if data['updated_at'] > max_updated_at:\n
-        execute('HSET', kit_key, 'maxUpdatedAt', data['updated_at'])\n
-
-gb = GearsBuilder()\n
-gb.map(extract_data)\n
-gb.foreach(update_maximums)\n
-gb.register('tile:*')"
-```
+> this used to be implemented as a `Redis Gears` (v1, Python) script registered on `tile:*` writes. it was removed since RedisGears v1's Python engine is not present in current Redis Stack images (bundled RedisGears v2 only supports JavaScript via `TFUNCTION`/`TFCALL`), which made the old script permanently dead code against any current deployment.
 
 ## Development
 This repository is a monorepo managed by [`Lerna`](https://lerna.js.org/) and separated into multiple independent packages

@@ -21,6 +21,7 @@ import {
   SEARCHED_GEOSHAPE_NAME,
   REDIS_SEARCH_DIALECT,
 } from '../../common/constants';
+import { KitManager } from '../../kit/models/kitManager';
 import { KitNotFoundError, TileDetailsNotFoundError } from './errors';
 import { LOAD_FIELDS, NEWLY_INSERTED_TILE_COUNTERS, transformDocument } from './util';
 
@@ -30,7 +31,11 @@ export interface TilesDetailsQueryParams extends Omit<TileQueryParams, 'bbox'> {
 
 @injectable()
 export class TileDetailsManager {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.REDIS) private readonly redis: RedisClient) {}
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.REDIS) private readonly redis: RedisClient,
+    private readonly kitManager: KitManager
+  ) {}
 
   public async queryTilesDetails(params: TilesDetailsQueryParams): Promise<TileQueryResponse> {
     let response: AggregateReply;
@@ -181,6 +186,8 @@ export class TileDetailsManager {
 
           await transaction.exec();
 
+          await this.kitManager.updateMaxValues(params.kit, state, payload.timestamp);
+
           return UpsertStatus.UPDATED;
         }
 
@@ -208,6 +215,8 @@ export class TileDetailsManager {
         transaction.json.set(key, '$', { ...initialTileDetails });
 
         await transaction.exec();
+
+        await this.kitManager.updateMaxValues(params.kit, state, payload.timestamp);
 
         return UpsertStatus.INSERTED;
       });

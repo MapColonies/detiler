@@ -10,6 +10,7 @@ import {
   TILE_DETAILS_KEY_PREFIX,
 } from '../../../src/common/constants';
 import { bboxToWktPolygon, UpsertStatus } from '../../../src/common/util';
+import { KitManager, UPDATE_MAX_VALUES_SCRIPT } from '../../../src/kit/models/kitManager';
 import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '../../../src/redis';
 import { KitNotFoundError, TileDetailsNotFoundError } from '../../../src/tileDetails/models/errors';
 import { TileDetailsManager, TilesDetailsQueryParams } from '../../../src/tileDetails/models/tileDetailsManager';
@@ -22,6 +23,7 @@ const mSetMock = jest.fn();
 const setMock = jest.fn();
 const numIncrByMock = jest.fn();
 const arrAppendMock = jest.fn();
+const evalMock = jest.fn();
 
 const executeIsolatedMock = jest.fn();
 const watchMock = jest.fn();
@@ -42,6 +44,7 @@ jest.mock('redis', () => ({
     exists: existsMock,
     multi: multiMock,
     exec: execMock,
+    eval: evalMock,
     json: {
       mGet: mGetMock,
       MGET: mGetMock,
@@ -67,7 +70,8 @@ describe('TileDetailsManager', () => {
 
   beforeAll(() => {
     mockedRedis = createClient() as jest.Mocked<RedisClient>;
-    manager = new TileDetailsManager(jsLogger({ enabled: false }), mockedRedis);
+    const kitManager = new KitManager(jsLogger({ enabled: false }), mockedRedis);
+    manager = new TileDetailsManager(jsLogger({ enabled: false }), mockedRedis, kitManager);
   });
 
   beforeEach(() => {
@@ -389,6 +393,7 @@ describe('TileDetailsManager', () => {
       expect(mSetMock).not.toHaveBeenCalled();
       expect(setMock).not.toHaveBeenCalled();
       expect(numIncrByMock).not.toHaveBeenCalled();
+      expect(evalMock).not.toHaveBeenCalled();
     });
 
     it('should create in transaction the tile according to params and payload with unspecified state if key does not exist', async () => {
@@ -431,6 +436,11 @@ describe('TileDetailsManager', () => {
         })
       );
       expect(execMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledWith(UPDATE_MAX_VALUES_SCRIPT, {
+        keys: [`${REDIS_KITS_HASH_PREFIX}:${params.kit}`],
+        arguments: [UNSPECIFIED_STATE.toString(), payload.timestamp.toString()],
+      });
     });
 
     it('should create in transaction the tile according to params and payload with state if key does not exist', async () => {
@@ -474,6 +484,11 @@ describe('TileDetailsManager', () => {
         })
       );
       expect(execMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledWith(UPDATE_MAX_VALUES_SCRIPT, {
+        keys: [`${REDIS_KITS_HASH_PREFIX}:${params.kit}`],
+        arguments: [(payload.state as number).toString(), payload.timestamp.toString()],
+      });
     });
 
     it('should update in transaction the tile according to params and payload with unspecified state if key does not exist', async () => {
@@ -513,6 +528,11 @@ describe('TileDetailsManager', () => {
       expect(arrAppendMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.states', UNSPECIFIED_STATE);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledWith(UPDATE_MAX_VALUES_SCRIPT, {
+        keys: [`${REDIS_KITS_HASH_PREFIX}:${params.kit}`],
+        arguments: [UNSPECIFIED_STATE.toString(), payload.timestamp.toString()],
+      });
     });
 
     it('should update in transaction the tile according to params and payload with state if key does not exist', async () => {
@@ -552,6 +572,11 @@ describe('TileDetailsManager', () => {
       expect(arrAppendMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.states', payload.state);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledWith(UPDATE_MAX_VALUES_SCRIPT, {
+        keys: [`${REDIS_KITS_HASH_PREFIX}:${params.kit}`],
+        arguments: [(payload.state as number).toString(), payload.timestamp.toString()],
+      });
     });
 
     it('should update in transaction the tile according to params and payload with skipped status', async () => {
@@ -590,6 +615,11 @@ describe('TileDetailsManager', () => {
       expect(arrAppendMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.states', payload.state);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledWith(UPDATE_MAX_VALUES_SCRIPT, {
+        keys: [`${REDIS_KITS_HASH_PREFIX}:${params.kit}`],
+        arguments: [(payload.state as number).toString(), payload.timestamp.toString()],
+      });
     });
 
     it('should update in transaction the tile according to params and payload with cooled status', async () => {
@@ -628,6 +658,11 @@ describe('TileDetailsManager', () => {
       expect(arrAppendMock).toHaveBeenCalledWith(`${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.states', payload.state);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledWith(UPDATE_MAX_VALUES_SCRIPT, {
+        keys: [`${REDIS_KITS_HASH_PREFIX}:${params.kit}`],
+        arguments: [(payload.state as number).toString(), payload.timestamp.toString()],
+      });
     });
 
     it('should throw if watch error detected', async () => {
@@ -666,6 +701,7 @@ describe('TileDetailsManager', () => {
       expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.renderCount', 1);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).not.toHaveBeenCalled();
     });
 
     it('should throw if some error detected', async () => {
@@ -704,6 +740,7 @@ describe('TileDetailsManager', () => {
       expect(numIncrByMock).toHaveBeenNthCalledWith(2, `${TILE_DETAILS_KEY_PREFIX}:kit1:1/0/0`, '$.renderCount', 1);
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).not.toHaveBeenCalled();
     });
   });
 });
