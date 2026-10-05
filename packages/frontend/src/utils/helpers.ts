@@ -115,7 +115,7 @@ export const geometryToFeature = (geometry: Geometry): Feature => {
 
 export const insertDummyFeature = (features: Feature[]): Feature[] => {
   if (features.length === 0) {
-    features.push({ type: 'Feature', properties: { id: FEATURE_ID_DUMMY }, geometry: { type: 'Point', coordinates: [] } });
+    features.push({ type: 'Feature', properties: { id: FEATURE_ID_DUMMY }, geometry: { type: 'Point', coordinates: [0, 0] } });
   }
   return features;
 };

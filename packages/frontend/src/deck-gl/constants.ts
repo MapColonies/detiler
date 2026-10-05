@@ -1,7 +1,7 @@
 import { COORDINATE_SYSTEM } from '@deck.gl/core';
 import { GeoJsonLayerProps } from '@deck.gl/layers/src/geojson-layer/geojson-layer';
 import { DataFilterExtension, DataFilterExtensionProps } from '@deck.gl/extensions';
-import { Feature } from '@turf/helpers';
+import { Feature } from 'geojson';
 import { RGBA_MAX, RGBA_MIN } from '../utils/style';
 import { MAX_ZOOM_LEVEL, MIN_ZOOM_LEVEL } from '../utils/constants';
 

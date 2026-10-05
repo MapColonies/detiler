@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Map } from 'react-map-gl';
-import maplibregl from 'maplibre-gl';
+import { Map } from 'react-map-gl/maplibre';
 import { MapViewState, WebMercatorViewport, FlyToInterpolator } from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
@@ -42,7 +41,7 @@ import { basemapLayerFactory } from './deck-gl/basemap';
 import { logger } from './logger';
 import { config } from './config';
 import { client } from './client';
-import { MapLibreGL, TargetetEvent } from './deck-gl/types';
+import { TargetetEvent } from './deck-gl/types';
 import { AppConfig } from './utils/interfaces';
 import { cooldownLayerFactory } from './deck-gl/cooldown';
 
@@ -403,7 +402,7 @@ export const App: React.FC = () => {
         layers={[basemapLayer, tilesLayer, cooldownsLayer]}
         onViewStateChange={handleViewportChange}
       >
-        <Map id="map" reuseMaps={true} mapLib={maplibregl as unknown as MapLibreGL} attributionControl={false} />
+        <Map id="map" reuseMaps={true} attributionControl={false} />
         <Tooltip hoverInfo={hoverInfo} />
       </DeckGL>
       <Preferences

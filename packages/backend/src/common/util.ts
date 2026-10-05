@@ -1,7 +1,7 @@
-import { createHash } from 'crypto';
-import { TileParams, TileParamsWithKit } from '@map-colonies/detiler-common';
-import { BoundingBox, LonLat } from '@map-colonies/tile-calc';
-import { TileRequestParams } from '../tileDetails/controllers/tileDetailsController';
+import { createHash } from 'node:crypto';
+import type { TileParams, TileParamsWithKit } from '@map-colonies/detiler-common';
+import type { BoundingBox, LonLat } from '@map-colonies/tile-calc';
+import type { TileRequestParams } from '../tileDetails/controllers/tileDetailsController';
 import { COORDINATES_FRACTION_DIGITS, TILE_DETAILS_KEY_PREFIX } from './constants';
 import { TimeoutError } from './errors';
 

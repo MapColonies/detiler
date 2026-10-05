@@ -1,4 +1,4 @@
-import { RedisClientOptions } from 'redis';
+import type { RedisClientOptions } from 'redis';
 
 interface LogFn {
   (obj: unknown, msg?: string, ...args: unknown[]): void;

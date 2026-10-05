@@ -1,4 +1,4 @@
-FROM node:20 as build
+FROM node:24 as build
 
 ARG package=backend
 
@@ -13,7 +13,7 @@ COPY ./tsconfig.json ./tsconfig.build.json ./
 
 RUN npm run build
 
-FROM node:20.3.1-alpine3.17 as production
+FROM node:24-alpine as production
 
 ARG package=backend
 
@@ -33,4 +33,4 @@ COPY --chown=node:node --from=build /tmp/buildApp/config ./config
 
 USER node
 EXPOSE 8080
-CMD ["dumb-init", "node", "--max_old_space_size=512", "./index.js"]
+CMD ["dumb-init", "node", "--import", "./instrumentation.mjs", "--max_old_space_size=512", "./index.js"]

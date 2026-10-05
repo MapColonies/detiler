@@ -2,7 +2,7 @@ import { ThemeProvider } from '@emotion/react';
 import { createTheme, PaletteMode, styled, ThemeOptions, useTheme } from '@mui/material';
 import { amber, grey, deepPurple } from '@mui/material/colors';
 import { MaterialDesignContent } from 'notistack';
-import { createContext, useMemo, useState } from 'react';
+import { createContext, useMemo, useState, type JSX } from 'react';
 import * as d3 from 'd3';
 import { RGBA_MAX } from '../utils/style';
 

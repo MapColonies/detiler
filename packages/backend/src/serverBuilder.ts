@@ -1,4 +1,4 @@
-import express, { Router } from 'express';
+import express, { Router, RequestHandler } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import cors from 'cors';
@@ -7,8 +7,10 @@ import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import httpLogger from '@map-colonies/express-access-log-middleware';
-import { defaultMetricsMiddleware, getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
+import { httpLogger } from '@map-colonies/express-access-log-middleware';
+import { collectMetricsExpressMiddleware, metricsMiddleware } from '@map-colonies/prometheus';
+import { Registry } from 'prom-client';
+import { getTraceContexHeaderMiddleware } from '@map-colonies/tracing-utils';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
 import { TILE_DETAILS_ROUTER_SYMBOL } from './tileDetails/routes/tileDetailsRouter';
@@ -22,11 +24,15 @@ export class ServerBuilder {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry,
     @inject(TILE_DETAILS_ROUTER_SYMBOL) private readonly tileDetailsRouter: Router,
     @inject(KIT_ROUTER_SYMBOL) private readonly kitRouter: Router,
     @inject(COOLDOWN_ROUTER_SYMBOL) private readonly cooldownRouter: Router
   ) {
     this.serverInstance = express();
+    // express@5 changed the default from 'extended' to 'simple', which no longer parses bracket-notation
+    // array query params (e.g. bbox[0]=..&bbox[1]=..) into arrays, breaking the openapi array validation
+    this.serverInstance.set('query parser', 'extended');
   }
 
   public build(): express.Application {
@@ -56,7 +62,10 @@ export class ServerBuilder {
   private registerPreRoutesMiddleware(): void {
     this.serverInstance.use(cors());
 
-    this.serverInstance.use('/metrics', defaultMetricsMiddleware());
+    // @map-colonies/prometheus bundles its own express@4 types, incompatible with this app's express@5 types at the type level only
+    this.serverInstance.use(collectMetricsExpressMiddleware({ registry: this.metricsRegistry }) as unknown as RequestHandler);
+    // collectMetricsExpressMiddleware already registered default node metrics on this registry; collecting them again here would throw
+    this.serverInstance.get('/metrics', metricsMiddleware(this.metricsRegistry, false) as unknown as RequestHandler);
     this.serverInstance.use(httpLogger({ logger: this.logger, ignorePaths: ['/metrics'] }));
 
     if (this.config.get<boolean>('server.response.compression.enabled')) {

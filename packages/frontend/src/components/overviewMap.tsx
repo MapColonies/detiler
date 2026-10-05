@@ -1,14 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import DeckGL from '@deck.gl/react';
-import { Map } from 'react-map-gl';
-import maplibregl from 'maplibre-gl';
+import { Map } from 'react-map-gl/maplibre';
 import { MapViewState } from '@deck.gl/core';
 import { useTheme } from '@mui/material';
 import { Feature } from 'geojson';
 import { differenceWith } from 'lodash';
 import { INITIAL_VIEW_STATE, ZOOM_OFFEST } from '../utils/constants';
-import { Bounds, MapLibreGL } from '../deck-gl/types';
+import { Bounds } from '../deck-gl/types';
 import { CONSTANT_GEOJSON_LAYER_PROPERTIES, OVERVIEW_BASEMAP_LAYER_ID, OVERVIEW_GEOJSON_LAYER_ID } from '../deck-gl/constants';
 import { bboxToFeature, bboxToLonLat } from '../utils/helpers';
 import { basemapLayerFactory } from '../deck-gl/basemap';
@@ -58,7 +57,7 @@ export const OverviewMap: React.FC<OverviewMapProps> = ({ bounds, zoom }) => {
 
   return (
     <DeckGL initialViewState={viewState} controller={true} layers={layers}>
-      <Map id="overview-map" reuseMaps={true} mapLib={maplibregl as unknown as MapLibreGL} attributionControl={false} />
+      <Map id="overview-map" reuseMaps={true} attributionControl={false} />
     </DeckGL>
   );
 };

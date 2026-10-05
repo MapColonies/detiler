@@ -1,21 +1,21 @@
-import { KitMetadata } from '@map-colonies/detiler-common';
-import jsLogger from '@map-colonies/js-logger';
+import { beforeAll, beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
+import type { KitMetadata } from '@map-colonies/detiler-common';
+import { jsLogger } from '@map-colonies/js-logger';
 import { createClient } from 'redis';
 import { REDIS_KITS_HASH_PREFIX, REDIS_KITS_SET } from '../../../../src/common/constants';
 import { KitAlreadyExistsError } from '../../../../src/kit/models/errors';
-import { Kit } from '../../../../src/kit/models/kit';
+import type { Kit } from '../../../../src/kit/models/kit';
 import { KitManager, UPDATE_MAX_VALUES_SCRIPT } from '../../../../src/kit/models/kitManager';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-jest.mock('redis', () => ({
-  ...jest.requireActual('redis'),
-  createClient: jest.fn().mockImplementation(() => ({
-    hGet: jest.fn(),
-    hGetAll: jest.fn(),
-    hSet: jest.fn(),
-    sMembers: jest.fn(),
-    sAdd: jest.fn(),
-    eval: jest.fn(),
+vi.mock('redis', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  createClient: vi.fn().mockImplementation(() => ({
+    hGet: vi.fn(),
+    hGetAll: vi.fn(),
+    hSet: vi.fn(),
+    sMembers: vi.fn(),
+    sAdd: vi.fn(),
+    eval: vi.fn(),
   })),
 }));
 
@@ -23,15 +23,15 @@ type RedisClient = ReturnType<typeof createClient>;
 
 describe('KitManager', () => {
   let kitManager: KitManager;
-  let mockedRedis: jest.Mocked<RedisClient>;
+  let mockedRedis: Mocked<RedisClient>;
 
-  beforeAll(() => {
-    mockedRedis = createClient({}) as jest.Mocked<RedisClient>;
-    kitManager = new KitManager(jsLogger({ enabled: false }), mockedRedis);
+  beforeAll(async () => {
+    mockedRedis = createClient({}) as Mocked<RedisClient>;
+    kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis);
   });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('#getAllKits', () => {

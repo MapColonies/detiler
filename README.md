@@ -84,3 +84,11 @@ integration tests are missing due to `node-redis` library structure, [see open i
 ```
 npx lerna run test
 ```
+
+
+```
+nvm use
+docker run -d --name detiler-redis -p 6379:6379 redis/redis-stack-server:7.2.0-v10
+cd packages/backend && npm run start
+cd packages/frontend && npx vite
+```
