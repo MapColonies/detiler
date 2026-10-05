@@ -21,7 +21,8 @@
     "overrides": {
         "axios-retry": {
             "axios": "$axios"
-        }
+        },
+        "maplibre-gl": "npm:@nivgreen/maplibre-gl-js-crs84@6.7.0-rc.1"
     },
     "devDependencies": {
         "@commitlint/cli": "^20.5.3",

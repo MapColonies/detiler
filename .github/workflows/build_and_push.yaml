@@ -3,8 +3,9 @@ name: build_and_push
 on:
   workflow_dispatch:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - feat/refactor
+      - master
 
 jobs:
   build_and_push:
@@ -21,6 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: set short sha
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
       - uses: azure/docker-login@v1
         with:
           login-server: ${{ secrets.ACR_URL }}
@@ -30,8 +34,8 @@ jobs:
       - name: build and push
         run: |
           docker build -f packages/${{ matrix.package }}/Dockerfile \
-            -t ${{ secrets.ACR_URL }}/${{ matrix.image }}:${{ github.ref_name }} .
-          docker push ${{ secrets.ACR_URL }}/${{ matrix.image }}:${{ github.ref_name }}
+            -t ${{ secrets.ACR_URL }}/${{ matrix.image }}:${{ env.SHORT_SHA }} .
+          docker push ${{ secrets.ACR_URL }}/${{ matrix.image }}:${{ env.SHORT_SHA }}
 
   bump_vector_helms:
     name: bump image tags in vector-helms
@@ -51,6 +55,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: vector-helms
 
+      - name: set short sha
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
       - name: install yq
         run: |
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
@@ -59,8 +66,8 @@ jobs:
       - name: bump image tags
         working-directory: vector-helms
         run: |
-          yq -i '.backend.image.tag = "${{ github.ref_name }}"' detiler-helms/values.yaml
-          yq -i '.frontend.image.tag = "${{ github.ref_name }}"' detiler-helms/values.yaml
+          yq -i '.backend.image.tag = "${{ env.SHORT_SHA }}"' detiler-helms/values.yaml
+          yq -i '.frontend.image.tag = "${{ env.SHORT_SHA }}"' detiler-helms/values.yaml
 
       - name: commit and push
         working-directory: vector-helms
@@ -69,5 +76,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add detiler-helms/values.yaml
           git diff --cached --quiet && exit 0
-          git commit -m "chore(detiler): bump image tags to ${{ github.ref_name }}"
+          git commit -m "chore(detiler): bump image tags to ${{ env.SHORT_SHA }}"
           git push
