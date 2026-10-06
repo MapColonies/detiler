@@ -52,7 +52,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: MapColonies/vector-helms
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.HELM_REPO_TOKEN }}
           path: vector-helms
 
       - name: set short sha
