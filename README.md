@@ -57,12 +57,13 @@ see [.env.production](/packages/frontend/config/.env.production) and [env.sh](/p
 
 ## Redis
 ### key prefix (shared Redis instances):
-`detiler-backend` can be configured with `redis.keyPrefix` (env var `REDIS_KEY_PREFIX`, default `""`) to avoid colliding
-with other apps, or other `detiler` deployments/environments, that point at the same Redis instance. When set, it is
-prepended verbatim (no separator is added — include your own, e.g. `"myenv:"` or `"myenv-"`) to every key
+`detiler-backend` can be configured with `redis.keyPrefix` (env var `REDIS_KEY_PREFIX`, default `"detiler:"`) to avoid
+colliding with other apps, or other `detiler` deployments/environments, that point at the same Redis instance. When
+set, it is prepended verbatim (no separator is added — include your own, e.g. `"myenv:"` or `"myenv-"`) to every key
 (`tile:...`, `kit:...`, `kits`, `cooldown:...`) **and** to both RediSearch index names (`tileDetailsIdx`,
-`cooldownIdx` below become `<prefix>tileDetailsIdx`, `<prefix>cooldownIdx`). Leaving it unset/empty preserves the
-exact key and index names below, so existing single-tenant deployments are unaffected.
+`cooldownIdx` below become `<prefix>tileDetailsIdx`, `<prefix>cooldownIdx`). Set `REDIS_KEY_PREFIX=""` explicitly to
+get the unprefixed exact key and index names below (e.g. for an existing single-tenant deployment predating this
+default).
 
 Each environment that sets a distinct prefix gets its own, separately-named indices, created automatically (see below)
 — no manual step needed per environment.
@@ -77,7 +78,7 @@ FT.CREATE <prefix>tileDetailsIdx ON JSON PREFIX 1 <prefix>tile: SCHEMA $.kit AS 
 
 FT.CREATE <prefix>cooldownIdx ON JSON PREFIX 1 <prefix>cooldown: SCHEMA $.kits[*] AS kits TAG $.minZoom AS minZoom NUMERIC $.maxZoom AS maxZoom NUMERIC $.enabled AS enabled TAG $.geoshape AS geoshape GEOSHAPE SPHERICAL
 ```
-(`<prefix>` is literally empty when `REDIS_KEY_PREFIX` is unset.) This requires the Redis user `detiler-backend`
+(`<prefix>` is `detiler:` by default — set `REDIS_KEY_PREFIX=""` to make it literally empty, as shown above.) This requires the Redis user `detiler-backend`
 connects as to have `FT.CREATE` permission — if its ACL is read/write-only on data commands, grant it or keep running
 these commands manually instead.
 

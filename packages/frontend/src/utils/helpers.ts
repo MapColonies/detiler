@@ -5,7 +5,9 @@ import { FEATURE_ID_DUMMY, MAX_LATITUDE, MAX_LONGITUDE, MIN_LATITUDE, MIN_LONGIT
 import { AppHelper } from './interfaces';
 
 const TILE_PIXELS = 256;
-const DEGREES_IN_CIRCLE = 360;
+// TILEGRID_WORLD_CRS84 is 2 tiles wide × 1 tall at zoom 0, so one tile-height's worth of pixels spans 180°
+// on BOTH axes (the 2x width is already covered by the grid itself, not by a wider degree span per tile).
+const WORLD_DEGREES_PER_TILE = 180;
 const ZOOM_SCALE_BASE = 2;
 const HALF = 2;
 
@@ -50,8 +52,8 @@ export interface ViewportBoundsParams {
  */
 export const getCRS84ViewportBounds = ({ longitude, latitude, zoom, width, height }: ViewportBoundsParams): [number, number, number, number] => {
   const worldSize = TILE_PIXELS * Math.pow(ZOOM_SCALE_BASE, zoom);
-  const lonSpan = (width / worldSize) * DEGREES_IN_CIRCLE;
-  const latSpan = (height / worldSize) * DEGREES_IN_CIRCLE;
+  const lonSpan = (width / worldSize) * WORLD_DEGREES_PER_TILE;
+  const latSpan = (height / worldSize) * WORLD_DEGREES_PER_TILE;
 
   return [longitude - lonSpan / HALF, latitude - latSpan / HALF, longitude + lonSpan / HALF, latitude + latSpan / HALF];
 };

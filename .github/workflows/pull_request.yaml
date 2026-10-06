@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        node: [20.x]
+        node: [24.x]
 
     steps:
       - name: Check out TS Project Git repository
@@ -56,7 +56,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install TS Project dependencies
         run: npm ci
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [20.x]
+        node: [24.x]
 
     steps:
       - name: Check out Git repository

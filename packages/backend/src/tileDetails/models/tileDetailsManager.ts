@@ -187,7 +187,13 @@ export class TileDetailsManager {
 
           await transaction.exec();
 
-          await this.kitManager.updateMaxValues(params.kit, state, payload.timestamp);
+          try {
+            await this.kitManager.updateMaxValues(params.kit, state, payload.timestamp);
+          } catch (err) {
+            // the tile write above already committed; a failure here must not surface as an upsert failure,
+            // or the caller will retry and double-count the counters incremented in the transaction above
+            this.logger.error({ msg: 'failed updating kit max values after a successful tile upsert', err, key, params, payload });
+          }
 
           return UpsertStatus.UPDATED;
         }
@@ -217,7 +223,13 @@ export class TileDetailsManager {
 
         await transaction.exec();
 
-        await this.kitManager.updateMaxValues(params.kit, state, payload.timestamp);
+        try {
+          await this.kitManager.updateMaxValues(params.kit, state, payload.timestamp);
+        } catch (err) {
+          // the tile write above already committed; a failure here must not surface as an upsert failure,
+          // or the caller will retry and double-count the counters set by the transaction above
+          this.logger.error({ msg: 'failed updating kit max values after a successful tile upsert', err, key, params, payload });
+        }
 
         return UpsertStatus.INSERTED;
       });
