@@ -15,6 +15,7 @@ export type RedisConfig = {
   port: number;
   enableSslAuth: boolean;
   sslPaths: { ca: string; cert: string; key: string };
+  keyPrefix: string;
 } & RedisClientOptions;
 
 export interface OpenApiConfig {

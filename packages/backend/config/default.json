@@ -36,6 +36,7 @@
       "key": "",
       "cert": ""
     },
-    "database": 0
+    "database": 0,
+    "keyPrefix": ""
   }
 }

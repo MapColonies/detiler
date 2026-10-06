@@ -11,6 +11,7 @@ import {
   SEARCHED_GEOSHAPE_NAME,
   TILE_DETAILS_KEY_PREFIX,
 } from '../../../src/common/constants';
+import type { IConfig } from '../../../src/common/interfaces';
 import { bboxToWktPolygon, UpsertStatus } from '../../../src/common/util';
 import { KitManager, UPDATE_MAX_VALUES_SCRIPT } from '../../../src/kit/models/kitManager';
 import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '../../../src/redis';
@@ -66,14 +67,16 @@ vi.mock('redis', async (importOriginal) => ({
 
 type RedisClient = ReturnType<typeof createClient>;
 
+const configMock: IConfig = { get: () => ({ keyPrefix: '' }), has: () => true };
+
 describe('TileDetailsManager', () => {
   let manager: TileDetailsManager;
   let mockedRedis: Mocked<RedisClient>;
 
   beforeAll(async () => {
     mockedRedis = createClient() as Mocked<RedisClient>;
-    const kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis);
-    manager = new TileDetailsManager(await jsLogger({ enabled: false }), mockedRedis, kitManager);
+    const kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, configMock);
+    manager = new TileDetailsManager(await jsLogger({ enabled: false }), mockedRedis, configMock, kitManager);
   });
 
   beforeEach(() => {
@@ -743,6 +746,37 @@ describe('TileDetailsManager', () => {
       expect(setMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
       expect(evalMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('with a configured redis key prefix', () => {
+    const prefix = 'env1:';
+    const prefixedConfigMock: IConfig = { get: () => ({ keyPrefix: prefix }), has: () => true };
+    let prefixedManager: TileDetailsManager;
+
+    beforeAll(async () => {
+      const kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, prefixedConfigMock);
+      prefixedManager = new TileDetailsManager(await jsLogger({ enabled: false }), mockedRedis, prefixedConfigMock, kitManager);
+    });
+
+    it('should prefix tile keys, the kit hash key and the search index name', async () => {
+      const params: TileParamsWithKit = { z: 1, x: 0, y: 0, kit: 'kit1' };
+      hGetMock.mockResolvedValue(params.kit);
+      existsMock.mockResolvedValue(0);
+      executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
+      multiMock.mockReturnValue(mockedRedis);
+      searchMock.mockResolvedValue({ documents: [], total: 0 });
+
+      await prefixedManager.upsertTilesDetails(params, { timestamp: 1000 });
+      await prefixedManager.getTilesDetailsByZXY({ z: params.z, x: params.x, y: params.y });
+
+      expect(hGetMock).toHaveBeenCalledWith(`${prefix}${REDIS_KITS_HASH_PREFIX}:${params.kit}`, 'name');
+      expect(setMock).toHaveBeenCalledWith(
+        `${prefix}${TILE_DETAILS_KEY_PREFIX}:${params.kit}:${params.z}/${params.x}/${params.y}`,
+        '$',
+        expect.anything()
+      );
+      expect(searchMock).toHaveBeenCalledWith(`${prefix}${REDIS_TILE_INDEX_NAME}`, expect.any(String), expect.anything());
     });
   });
 });

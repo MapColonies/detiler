@@ -10,11 +10,14 @@ import {
   REDIS_WILDCARD,
   SEARCHED_GEOSHAPE_NAME,
 } from '../../../../src/common/constants';
+import type { IConfig } from '../../../../src/common/interfaces';
 import { CooldownManager } from '../../../../src/cooldown/models/cooldownManager';
 import { bboxToWktPolygon, hashValue } from '../../../../src/common/util';
 import { HALF_GLOBE_BBOX } from '../../../../src/cooldown/models/constants';
 
 const NOW_MOCK = 1000;
+
+const configMock: IConfig = { get: () => ({ keyPrefix: '' }), has: () => true };
 
 const executeIsolatedMock = vi.fn();
 const multiMock = vi.fn();
@@ -47,7 +50,7 @@ describe('CooldownManager', () => {
 
   beforeAll(async () => {
     mockedRedis = createClient({}) as Mocked<RedisClient>;
-    cooldownManager = new CooldownManager(await jsLogger({ enabled: false }), mockedRedis);
+    cooldownManager = new CooldownManager(await jsLogger({ enabled: false }), mockedRedis, configMock);
   });
 
   beforeEach(() => {
@@ -254,6 +257,36 @@ describe('CooldownManager', () => {
       expect(setMock).toHaveBeenCalledWith(expectedKey, '$', expected);
       expect(expireMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('with a configured redis key prefix', () => {
+    const prefix = 'env1:';
+    const prefixedConfigMock: IConfig = { get: () => ({ keyPrefix: prefix }), has: () => true };
+    let prefixedCooldownManager: CooldownManager;
+
+    beforeAll(async () => {
+      prefixedCooldownManager = new CooldownManager(await jsLogger({ enabled: false }), mockedRedis, prefixedConfigMock);
+    });
+
+    it('should prefix the cooldown index name and key', async () => {
+      vi.spyOn(Date, 'now').mockImplementation(() => NOW_MOCK);
+      executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
+      multiMock.mockReturnValue(mockedRedis);
+      searchMock.mockResolvedValue({ documents: [], total: 0 });
+
+      const newCooldownRequest: CooldownCreationRequest = { enabled: true, duration: 100, kits: ['a'], minZoom: 0, maxZoom: 1 };
+      const expectedToBeHashed = { ...newCooldownRequest, geoshape: bboxToWktPolygon(HALF_GLOBE_BBOX) };
+      const expectedKey = `${prefix}${COOLDOWN_KEY_PREFIX}:${hashValue(expectedToBeHashed)}`;
+
+      await prefixedCooldownManager.createCooldown(newCooldownRequest);
+      await prefixedCooldownManager.queryCooldowns({ from: 0, size: 2 });
+
+      expect(setMock).toHaveBeenCalledWith(expectedKey, '$', expect.objectContaining({}));
+      expect(searchMock).toHaveBeenCalledWith(`${prefix}${REDIS_COOLDOWN_INDEX_NAME}`, REDIS_WILDCARD, {
+        DIALECT: REDIS_SEARCH_DIALECT,
+        LIMIT: { from: 0, size: 2 },
+      });
     });
   });
 });
