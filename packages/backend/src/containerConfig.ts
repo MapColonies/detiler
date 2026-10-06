@@ -10,11 +10,13 @@ import { instancePerContainerCachingFactory } from 'tsyringe';
 import { Registry } from 'prom-client';
 import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from './common/constants';
 import { getTracing } from './common/tracing';
+import type { RedisConfig } from './common/interfaces';
 import { tileDetailsRouterFactory, TILE_DETAILS_ROUTER_SYMBOL } from './tileDetails/routes/tileDetailsRouter';
 import type { InjectionObject } from './common/dependencyRegistration';
 import { registerDependencies } from './common/dependencyRegistration';
 import type { RedisClient } from './redis';
 import { healthCheckFunctionFactory, redisClientFactory } from './redis';
+import { ensureSearchIndices } from './redis/indices';
 import { kitRouterFactory, KIT_ROUTER_SYMBOL } from './kit/routes/kitRouter';
 import { COOLDOWN_ROUTER_SYMBOL, cooldownRouterFactory } from './cooldown/routes/cooldownRouter';
 
@@ -54,6 +56,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
           const redis = deps.resolve<RedisClient>(SERVICES.REDIS);
           cleanupRegistry.register({ func: redis.disconnect.bind(redis), id: SERVICES.REDIS });
           await redis.connect();
+          await ensureSearchIndices(redis, logger, config.get<RedisConfig>('redis').keyPrefix);
         },
       },
       {

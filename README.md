@@ -64,20 +64,22 @@ prepended verbatim (no separator is added — include your own, e.g. `"myenv:"` 
 `cooldownIdx` below become `<prefix>tileDetailsIdx`, `<prefix>cooldownIdx`). Leaving it unset/empty preserves the
 exact key and index names below, so existing single-tenant deployments are unaffected.
 
-Each environment that sets a distinct prefix must create its own indices with the matching prefixed `PREFIX` clause
-(see below) — index creation is a manual, one-time operation against Redis, not something `detiler-backend` does
-itself.
+Each environment that sets a distinct prefix gets its own, separately-named indices, created automatically (see below)
+— no manual step needed per environment.
 
-### redis search tile details index creation:
+### redis search index creation:
+On every startup, `detiler-backend` ensures both RediSearch indices exist, creating whichever are missing — see
+`ensureSearchIndices` in [indices.ts](/packages/backend/src/redis/indices.ts). `FT.CREATE` fails with `Index already
+exists` if an index is already there, which is caught and ignored, so this is safe to run on every boot (including
+with multiple replicas starting concurrently) and requires no manual setup. It's equivalent to running:
 ```
 FT.CREATE <prefix>tileDetailsIdx ON JSON PREFIX 1 <prefix>tile: SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.renderedAt AS renderedAt NUMERIC $.createdAt AS createdAt NUMERIC $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.states[*] AS states NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
-```
 
-### redis search cooldowns index creation:
-```
 FT.CREATE <prefix>cooldownIdx ON JSON PREFIX 1 <prefix>cooldown: SCHEMA $.kits[*] AS kits TAG $.minZoom AS minZoom NUMERIC $.maxZoom AS maxZoom NUMERIC $.enabled AS enabled TAG $.geoshape AS geoshape GEOSHAPE SPHERICAL
 ```
-(`<prefix>` is literally empty — drop it entirely, e.g. `FT.CREATE tileDetailsIdx ON JSON PREFIX 1 tile: ...` — when `REDIS_KEY_PREFIX` is unset.)
+(`<prefix>` is literally empty when `REDIS_KEY_PREFIX` is unset.) This requires the Redis user `detiler-backend`
+connects as to have `FT.CREATE` permission — if its ACL is read/write-only on data commands, grant it or keep running
+these commands manually instead.
 
 ### kit metadata maintenance:
 each kit's `maxState` and `maxUpdatedAt` (used by the frontend to bound its state-range filter) are maintained directly by `detiler-backend` itself, on every tile upsert — see `KitManager.updateMaxValues` in [kitManager.ts](/packages/backend/src/kit/models/kitManager.ts). it atomically raises those two fields via a Lua script (`EVAL`), so no separate Redis module or out-of-process script is required.
