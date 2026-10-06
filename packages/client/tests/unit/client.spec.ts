@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import nock from 'nock';
 import { AxiosError } from 'axios';
 import httpStatusCodes from 'http-status-codes';
@@ -22,7 +23,7 @@ describe('Client', () => {
 
   beforeEach(() => {
     detiler = new DetilerClient({ url: MOCK_DETILER_URL });
-    jest.resetAllMocks();
+    vi.resetAllMocks();
     nock.cleanAll();
   });
 
@@ -31,7 +32,7 @@ describe('Client', () => {
       const kit1 = 'kit1';
       const kit2 = 'kit2';
       nock(MOCK_DETILER_URL).get('/kits').reply(httpStatusCodes.OK, [kit1, kit2]);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const response = await detiler.getKits();
 
@@ -42,7 +43,7 @@ describe('Client', () => {
 
     it('should throw an error if the http get request has errored', async function () {
       nock(MOCK_DETILER_URL).get(`/kits`).reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       await expect(detiler.getKits()).rejects.toThrow(AxiosError);
       expect(getSpy).toHaveBeenCalledTimes(1);
@@ -58,7 +59,7 @@ describe('Client', () => {
         .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params })
         .reply(httpStatusCodes.OK, details);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const response = await detiler.queryTilesDetails(params);
 
@@ -73,7 +74,7 @@ describe('Client', () => {
         .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params })
         .reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       await expect(detiler.queryTilesDetails(params)).rejects.toThrow(AxiosError);
       expect(getSpy).toHaveBeenCalledTimes(1);
@@ -114,7 +115,7 @@ describe('Client', () => {
         .get(TILE_DETAILS_ENDPOINT)
         .query({ ...lastParams })
         .reply(httpStatusCodes.OK, details4);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const queryGenerator = detiler.queryTilesDetailsAsyncGenerator(params1);
 
@@ -152,7 +153,7 @@ describe('Client', () => {
         .query({ ...params3 })
         .thrice()
         .reply(httpStatusCodes.OK, details3);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const queryGenerator = detiler.queryTilesDetailsAsyncGenerator(params1);
 
@@ -174,7 +175,7 @@ describe('Client', () => {
         .query({ ...params, size: DEFAULT_PAGE_SIZE })
         .once()
         .reply(httpStatusCodes.OK, details);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const queryGenerator = detiler.queryTilesDetailsAsyncGenerator(params);
 
@@ -192,7 +193,7 @@ describe('Client', () => {
         .get(TILE_DETAILS_ENDPOINT)
         .query({ ...params })
         .reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const queryGenerator = detiler.queryTilesDetailsAsyncGenerator(params);
 
@@ -207,7 +208,7 @@ describe('Client', () => {
       const details = { a: 1 };
       const params: TileParamsWithKit = { kit: 'kit', z: 1, x: 1, y: 1 };
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).reply(httpStatusCodes.OK, details);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const response = await detiler.getTileDetails(params);
 
@@ -219,7 +220,7 @@ describe('Client', () => {
     it('should retrun null if tile details were not found', async function () {
       const params: TileParamsWithKit = { kit: 'kit', z: 1, x: 1, y: 1 };
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).reply(httpStatusCodes.NOT_FOUND);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const response = await detiler.getTileDetails(params);
 
@@ -231,7 +232,7 @@ describe('Client', () => {
     it('should throw an error if the http get request has errored', async function () {
       const params: TileParamsWithKit = { kit: 'kit', z: 1, x: 1, y: 1 };
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       await expect(detiler.getTileDetails(params)).rejects.toThrow(AxiosError);
       expect(getSpy).toHaveBeenCalledTimes(1);
@@ -240,11 +241,27 @@ describe('Client', () => {
   });
 
   describe('#getTilesDetails', () => {
-    it('should get tiles details according to params', async function () {
+    it('should get tiles details filtered by the given kits', async function () {
       const details = { a: 1 };
       const params: TileParams & { kits?: string[] } = { kits: ['kit1', 'kit2'], z: 1, x: 1, y: 1 };
+      nock(MOCK_DETILER_URL).get(`/detail/${params.z}/${params.x}/${params.y}`).query({ kits: params.kits }).reply(httpStatusCodes.OK, details);
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
+
+      const response = await detiler.getTilesDetails(params);
+
+      expect(response).toMatchObject(details);
+      expect(getSpy).toHaveBeenCalledTimes(1);
+      expect(getSpy).toHaveBeenCalledWith(
+        `${MOCK_DETILER_URL}/detail/${params.z}/${params.x}/${params.y}`,
+        expect.objectContaining({ params: { kits: params.kits } })
+      );
+    });
+
+    it('should get tiles details for all kits when kits is not provided', async function () {
+      const details = { a: 1 };
+      const params: TileParams & { kits?: string[] } = { z: 1, x: 1, y: 1 };
       nock(MOCK_DETILER_URL).get(`/detail/${params.z}/${params.x}/${params.y}`).reply(httpStatusCodes.OK, details);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const response = await detiler.getTilesDetails(params);
 
@@ -254,8 +271,11 @@ describe('Client', () => {
 
     it('should throw an error if the http get request has errored', async function () {
       const params: TileParams & { kits?: string[] } = { kits: ['kit1', 'kit2'], z: 1, x: 1, y: 1 };
-      nock(MOCK_DETILER_URL).get(`/detail/${params.z}/${params.x}/${params.y}`).reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      nock(MOCK_DETILER_URL)
+        .get(`/detail/${params.z}/${params.x}/${params.y}`)
+        .query({ kits: params.kits })
+        .reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       await expect(detiler.getTilesDetails(params)).rejects.toThrow(AxiosError);
 
@@ -268,7 +288,7 @@ describe('Client', () => {
       const params: TileParamsWithKit = { kit: 'kit', z: 1, x: 1, y: 1 };
       const payload: TileDetailsPayload = { state: 1, timestamp: 1 };
       nock(MOCK_DETILER_URL).put(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).reply(httpStatusCodes.CREATED);
-      const putSpy = jest.spyOn(detiler['axios'], 'put');
+      const putSpy = vi.spyOn(detiler['axios'], 'put');
 
       await detiler.setTileDetails(params, payload);
 
@@ -280,7 +300,7 @@ describe('Client', () => {
       const params: TileParamsWithKit = { kit: 'kit', z: 1, x: 1, y: 1 };
       const payload: TileDetailsPayload = { state: 1, timestamp: 1 };
       nock(MOCK_DETILER_URL).put(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
-      const putSpy = jest.spyOn(detiler['axios'], 'put');
+      const putSpy = vi.spyOn(detiler['axios'], 'put');
 
       await expect(detiler.setTileDetails(params, payload)).rejects.toThrow(AxiosError);
 
@@ -322,7 +342,7 @@ describe('Client', () => {
         .get(COOLDOWN_ENDPOINT)
         .query({ ...lastParams })
         .reply(httpStatusCodes.OK, cooldown4);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const queryGenerator = detiler.queryCooldownsAsyncGenerator(params1);
 
@@ -360,7 +380,7 @@ describe('Client', () => {
         .query({ ...params3 })
         .thrice()
         .reply(httpStatusCodes.OK, cooldown3);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const queryGenerator = detiler.queryCooldownsAsyncGenerator({ size: 2 });
 
@@ -382,7 +402,7 @@ describe('Client', () => {
         .query({ ...params, from: 0, size: DEFAULT_PAGE_SIZE })
         .once()
         .reply(httpStatusCodes.OK, cooldowns);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const queryGenerator = detiler.queryCooldownsAsyncGenerator(params);
 
@@ -400,7 +420,7 @@ describe('Client', () => {
         .get(COOLDOWN_ENDPOINT)
         .query({ ...params })
         .reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
-      const getSpy = jest.spyOn(detiler['axios'], 'get');
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       const queryGenerator = detiler.queryCooldownsAsyncGenerator(params);
 
@@ -423,7 +443,7 @@ describe('Client', () => {
 
       const params: TileParamsWithKit = { kit: 'kit', z: 1, x: 1, y: 1 };
       nock(MOCK_DETILER_URL).persist().get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).replyWithError(networkError);
-      const spyWithRetry = jest.spyOn(detilerWithRetry['axios'], 'get');
+      const spyWithRetry = vi.spyOn(detilerWithRetry['axios'], 'get');
 
       await expect(detilerWithRetry.getTileDetails(params)).rejects.toThrow(AxiosError);
       expect(spyWithRetry).toHaveBeenCalledTimes(1);
@@ -444,7 +464,7 @@ describe('Client', () => {
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).once().replyWithError(networkError);
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).twice().replyWithError(networkError);
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).thrice().reply(httpStatusCodes.OK, details);
-      const spyWithRetry = jest.spyOn(detilerWithRetry['axios'], 'get');
+      const spyWithRetry = vi.spyOn(detilerWithRetry['axios'], 'get');
 
       const response = await detilerWithRetry.getTileDetails(params);
 
@@ -469,7 +489,7 @@ describe('Client', () => {
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).once().replyWithError(networkError);
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).twice().replyWithError(networkError);
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).thrice().reply(httpStatusCodes.OK, details);
-      const spyWithRetry = jest.spyOn(detilerWithRetry['axios'], 'get');
+      const spyWithRetry = vi.spyOn(detilerWithRetry['axios'], 'get');
 
       const response = await detilerWithRetry.getTileDetails(params);
 
@@ -495,7 +515,7 @@ describe('Client', () => {
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).once().replyWithError(networkError);
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).twice().replyWithError(networkError);
       nock(MOCK_DETILER_URL).get(`/detail/${params.kit}/${params.z}/${params.x}/${params.y}`).thrice().reply(httpStatusCodes.OK, details);
-      const spyWithRetry = jest.spyOn(detilerWithRetry['axios'], 'get');
+      const spyWithRetry = vi.spyOn(detilerWithRetry['axios'], 'get');
 
       detilerWithRetry['axios'].interceptors.request.use((req) => {
         expect(req.headers).toEqual(expect.objectContaining(headers));

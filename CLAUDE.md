@@ -28,27 +28,27 @@ npx lerna run test           # runs all unit test suites
 npx lerna run lint
 ```
 
-Within `packages/backend` or `packages/client` (same script names in both):
+All of `packages/backend`, `packages/client`, and `packages/common` run their unit tests on vitest (same script names across all three):
 ```bash
 npm run build                # tsc -p tsconfig.build.json, then copies config/openapi3.yaml/package.json into dist
-npm run test:unit            # jest --config=./tests/configurations/unit/jest.config.js
+npm run test:unit            # vitest run (backend scopes this to its unit project: `vitest run --project unit`)
 npm run lint / lint:fix
 npm run format / format:fix
 npm start                    # backend only: build, then `node dist/index.js`
 ```
 
-Run a single test file or test name:
+Run a single test file or test name (works the same in all three packages):
 ```bash
-npx jest --config=./tests/configurations/unit/jest.config.js tests/unit/kit/models/kit.spec.ts
-npx jest --config=./tests/configurations/unit/jest.config.js -t "should create the kit"
+npx vitest run tests/unit/kit/models/kit.spec.ts
+npx vitest run -t "should create the kit"
 ```
-Note: running a narrowed subset will still report a non-zero exit from the global coverage thresholds below even when every test passes — check the `Tests:` line, not the process exit code, when running less than the full suite.
+Note: running a narrowed subset will still report a non-zero exit from the coverage thresholds below even when every test passes — check the `Tests` summary line, not the process exit code, when running less than the full suite.
 
-`packages/common` defines a `test:unit` script but has no `tests/` directory or jest config at all — it's effectively a no-op (there's nothing to run). `packages/frontend` has no jest suite — it has `npm run typecheck` (custom `typecheck.mjs`) and `npm run build` (typecheck + `vite build`); for local dev run `npx vite` directly inside `packages/frontend` (the `start` script is `vite preview`, which only serves an already-built `dist/`, not a dev server).
+`packages/backend` additionally has `npm run test:e2e` (`vitest run --project e2e --coverage.enabled=false`), which hits a real running instance instead of mocks — see [tests/e2e/README.md](packages/backend/tests/e2e/README.md). `packages/common` is almost entirely types/constants with no logic, so its suite ([tests/unit/index.spec.ts](packages/common/tests/unit/index.spec.ts)) is a thin smoke test guarding the public constants, not a coverage-driven suite. `packages/frontend` has no test suite at all — it has `npm run typecheck` (custom `typecheck.mjs`) and `npm run build` (typecheck + `vite build`); for local dev run `npx vite` directly inside `packages/frontend` (the `start` script is `vite preview`, which only serves an already-built `dist/`, not a dev server).
 
 Integration tests are intentionally absent — see README: blocked on a `node-redis` library issue ([redis/node-redis#2546](https://github.com/redis/node-redis/issues/2546)).
 
-Jest coverage thresholds (`jest.config.base.js`): 80% branches/functions/lines globally. `backend`'s jest config additionally excludes `controllers/`, `routes/`, and `redis/` from coverage accounting.
+Vitest coverage thresholds (each package's own `vitest.config.mts`, under `test.coverage.thresholds`): 80% branches/functions/lines. `backend`'s config additionally excludes `controllers/`, `routes/`, and `redis/` from coverage accounting.
 
 ### Commit messages
 

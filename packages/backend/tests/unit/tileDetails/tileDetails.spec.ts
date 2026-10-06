@@ -669,6 +669,52 @@ describe('TileDetailsManager', () => {
       });
     });
 
+    it('should still return inserted status even if updating the kit max values fails after a successful insert', async () => {
+      executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
+      multiMock.mockReturnValue(mockedRedis);
+      const exisingKits: KitMetadata[] = [{ name: 'kit1' }];
+      hGetMock.mockResolvedValue(exisingKits);
+      existsMock.mockResolvedValue(0);
+      evalMock.mockRejectedValue(new Error('redis is busy'));
+
+      const params: TileParamsWithKit = {
+        kit: 'kit1',
+        z: 1,
+        x: 0,
+        y: 0,
+      };
+      const payload: TileDetailsPayload = { state: 666, timestamp: 1000 };
+
+      const response = await manager.upsertTilesDetails(params, payload);
+
+      expect(response).toBe(UpsertStatus.INSERTED);
+      expect(execMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should still return updated status even if updating the kit max values fails after a successful update', async () => {
+      executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
+      multiMock.mockReturnValue(mockedRedis);
+      const exisingKits: KitMetadata[] = [{ name: 'kit1' }];
+      hGetMock.mockResolvedValue(exisingKits);
+      existsMock.mockResolvedValue(1);
+      evalMock.mockRejectedValue(new Error('redis is busy'));
+
+      const params: TileParamsWithKit = {
+        kit: 'kit1',
+        z: 1,
+        x: 0,
+        y: 0,
+      };
+      const payload: TileDetailsPayload = { state: 666, timestamp: 1000 };
+
+      const response = await manager.upsertTilesDetails(params, payload);
+
+      expect(response).toBe(UpsertStatus.UPDATED);
+      expect(execMock).toHaveBeenCalledTimes(1);
+      expect(evalMock).toHaveBeenCalledTimes(1);
+    });
+
     it('should throw if watch error detected', async () => {
       executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
       multiMock.mockReturnValue(mockedRedis);

@@ -44,11 +44,9 @@ export default defineConfig({
       exclude: ['**/vendor/**', 'node_modules/**', 'src/common/**', 'src/*.ts', '**/controllers/**', '**/routes/**', '**/redis/**'],
       reportOnFailure: true,
       thresholds: {
-        global: {
-          branches: 80,
-          functions: 80,
-          lines: 80,
-        },
+        branches: 80,
+        functions: 80,
+        lines: 80,
       },
     },
   },
