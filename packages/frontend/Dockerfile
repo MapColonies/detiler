@@ -6,7 +6,7 @@ WORKDIR /tmp/buildApp
 
 COPY ./packages/${package}/package.json ./
 
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 COPY ./packages/${package} ./
 COPY ./packages/${package}/tsconfig.json ./tsconfig.build.json
