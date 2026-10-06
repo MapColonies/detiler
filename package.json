@@ -20,7 +20,7 @@
     ],
     "overrides": {
         "axios-retry": {
-            "axios": "$axios"
+            "axios": "^1.20.0"
         },
         "maplibre-gl": "npm:@nivgreen/maplibre-gl-js-crs84@6.7.0-rc.1",
         "@loaders.gl/mvt": {

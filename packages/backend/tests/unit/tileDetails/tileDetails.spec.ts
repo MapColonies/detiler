@@ -11,7 +11,6 @@ import {
   SEARCHED_GEOSHAPE_NAME,
   TILE_DETAILS_KEY_PREFIX,
 } from '../../../src/common/constants';
-import type { IConfig } from '../../../src/common/interfaces';
 import { bboxToWktPolygon, UpsertStatus } from '../../../src/common/util';
 import { KitManager, UPDATE_MAX_VALUES_SCRIPT } from '../../../src/kit/models/kitManager';
 import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '../../../src/redis';
@@ -67,7 +66,7 @@ vi.mock('redis', async (importOriginal) => ({
 
 type RedisClient = ReturnType<typeof createClient>;
 
-const configMock: IConfig = { get: () => ({ keyPrefix: '' }), has: () => true };
+const keyPrefix = '';
 
 describe('TileDetailsManager', () => {
   let manager: TileDetailsManager;
@@ -75,8 +74,8 @@ describe('TileDetailsManager', () => {
 
   beforeAll(async () => {
     mockedRedis = createClient() as Mocked<RedisClient>;
-    const kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, configMock);
-    manager = new TileDetailsManager(await jsLogger({ enabled: false }), mockedRedis, configMock, kitManager);
+    const kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, keyPrefix);
+    manager = new TileDetailsManager(await jsLogger({ enabled: false }), mockedRedis, keyPrefix, kitManager);
   });
 
   beforeEach(() => {
@@ -751,12 +750,11 @@ describe('TileDetailsManager', () => {
 
   describe('with a configured redis key prefix', () => {
     const prefix = 'env1:';
-    const prefixedConfigMock: IConfig = { get: () => ({ keyPrefix: prefix }), has: () => true };
     let prefixedManager: TileDetailsManager;
 
     beforeAll(async () => {
-      const kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, prefixedConfigMock);
-      prefixedManager = new TileDetailsManager(await jsLogger({ enabled: false }), mockedRedis, prefixedConfigMock, kitManager);
+      const kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, prefix);
+      prefixedManager = new TileDetailsManager(await jsLogger({ enabled: false }), mockedRedis, prefix, kitManager);
     });
 
     it('should prefix tile keys, the kit hash key and the search index name', async () => {

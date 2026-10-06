@@ -3,12 +3,11 @@ import type { KitMetadata } from '@map-colonies/detiler-common';
 import { jsLogger } from '@map-colonies/js-logger';
 import { createClient } from 'redis';
 import { REDIS_KITS_HASH_PREFIX, REDIS_KITS_SET } from '../../../../src/common/constants';
-import type { IConfig } from '../../../../src/common/interfaces';
 import { KitAlreadyExistsError } from '../../../../src/kit/models/errors';
 import type { Kit } from '../../../../src/kit/models/kit';
 import { KitManager, UPDATE_MAX_VALUES_SCRIPT } from '../../../../src/kit/models/kitManager';
 
-const configMock: IConfig = { get: () => ({ keyPrefix: '' }), has: () => true };
+const keyPrefix = '';
 
 vi.mock('redis', async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -30,7 +29,7 @@ describe('KitManager', () => {
 
   beforeAll(async () => {
     mockedRedis = createClient({}) as Mocked<RedisClient>;
-    kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, configMock);
+    kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, keyPrefix);
   });
 
   beforeEach(() => {
@@ -102,11 +101,10 @@ describe('KitManager', () => {
 
   describe('with a configured redis key prefix', () => {
     const prefix = 'env1:';
-    const prefixedConfigMock: IConfig = { get: () => ({ keyPrefix: prefix }), has: () => true };
     let prefixedKitManager: KitManager;
 
     beforeAll(async () => {
-      prefixedKitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, prefixedConfigMock);
+      prefixedKitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, prefix);
     });
 
     it('should prefix the kits set and kit hash keys', async () => {

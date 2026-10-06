@@ -2,7 +2,6 @@ import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import { KitMetadata } from '@map-colonies/detiler-common';
 import { SERVICES } from '../../common/constants';
-import type { IConfig, RedisConfig } from '../../common/interfaces';
 import { kitHashKey, kitsSetKey } from '../../common/util';
 import { RedisClient } from '../../redis';
 import { KitAlreadyExistsError } from './errors';
@@ -28,15 +27,11 @@ end
 
 @injectable()
 export class KitManager {
-  private readonly keyPrefix: string;
-
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.REDIS) private readonly redis: RedisClient,
-    @inject(SERVICES.CONFIG) private readonly config: IConfig
-  ) {
-    this.keyPrefix = this.config.get<RedisConfig>('redis').keyPrefix;
-  }
+    @inject(SERVICES.REDIS_KEY_PREFIX) private readonly keyPrefix: string
+  ) {}
 
   public async getAllKits(): Promise<KitMetadata[]> {
     this.logger.info('getting all kits');

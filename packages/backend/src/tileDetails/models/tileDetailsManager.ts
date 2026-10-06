@@ -14,7 +14,6 @@ import { BoundingBox, TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colon
 import { AggregateReply, DEFAULT_LIMIT, DEFAULT_PAGE_SIZE, RedisClient } from '../../redis';
 import { keyfy, kitHashKey, tileIndexName, stringifyCoordinates, bboxToWktPolygon, UpsertStatus, bboxToLonLat } from '../../common/util';
 import { METATILE_SIZE, SERVICES, SEARCHED_GEOSHAPE_NAME, REDIS_SEARCH_DIALECT } from '../../common/constants';
-import type { IConfig, RedisConfig } from '../../common/interfaces';
 import { KitManager } from '../../kit/models/kitManager';
 import { KitNotFoundError, TileDetailsNotFoundError } from './errors';
 import { LOAD_FIELDS, NEWLY_INSERTED_TILE_COUNTERS, transformDocument } from './util';
@@ -25,16 +24,14 @@ export interface TilesDetailsQueryParams extends Omit<TileQueryParams, 'bbox'> {
 
 @injectable()
 export class TileDetailsManager {
-  private readonly keyPrefix: string;
   private readonly tileIndexName: string;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.REDIS) private readonly redis: RedisClient,
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.REDIS_KEY_PREFIX) private readonly keyPrefix: string,
     private readonly kitManager: KitManager
   ) {
-    this.keyPrefix = this.config.get<RedisConfig>('redis').keyPrefix;
     this.tileIndexName = tileIndexName(this.keyPrefix);
   }
 

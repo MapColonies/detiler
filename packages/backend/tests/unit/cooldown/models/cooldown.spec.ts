@@ -10,14 +10,13 @@ import {
   REDIS_WILDCARD,
   SEARCHED_GEOSHAPE_NAME,
 } from '../../../../src/common/constants';
-import type { IConfig } from '../../../../src/common/interfaces';
 import { CooldownManager } from '../../../../src/cooldown/models/cooldownManager';
 import { bboxToWktPolygon, hashValue } from '../../../../src/common/util';
 import { HALF_GLOBE_BBOX } from '../../../../src/cooldown/models/constants';
 
 const NOW_MOCK = 1000;
 
-const configMock: IConfig = { get: () => ({ keyPrefix: '' }), has: () => true };
+const keyPrefix = '';
 
 const executeIsolatedMock = vi.fn();
 const multiMock = vi.fn();
@@ -50,7 +49,7 @@ describe('CooldownManager', () => {
 
   beforeAll(async () => {
     mockedRedis = createClient({}) as Mocked<RedisClient>;
-    cooldownManager = new CooldownManager(await jsLogger({ enabled: false }), mockedRedis, configMock);
+    cooldownManager = new CooldownManager(await jsLogger({ enabled: false }), mockedRedis, keyPrefix);
   });
 
   beforeEach(() => {
@@ -262,11 +261,10 @@ describe('CooldownManager', () => {
 
   describe('with a configured redis key prefix', () => {
     const prefix = 'env1:';
-    const prefixedConfigMock: IConfig = { get: () => ({ keyPrefix: prefix }), has: () => true };
     let prefixedCooldownManager: CooldownManager;
 
     beforeAll(async () => {
-      prefixedCooldownManager = new CooldownManager(await jsLogger({ enabled: false }), mockedRedis, prefixedConfigMock);
+      prefixedCooldownManager = new CooldownManager(await jsLogger({ enabled: false }), mockedRedis, prefix);
     });
 
     it('should prefix the cooldown index name and key', async () => {

@@ -8,21 +8,18 @@ import { Geometry } from 'geojson';
 import { stringify as geojsonToWkt, GeoJSONGeometry } from 'wellknown';
 import { bboxToWktPolygon, cooldownIndexName, cooldownKey, hashValue } from '../../common/util';
 import { SERVICES, SEARCHED_GEOSHAPE_NAME, REDIS_SEARCH_DIALECT, REDIS_WILDCARD } from '../../common/constants';
-import type { IConfig, RedisConfig } from '../../common/interfaces';
 import { RedisClient } from '../../redis';
 import { HALF_GLOBE_BBOX } from './constants';
 
 @injectable()
 export class CooldownManager {
-  private readonly keyPrefix: string;
   private readonly cooldownIndexName: string;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.REDIS) private readonly redis: RedisClient,
-    @inject(SERVICES.CONFIG) private readonly config: IConfig
+    @inject(SERVICES.REDIS_KEY_PREFIX) private readonly keyPrefix: string
   ) {
-    this.keyPrefix = this.config.get<RedisConfig>('redis').keyPrefix;
     this.cooldownIndexName = cooldownIndexName(this.keyPrefix);
   }
 
