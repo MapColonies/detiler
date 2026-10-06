@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Map } from 'react-map-gl/maplibre';
-import { MapViewState, WebMercatorViewport, FlyToInterpolator } from '@deck.gl/core';
+import { MapViewState, FlyToInterpolator } from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import { ViewStateChangeParameters } from '@deck.gl/core/src/controllers/controller';
@@ -12,16 +12,24 @@ import { useSnackbar } from 'notistack';
 import pTimeout from 'p-timeout';
 import { uniqBy } from 'lodash';
 import { TILEGRID_WORLD_CRS84, tileToBoundingBox } from '@map-colonies/tile-calc';
-import { AxiosError } from 'axios';
+import axios from 'axios';
 import { parse as WktToGeojson } from 'wellknown';
-import { appHelper, compareQueries, parseDataToFeatures, timerify, querifyBounds, geometryToFeature } from './utils/helpers';
+import {
+  appHelper,
+  compareQueries,
+  parseDataToFeatures,
+  timerify,
+  querifyBounds,
+  geometryToFeature,
+  getCRS84ViewportBounds,
+  ViewportBoundsParams,
+} from './utils/helpers';
 import {
   ZOOM_OFFEST,
   INITIAL_VIEW_STATE,
   DEFAULT_MIN_STATE,
   DEFAULT_MAX_STATE,
   MAX_KIT_STATE_KEY,
-  CLIENT_ABORTED_ERROR_CODE,
   DEFAULT_KITS_FETCH_INTERVAL,
   DEFAULT_TILES_FETCH_INTERVAL,
   DEFAULT_TILES_FETCH_TIMEOUT,
@@ -36,8 +44,8 @@ import { METRICS, INITIAL_MIN_MAX, Metric } from './utils/metric';
 import { INIT_STATS, calcHttpStat, Stats } from './utils/stats';
 import { Preferences, Sidebar, Tooltip, CornerTabs, ExtendedCooldown } from './components';
 import { comparatorFuncWrapper, filterRangeFuncWrapper, transformFuncWrapper } from './deck-gl';
-import { CONSTANT_GEOJSON_LAYER_PROPERTIES, TILES_LAYER_ID, BASEMAP_LAYER_ID } from './deck-gl/constants';
-import { basemapLayerFactory } from './deck-gl/basemap';
+import { CONSTANT_GEOJSON_LAYER_PROPERTIES, TILES_LAYER_ID } from './deck-gl/constants';
+import { BASEMAP_STYLE, basemapTransformRequest } from './maplibre/basemapStyle';
 import { logger } from './logger';
 import { config } from './config';
 import { client } from './client';
@@ -138,10 +146,14 @@ export const App: React.FC = () => {
 
     setViewState({ ...viewState, ...nextViewState.viewState });
 
+    // the controller includes longitude/latitude/width/height on every change even though this callback only
+    // declares interest in `zoom` - see ViewportBoundsParams for the fields actually read off of it
+    const viewport = nextViewState.viewState as unknown as ViewportBoundsParams;
+
     // for higher zoom levels lower the viewport's zoom level by 1 to have a buffer around the query bounds
-    const viewportZoom = nextViewState.viewState.zoom <= ZOOM_OFFEST + 1 ? nextViewState.viewState.zoom : nextViewState.viewState.zoom - 1;
-    appHelper.bounds.query = new WebMercatorViewport({ ...nextViewState.viewState, zoom: viewportZoom }).getBounds();
-    appHelper.bounds.actual = new WebMercatorViewport(nextViewState.viewState).getBounds();
+    const viewportZoom = viewport.zoom <= ZOOM_OFFEST + 1 ? viewport.zoom : viewport.zoom - 1;
+    appHelper.bounds.query = getCRS84ViewportBounds({ ...viewport, zoom: viewportZoom });
+    appHelper.bounds.actual = getCRS84ViewportBounds(viewport);
 
     const nextZoom = Math.floor(nextViewState.viewState.zoom);
     appHelper.currentZoomLevel = nextZoom;
@@ -302,16 +314,12 @@ export const App: React.FC = () => {
         return { ...prevStatsTable, httpInvokes: { ...prevStatsTable.httpInvokes, query: nextHttpStat } };
       });
     } catch (err) {
-      if (err instanceof AxiosError) {
-        if (err.code === CLIENT_ABORTED_ERROR_CODE) {
-          logger.error({ msg: 'aborted data fetch', err });
-          setIsLoading(false);
-          throw err;
-        }
-      } else {
-        logger.error({ msg: 'error fetching data', err });
-        enqueueSnackbar(JSON.stringify(err), { variant: 'error' });
+      if (axios.isCancel(err)) {
+        logger.error({ msg: 'aborted data fetch', err });
+        throw err;
       }
+      logger.error({ msg: 'error fetching data', err });
+      enqueueSnackbar(JSON.stringify(err), { variant: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -361,8 +369,6 @@ export const App: React.FC = () => {
     });
   };
 
-  const basemapLayer = basemapLayerFactory(BASEMAP_LAYER_ID);
-
   const tilesLayer = new GeoJsonLayer({
     id: TILES_LAYER_ID,
     ...CONSTANT_GEOJSON_LAYER_PROPERTIES,
@@ -396,13 +402,8 @@ export const App: React.FC = () => {
 
   return (
     <div>
-      <DeckGL
-        initialViewState={viewState}
-        controller={true}
-        layers={[basemapLayer, tilesLayer, cooldownsLayer]}
-        onViewStateChange={handleViewportChange}
-      >
-        <Map id="map" reuseMaps={true} attributionControl={false} />
+      <DeckGL initialViewState={viewState} controller={true} layers={[tilesLayer, cooldownsLayer]} onViewStateChange={handleViewportChange}>
+        <Map id="map" reuseMaps={true} attributionControl={false} mapStyle={BASEMAP_STYLE} transformRequest={basemapTransformRequest} />
         <Tooltip hoverInfo={hoverInfo} />
       </DeckGL>
       <Preferences

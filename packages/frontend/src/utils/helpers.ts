@@ -4,6 +4,11 @@ import { Feature, Geometry } from 'geojson';
 import { FEATURE_ID_DUMMY, MAX_LATITUDE, MAX_LONGITUDE, MIN_LATITUDE, MIN_LONGITUDE, ZOOM_OFFEST } from './constants';
 import { AppHelper } from './interfaces';
 
+const TILE_PIXELS = 256;
+const DEGREES_IN_CIRCLE = 360;
+const ZOOM_SCALE_BASE = 2;
+const HALF = 2;
+
 const querifyLongitude = (longitude: number): number => {
   if (longitude > MAX_LONGITUDE) {
     return MAX_LONGITUDE;
@@ -27,6 +32,28 @@ const querifyLatitude = (latitude: number): number => {
 export const querifyBounds = (bounds: [number, number, number, number]): [number, number, number, number] => {
   const [west, south, east, north] = bounds;
   return [querifyLongitude(west), querifyLatitude(south), querifyLongitude(east), querifyLatitude(north)];
+};
+
+export interface ViewportBoundsParams {
+  longitude: number;
+  latitude: number;
+  zoom: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Computes the visible lon/lat bounds for a north-up, unpitched camera, the way `WebMercatorViewport.getBounds()`
+ * would, but using WorldCRS84Quad's math instead of web mercator's. `xFromLng`/`yFromLat` are both linear in
+ * CRS84 (unlike mercator's latitude-dependent `yFromLat`), so degrees-per-pixel is constant at every latitude
+ * for a given zoom - no need for a stateful viewport class to compute it.
+ */
+export const getCRS84ViewportBounds = ({ longitude, latitude, zoom, width, height }: ViewportBoundsParams): [number, number, number, number] => {
+  const worldSize = TILE_PIXELS * Math.pow(ZOOM_SCALE_BASE, zoom);
+  const lonSpan = (width / worldSize) * DEGREES_IN_CIRCLE;
+  const latSpan = (height / worldSize) * DEGREES_IN_CIRCLE;
+
+  return [longitude - lonSpan / HALF, latitude - latSpan / HALF, longitude + lonSpan / HALF, latitude + latSpan / HALF];
 };
 
 export const parseBoolean = (value: string): boolean => value === 'true';

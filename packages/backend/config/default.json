@@ -37,6 +37,6 @@
       "cert": ""
     },
     "database": 0,
-    "keyPrefix": ""
+    "keyPrefix": "detiler:"
   }
 }

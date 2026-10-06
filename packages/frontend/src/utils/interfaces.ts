@@ -9,6 +9,8 @@ export interface AppConfig {
     tileSize?: number;
     zoomOffset?: number;
     desaturate?: number;
+    minZoom?: number;
+    maxZoom?: number;
   };
   style: {
     tilesPerPage?: number;
