@@ -11,6 +11,7 @@ Skip-decision flow (implemented in `retiler`, not here): before rendering a tile
 ## Monorepo layout
 
 npm workspaces + Lerna, 4 independent packages under `packages/`:
+
 - **backend** (`detiler-backend`) — Express API, the only thing that talks to Redis directly
 - **frontend** (`detiler-frontend`) — Vite + React + deck.gl visualizer
 - **client** (`@map-colonies/detiler-client`) — axios wrapper around the backend API; this is what `retiler` depends on
@@ -29,6 +30,7 @@ npx lerna run lint
 ```
 
 All of `packages/backend`, `packages/client`, and `packages/common` run their unit tests on vitest (same script names across all three):
+
 ```bash
 npm run build                # tsc -p tsconfig.build.json, then copies config/openapi3.yaml/package.json into dist
 npm run test:unit            # vitest run (backend scopes this to its unit project: `vitest run --project unit`)
@@ -38,10 +40,12 @@ npm start                    # backend only: build, then `node dist/index.js`
 ```
 
 Run a single test file or test name (works the same in all three packages):
+
 ```bash
 npx vitest run tests/unit/kit/models/kit.spec.ts
 npx vitest run -t "should create the kit"
 ```
+
 Note: running a narrowed subset will still report a non-zero exit from the coverage thresholds below even when every test passes — check the `Tests` summary line, not the process exit code, when running less than the full suite.
 
 `packages/backend` additionally has `npm run test:e2e` (`vitest run --project e2e --coverage.enabled=false`), which hits a real running instance instead of mocks — see [tests/e2e/README.md](packages/backend/tests/e2e/README.md). `packages/common` is almost entirely types/constants with no logic, so its suite ([tests/unit/index.spec.ts](packages/common/tests/unit/index.spec.ts)) is a thin smoke test guarding the public constants, not a coverage-driven suite. `packages/frontend` has no test suite at all — it has `npm run typecheck` (custom `typecheck.mjs`) and `npm run build` (typecheck + `vite build`); for local dev run `npx vite` directly inside `packages/frontend` (the `start` script is `vite preview`, which only serves an already-built `dist/`, not a dev server).

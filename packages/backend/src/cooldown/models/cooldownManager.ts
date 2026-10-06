@@ -104,7 +104,7 @@ export class CooldownManager {
       cooldown.geoshape = bboxToWktPolygon(bbox);
     }
 
-    if (area !== undefined && isGeojson(area as Geometry)) {
+    if (area !== undefined && isGeojson(area as Geometry) === true) {
       cooldown.geoshape = geojsonToWkt(area as GeoJSONGeometry);
     }
 

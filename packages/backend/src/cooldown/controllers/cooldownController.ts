@@ -87,7 +87,7 @@ export class CooldownController {
     }
 
     // validate geojson
-    if (!isGeojson(area)) {
+    if (isGeojson(area) !== true) {
       const error = new RequestValidationError('area is an invalid geojson');
       this.logger.error({ msg: 'validation failed', invalidParam: 'area', received: area, err: error });
       throw error;
