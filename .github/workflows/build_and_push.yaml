@@ -46,7 +46,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: MapColonies/vector-helms
-          ref: feat/detiler
+          ref: master
           token: ${{ secrets.HELM_REPO_TOKEN }}
           path: vector-helms
 
