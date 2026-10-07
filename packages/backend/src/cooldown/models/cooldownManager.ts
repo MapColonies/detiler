@@ -6,24 +6,25 @@ import { Cooldown, CooldownCreationRequest, CooldownQueryParams } from '@map-col
 import isGeojson from '@turf/boolean-valid';
 import { Geometry } from 'geojson';
 import { stringify as geojsonToWkt, GeoJSONGeometry } from 'wellknown';
-import { bboxToWktPolygon, hashValue } from '../../common/util';
-import {
-  SERVICES,
-  COOLDOWN_KEY_PREFIX,
-  REDIS_COOLDOWN_INDEX_NAME,
-  SEARCHED_GEOSHAPE_NAME,
-  REDIS_SEARCH_DIALECT,
-  REDIS_WILDCARD,
-} from '../../common/constants';
+import { bboxToWktPolygon, cooldownIndexName, cooldownKey, hashValue } from '../../common/util';
+import { SERVICES, SEARCHED_GEOSHAPE_NAME, REDIS_SEARCH_DIALECT, REDIS_WILDCARD } from '../../common/constants';
 import { RedisClient } from '../../redis';
 import { HALF_GLOBE_BBOX } from './constants';
 
 @injectable()
 export class CooldownManager {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.REDIS) private readonly redis: RedisClient) {}
+  private readonly cooldownIndexName: string;
+
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.REDIS) private readonly redis: RedisClient,
+    @inject(SERVICES.REDIS_KEY_PREFIX) private readonly keyPrefix: string
+  ) {
+    this.cooldownIndexName = cooldownIndexName(this.keyPrefix);
+  }
 
   public async queryCooldowns(params: CooldownQueryParams & Required<Pick<CooldownQueryParams, 'from' | 'size'>>): Promise<Cooldown[]> {
-    this.logger.info('quering cooldowns', params);
+    this.logger.info({ msg: 'quering cooldowns', params });
 
     const { kits, minZoom, maxZoom, area, enabled, from, size } = params;
 
@@ -69,7 +70,7 @@ export class CooldownManager {
 
     this.logger.debug({ msg: 'attempting the following search', query, options });
 
-    const result = await this.redis.ft.search(REDIS_COOLDOWN_INDEX_NAME, query, options);
+    const result = await this.redis.ft.search(this.cooldownIndexName, query, options);
 
     this.logger.debug({
       msg: 'finished search',
@@ -103,7 +104,7 @@ export class CooldownManager {
       cooldown.geoshape = bboxToWktPolygon(bbox);
     }
 
-    if (area !== undefined && isGeojson(area as Geometry)) {
+    if (area !== undefined && isGeojson(area as Geometry) === true) {
       cooldown.geoshape = geojsonToWkt(area as GeoJSONGeometry);
     }
 
@@ -111,7 +112,7 @@ export class CooldownManager {
       cooldown.geoshape = bboxToWktPolygon(HALF_GLOBE_BBOX);
     }
 
-    const key = `${COOLDOWN_KEY_PREFIX}:${hashValue(cooldown)}`;
+    const key = cooldownKey(hashValue(cooldown), this.keyPrefix);
 
     const now = Date.now();
     cooldown = {

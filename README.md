@@ -56,48 +56,36 @@ to achieve runtime variables we inject for each variable it's value in runtime i
 see [.env.production](/packages/frontend/config/.env.production) and [env.sh](/packages/frontend/env.sh).
 
 ## Redis
-### redis search tile details index creation:
+### key prefix (shared Redis instances):
+`detiler-backend` can be configured with `redis.keyPrefix` (env var `REDIS_KEY_PREFIX`, default `"detiler:"`) to avoid
+colliding with other apps, or other `detiler` deployments/environments, that point at the same Redis instance. When
+set, it is prepended verbatim (no separator is added — include your own, e.g. `"myenv:"` or `"myenv-"`) to every key
+(`tile:...`, `kit:...`, `kits`, `cooldown:...`) **and** to both RediSearch index names (`tileDetailsIdx`,
+`cooldownIdx` below become `<prefix>tileDetailsIdx`, `<prefix>cooldownIdx`). Set `REDIS_KEY_PREFIX=""` explicitly to
+get the unprefixed exact key and index names below (e.g. for an existing single-tenant deployment predating this
+default).
+
+Each environment that sets a distinct prefix gets its own, separately-named indices, created automatically (see below)
+— no manual step needed per environment.
+
+### redis search index creation:
+On every startup, `detiler-backend` ensures both RediSearch indices exist, creating whichever are missing — see
+`ensureSearchIndices` in [indices.ts](/packages/backend/src/redis/indices.ts). `FT.CREATE` fails with `Index already
+exists` if an index is already there, which is caught and ignored, so this is safe to run on every boot (including
+with multiple replicas starting concurrently) and requires no manual setup. It's equivalent to running:
 ```
-FT.CREATE tileDetailsIdx ON JSON PREFIX 1 tile: SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.renderedAt AS renderedAt NUMERIC $.createdAt AS createdAt NUMERIC $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.states[*] AS states NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
+FT.CREATE <prefix>tileDetailsIdx ON JSON PREFIX 1 <prefix>tile: SCHEMA $.kit AS kit TEXT $.updatedAt AS updatedAt NUMERIC $.renderedAt AS renderedAt NUMERIC $.createdAt AS createdAt NUMERIC $.geoshape AS geoshape GEOSHAPE SPHERICAL $.state AS state NUMERIC $.states[*] AS states NUMERIC $.z AS z NUMERIC $.x AS x NUMERIC $.y AS y NUMERIC
+
+FT.CREATE <prefix>cooldownIdx ON JSON PREFIX 1 <prefix>cooldown: SCHEMA $.kits[*] AS kits TAG $.minZoom AS minZoom NUMERIC $.maxZoom AS maxZoom NUMERIC $.enabled AS enabled TAG $.geoshape AS geoshape GEOSHAPE SPHERICAL
 ```
+(`<prefix>` is `detiler:` by default — set `REDIS_KEY_PREFIX=""` to make it literally empty, as shown above.) This requires the Redis user `detiler-backend`
+connects as to have `FT.CREATE` permission — if its ACL is read/write-only on data commands, grant it or keep running
+these commands manually instead.
 
-### redis search cooldowns index creation:
-```
-FT.CREATE cooldownIdx ON JSON PREFIX 1 cooldown: SCHEMA $.kits[*] AS kits TAG $.minZoom AS minZoom NUMERIC $.maxZoom AS maxZoom NUMERIC $.enabled AS enabled TAG $.geoshape AS geoshape GEOSHAPE SPHERICAL
-```
+### kit metadata maintenance:
+each kit's `maxState` and `maxUpdatedAt` (used by the frontend to bound its state-range filter) are maintained directly by `detiler-backend` itself, on every tile upsert — see `KitManager.updateMaxValues` in [kitManager.ts](/packages/backend/src/kit/models/kitManager.ts). it atomically raises those two fields via a Lua script (`EVAL`), so no separate Redis module or out-of-process script is required.
 
-### redis post processing:
-using `Redis Gears` the following post processing function is being used to maintain additional metadata for each kit - it's `maxState` and `maxUpdatedAt` see [maintain_kit_metadata.py](/packages/backend/gears/maintain_kit_metadata.py) for full documented python code
-
-execute with `redis-cli`
-```
-RG.PYEXECUTE "
-def extract_data(record):\n
-    data_key = record['key']\n
-
-    kit = execute('JSON.GET', data_key, 'kit')\n
-    state = execute('JSON.GET', data_key, 'state')\n
-    updated_at = execute('JSON.GET', data_key, 'updatedAt')\n
-    return { 'kit': kit[1:-1], 'state': int(state), 'updated_at': int(updated_at) }\n
-
-def update_maximums(data):\n
-    kit_key = 'kit:' + data['kit']\n
-
-    max_state = execute('HGET', kit_key, 'maxState')\n
-    max_state = int(max_state) if max_state else 0\n
-    if data['state'] > max_state:\n
-        execute('HSET', kit_key, 'maxState', data['state'])\n
-
-    max_updated_at = execute('HGET', kit_key, 'maxUpdatedAt')\n
-    max_updated_at = int(max_updated_at) if max_updated_at else 0\n
-    if data['updated_at'] > max_updated_at:\n
-        execute('HSET', kit_key, 'maxUpdatedAt', data['updated_at'])\n
-
-gb = GearsBuilder()\n
-gb.map(extract_data)\n
-gb.foreach(update_maximums)\n
-gb.register('tile:*')"
-```
+> this used to be implemented as a `Redis Gears` (v1, Python) script registered on `tile:*` writes. it was removed since RedisGears v1's Python engine is not present in current Redis Stack images (bundled RedisGears v2 only supports JavaScript via `TFUNCTION`/`TFCALL`), which made the old script permanently dead code against any current deployment.
 
 ## Development
 This repository is a monorepo managed by [`Lerna`](https://lerna.js.org/) and separated into multiple independent packages
@@ -111,4 +99,12 @@ npx lerna run build
 integration tests are missing due to `node-redis` library structure, [see open issue here](https://github.com/redis/node-redis/issues/2546)
 ```
 npx lerna run test
+```
+
+
+```
+nvm use
+docker run -d --name detiler-redis -p 6379:6379 redis/redis-stack-server:7.2.0-v10
+cd packages/backend && npm run start
+cd packages/frontend && npx vite
 ```

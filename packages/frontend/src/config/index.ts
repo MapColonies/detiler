@@ -46,7 +46,7 @@ export const config: IConfig = (function (): IConfig {
   });
 
   const retryStrategy =
-    parseValue('boolean', viteConfig.CONFIG_DETILER_CLIENT_ENABLE_RETRY_STRATEGY) ?? false
+    (parseValue('boolean', viteConfig.CONFIG_DETILER_CLIENT_ENABLE_RETRY_STRATEGY) ?? false)
       ? {
           delay: parseValue('number', viteConfig.CONFIG_DETILER_CLIENT_RETRY_STRATEGY_DELAY),
           isExponential: parseValue('boolean', viteConfig.CONFIG_DETILER_CLIENT_RETRY_STRATEGY_IS_EXPONENTIAL),
@@ -69,6 +69,8 @@ export const config: IConfig = (function (): IConfig {
         tileSize: parseValue('number', viteConfig.CONFIG_APP_BASEMAP_TILE_SIZE),
         zoomOffset: parseValue('number', viteConfig.CONFIG_APP_BASEMAP_ZOOM_OFFSET),
         desaturate: parseValue('number', viteConfig.CONFIG_APP_BASEMAP_DESATURATE),
+        minZoom: parseValue('number', viteConfig.CONFIG_APP_BASEMAP_MIN_ZOOM),
+        maxZoom: parseValue('number', viteConfig.CONFIG_APP_BASEMAP_MAX_ZOOM),
       }
     : {};
 

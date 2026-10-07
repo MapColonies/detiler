@@ -13,9 +13,6 @@ export default defineConfig({
       include: ['packages/client', 'packages/common', /node_modules/],
     },
   },
-  esbuild: {
-    jsxInject: `import React from 'react'`,
-  },
   resolve: {
     preserveSymlinks: true,
   },

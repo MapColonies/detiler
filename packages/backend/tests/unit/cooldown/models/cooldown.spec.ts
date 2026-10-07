@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */ // due to redis package
-import { Cooldown, CooldownCreationRequest } from '@map-colonies/detiler-common';
-import jsLogger from '@map-colonies/js-logger';
+import { beforeAll, beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
+import type { Cooldown, CooldownCreationRequest } from '@map-colonies/detiler-common';
+import { jsLogger } from '@map-colonies/js-logger';
 import { createClient } from 'redis';
 import {
   COOLDOWN_KEY_PREFIX,
@@ -15,17 +16,18 @@ import { HALF_GLOBE_BBOX } from '../../../../src/cooldown/models/constants';
 
 const NOW_MOCK = 1000;
 
-const executeIsolatedMock = jest.fn();
-const multiMock = jest.fn();
-const expireMock = jest.fn();
-const execMock = jest.fn();
-const searchMock = jest.fn();
-const setMock = jest.fn();
+const keyPrefix = '';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-jest.mock('redis', () => ({
-  ...jest.requireActual('redis'),
-  createClient: jest.fn().mockImplementation(() => ({
+const executeIsolatedMock = vi.fn();
+const multiMock = vi.fn();
+const expireMock = vi.fn();
+const execMock = vi.fn();
+const searchMock = vi.fn();
+const setMock = vi.fn();
+
+vi.mock('redis', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  createClient: vi.fn().mockImplementation(() => ({
     executeIsolated: executeIsolatedMock,
     multi: multiMock,
     expire: expireMock,
@@ -43,15 +45,15 @@ type RedisClient = ReturnType<typeof createClient>;
 
 describe('CooldownManager', () => {
   let cooldownManager: CooldownManager;
-  let mockedRedis: jest.Mocked<RedisClient>;
+  let mockedRedis: Mocked<RedisClient>;
 
-  beforeAll(() => {
-    mockedRedis = createClient({}) as jest.Mocked<RedisClient>;
-    cooldownManager = new CooldownManager(jsLogger({ enabled: false }), mockedRedis);
+  beforeAll(async () => {
+    mockedRedis = createClient({}) as Mocked<RedisClient>;
+    cooldownManager = new CooldownManager(await jsLogger({ enabled: false }), mockedRedis, keyPrefix);
   });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('#queryCooldowns', () => {
@@ -148,7 +150,7 @@ describe('CooldownManager', () => {
 
   describe('#createCooldown', () => {
     it('should create a new cooldown with no ttl and default area', async () => {
-      jest.spyOn(Date, 'now').mockImplementation(() => NOW_MOCK);
+      vi.spyOn(Date, 'now').mockImplementation(() => NOW_MOCK);
       executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
       multiMock.mockReturnValue(mockedRedis);
 
@@ -168,7 +170,7 @@ describe('CooldownManager', () => {
     });
 
     it('should create a new cooldown with ttl and default area', async () => {
-      jest.spyOn(Date, 'now').mockImplementation(() => NOW_MOCK);
+      vi.spyOn(Date, 'now').mockImplementation(() => NOW_MOCK);
       executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
       multiMock.mockReturnValue(mockedRedis);
 
@@ -197,7 +199,7 @@ describe('CooldownManager', () => {
     });
 
     it('should create a new cooldown with no ttl and given bbox area', async () => {
-      jest.spyOn(Date, 'now').mockImplementation(() => NOW_MOCK);
+      vi.spyOn(Date, 'now').mockImplementation(() => NOW_MOCK);
       executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
       multiMock.mockReturnValue(mockedRedis);
 
@@ -218,7 +220,7 @@ describe('CooldownManager', () => {
     });
 
     it('should create a new cooldown with no ttl and given geojson area', async () => {
-      jest.spyOn(Date, 'now').mockImplementation(() => NOW_MOCK);
+      vi.spyOn(Date, 'now').mockImplementation(() => NOW_MOCK);
       executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
       multiMock.mockReturnValue(mockedRedis);
 
@@ -254,6 +256,35 @@ describe('CooldownManager', () => {
       expect(setMock).toHaveBeenCalledWith(expectedKey, '$', expected);
       expect(expireMock).not.toHaveBeenCalled();
       expect(execMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('with a configured redis key prefix', () => {
+    const prefix = 'env1:';
+    let prefixedCooldownManager: CooldownManager;
+
+    beforeAll(async () => {
+      prefixedCooldownManager = new CooldownManager(await jsLogger({ enabled: false }), mockedRedis, prefix);
+    });
+
+    it('should prefix the cooldown index name and key', async () => {
+      vi.spyOn(Date, 'now').mockImplementation(() => NOW_MOCK);
+      executeIsolatedMock.mockImplementation(async (fn: (client: RedisClient) => Promise<unknown>) => fn(mockedRedis));
+      multiMock.mockReturnValue(mockedRedis);
+      searchMock.mockResolvedValue({ documents: [], total: 0 });
+
+      const newCooldownRequest: CooldownCreationRequest = { enabled: true, duration: 100, kits: ['a'], minZoom: 0, maxZoom: 1 };
+      const expectedToBeHashed = { ...newCooldownRequest, geoshape: bboxToWktPolygon(HALF_GLOBE_BBOX) };
+      const expectedKey = `${prefix}${COOLDOWN_KEY_PREFIX}:${hashValue(expectedToBeHashed)}`;
+
+      await prefixedCooldownManager.createCooldown(newCooldownRequest);
+      await prefixedCooldownManager.queryCooldowns({ from: 0, size: 2 });
+
+      expect(setMock).toHaveBeenCalledWith(expectedKey, '$', expect.objectContaining({}));
+      expect(searchMock).toHaveBeenCalledWith(`${prefix}${REDIS_COOLDOWN_INDEX_NAME}`, REDIS_WILDCARD, {
+        DIALECT: REDIS_SEARCH_DIALECT,
+        LIMIT: { from: 0, size: 2 },
+      });
     });
   });
 });

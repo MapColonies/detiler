@@ -2,7 +2,14 @@
   "extends": "../../tsconfig.build.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "baseUrl": ".",
+    "paths": {
+      "@src/*": ["src/*"],
+      "@common/*": ["src/common/*"]
+    }
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.mts"]
 }

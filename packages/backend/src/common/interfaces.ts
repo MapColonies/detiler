@@ -1,4 +1,4 @@
-import { RedisClientOptions } from 'redis';
+import type { RedisClientOptions } from 'redis';
 
 interface LogFn {
   (obj: unknown, msg?: string, ...args: unknown[]): void;
@@ -15,6 +15,7 @@ export type RedisConfig = {
   port: number;
   enableSslAuth: boolean;
   sslPaths: { ca: string; cert: string; key: string };
+  keyPrefix: string;
 } & RedisClientOptions;
 
 export interface OpenApiConfig {

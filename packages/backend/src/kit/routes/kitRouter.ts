@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { FactoryFunction } from 'tsyringe';
+import type { FactoryFunction } from 'tsyringe';
 import { KitController } from '../controllers/kitController';
 
 export const KIT_ROUTER_SYMBOL = Symbol('kitRouterFactory');

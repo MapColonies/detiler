@@ -11,8 +11,9 @@ export const SERVICES: Record<string, symbol> = {
   LOGGER: Symbol('Logger'),
   CONFIG: Symbol('Config'),
   TRACER: Symbol('Tracer'),
-  METER: Symbol('Meter'),
+  METRICS: Symbol('Metrics'),
   REDIS: Symbol('Redis'),
+  REDIS_KEY_PREFIX: Symbol('RedisKeyPrefix'),
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 

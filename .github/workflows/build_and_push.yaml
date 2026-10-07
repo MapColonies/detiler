@@ -1,23 +1,75 @@
+name: build_and_push
+
 on:
   workflow_dispatch:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - feat/refactor
+      - master
 
 jobs:
   build_and_push:
+    name: build and push image
     runs-on: ubuntu-latest
-    env:
-      Docker_Repository: ${{ secrets.ACR_URL }}/${{ github.event.repository.name }}:${{ github.ref_name }}
+    environment: prod
+    strategy:
+      matrix:
+        include:
+          - package: backend
+            image: detiler-backend
+          - package: frontend
+            image: detiler-frontend
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      - name: set short sha
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
       - uses: azure/docker-login@v1
         with:
           login-server: ${{ secrets.ACR_URL }}
           username: ${{ secrets.ACR_PUSH_USER }}
           password: ${{ secrets.ACR_PUSH_TOKEN }}
-      - name: downcase repository
+
+      - name: build and push
         run: |
-          echo "Docker_Repository=${Docker_Repository,,}" >>${GITHUB_ENV}
-      - run: docker build . -t ${{ env.Docker_Repository }}
-      - run: docker push ${{ env.Docker_Repository }}
+          docker build -f packages/${{ matrix.package }}/Dockerfile \
+            -t ${{ secrets.ACR_URL }}/${{ matrix.image }}:${{ env.SHORT_SHA }} .
+          docker push ${{ secrets.ACR_URL }}/${{ matrix.image }}:${{ env.SHORT_SHA }}
+
+  bump_vector_helms:
+    name: bump image tags in vector-helms
+    runs-on: ubuntu-latest
+    needs: build_and_push
+    steps:
+      - name: checkout vector-helms
+        uses: actions/checkout@v4
+        with:
+          repository: MapColonies/vector-helms
+          ref: master
+          token: ${{ secrets.HELM_REPO_TOKEN }}
+          path: vector-helms
+
+      - name: set short sha
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      - name: install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: bump image tags
+        working-directory: vector-helms
+        run: |
+          yq -i '.backend.image.tag = "${{ env.SHORT_SHA }}"' detiler-helms/values.yaml
+          yq -i '.frontend.image.tag = "${{ env.SHORT_SHA }}"' detiler-helms/values.yaml
+
+      - name: commit and push
+        working-directory: vector-helms
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add detiler-helms/values.yaml
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(detiler): bump image tags to ${{ env.SHORT_SHA }}"
+          git push

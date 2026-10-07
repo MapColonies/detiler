@@ -4,21 +4,24 @@ import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { BoundingBox, TILEGRID_WEB_MERCATOR, validateTileGridBoundingBox } from '@map-colonies/tile-calc';
 import { Cooldown, CooldownCreationRequest, CooldownQueryParams } from '@map-colonies/detiler-common';
-import mime from 'mime-types';
+import { contentType } from 'mime-types';
 import isGeojson from '@turf/boolean-valid';
 import { SERVICES } from '../../common/constants';
 import { CooldownManager } from '../models/cooldownManager';
 import { RequestValidationError } from '../models/errors';
 import { DEFAULT_PAGE_SIZE } from '../../redis';
 
-const txtplain = mime.contentType('text/plain') as string;
+const txtplain = contentType('text/plain') as string;
 
 type GetCooldownsHandler = RequestHandler<undefined, Cooldown[], undefined, CooldownQueryParams>;
 type PostCooldownHandler = RequestHandler<undefined, string, CooldownCreationRequest>;
 
 @injectable()
 export class CooldownController {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(CooldownManager) private readonly manager: CooldownManager) {}
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(CooldownManager) private readonly manager: CooldownManager
+  ) {}
 
   public getCooldowns: GetCooldownsHandler = async (req, res, next) => {
     try {
@@ -84,7 +87,7 @@ export class CooldownController {
     }
 
     // validate geojson
-    if (!isGeojson(area)) {
+    if (isGeojson(area) !== true) {
       const error = new RequestValidationError('area is an invalid geojson');
       this.logger.error({ msg: 'validation failed', invalidParam: 'area', received: area, err: error });
       throw error;

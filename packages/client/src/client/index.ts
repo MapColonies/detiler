@@ -154,7 +154,8 @@ export class DetilerClient implements IDetilerClient {
 
     try {
       const res = await this.axios.get<TileDetails[]>(`${this.config.url}/detail/${params.z}/${params.x}/${params.y}`, {
-        paramsSerializer: (params) => stringify(params.kits),
+        params: { kits: params.kits },
+        paramsSerializer: (params) => stringify(params),
       });
       return res.data;
     } catch (error) {

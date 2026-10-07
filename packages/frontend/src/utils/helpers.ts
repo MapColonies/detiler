@@ -4,6 +4,13 @@ import { Feature, Geometry } from 'geojson';
 import { FEATURE_ID_DUMMY, MAX_LATITUDE, MAX_LONGITUDE, MIN_LATITUDE, MIN_LONGITUDE, ZOOM_OFFEST } from './constants';
 import { AppHelper } from './interfaces';
 
+const TILE_PIXELS = 256;
+// TILEGRID_WORLD_CRS84 is 2 tiles wide × 1 tall at zoom 0, so one tile-height's worth of pixels spans 180°
+// on BOTH axes (the 2x width is already covered by the grid itself, not by a wider degree span per tile).
+const WORLD_DEGREES_PER_TILE = 180;
+const ZOOM_SCALE_BASE = 2;
+const HALF = 2;
+
 const querifyLongitude = (longitude: number): number => {
   if (longitude > MAX_LONGITUDE) {
     return MAX_LONGITUDE;
@@ -27,6 +34,28 @@ const querifyLatitude = (latitude: number): number => {
 export const querifyBounds = (bounds: [number, number, number, number]): [number, number, number, number] => {
   const [west, south, east, north] = bounds;
   return [querifyLongitude(west), querifyLatitude(south), querifyLongitude(east), querifyLatitude(north)];
+};
+
+export interface ViewportBoundsParams {
+  longitude: number;
+  latitude: number;
+  zoom: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Computes the visible lon/lat bounds for a north-up, unpitched camera, the way `WebMercatorViewport.getBounds()`
+ * would, but using WorldCRS84Quad's math instead of web mercator's. `xFromLng`/`yFromLat` are both linear in
+ * CRS84 (unlike mercator's latitude-dependent `yFromLat`), so degrees-per-pixel is constant at every latitude
+ * for a given zoom - no need for a stateful viewport class to compute it.
+ */
+export const getCRS84ViewportBounds = ({ longitude, latitude, zoom, width, height }: ViewportBoundsParams): [number, number, number, number] => {
+  const worldSize = TILE_PIXELS * Math.pow(ZOOM_SCALE_BASE, zoom);
+  const lonSpan = (width / worldSize) * WORLD_DEGREES_PER_TILE;
+  const latSpan = (height / worldSize) * WORLD_DEGREES_PER_TILE;
+
+  return [longitude - lonSpan / HALF, latitude - latSpan / HALF, longitude + lonSpan / HALF, latitude + latSpan / HALF];
 };
 
 export const parseBoolean = (value: string): boolean => value === 'true';
@@ -115,7 +144,7 @@ export const geometryToFeature = (geometry: Geometry): Feature => {
 
 export const insertDummyFeature = (features: Feature[]): Feature[] => {
   if (features.length === 0) {
-    features.push({ type: 'Feature', properties: { id: FEATURE_ID_DUMMY }, geometry: { type: 'Point', coordinates: [] } });
+    features.push({ type: 'Feature', properties: { id: FEATURE_ID_DUMMY }, geometry: { type: 'Point', coordinates: [0, 0] } });
   }
   return features;
 };
