@@ -1,9 +1,11 @@
+import type { TracingOptions } from '@map-colonies/tracing';
 import { Tracing } from '@map-colonies/tracing';
 import { IGNORED_INCOMING_TRACE_ROUTES, IGNORED_OUTGOING_TRACE_ROUTES } from './constants';
 
 let tracing: Tracing | undefined;
 
-export function tracingFactory(options: ConstructorParameters<typeof Tracing>[0]): Tracing {
+export function tracingFactory(options: TracingOptions): Tracing {
+  // instrumentation package names are not camelCase
   tracing = new Tracing({
     ...options,
     autoInstrumentationsConfigMap: {

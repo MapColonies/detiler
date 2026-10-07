@@ -16,6 +16,7 @@ void getApp()
     depContainer = container;
 
     const logger = depContainer.resolve<Logger>(SERVICES.LOGGER);
+    // terminus requires the route path as the key, not camelCase
     const server = createTerminus(createServer(app), {
       healthChecks: { '/liveness': depContainer.resolve(HEALTHCHECK) },
       onSignal: depContainer.resolve(ON_SIGNAL),

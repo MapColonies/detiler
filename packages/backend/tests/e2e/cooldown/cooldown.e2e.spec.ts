@@ -8,7 +8,7 @@ describe('cooldown API', () => {
     await request.post('/kits').send({ name: TEST_KIT });
   });
 
-  it('creates a cooldown and lists it back filtered by kit', async () => {
+  it('should creates a cooldown and lists it back filtered by kit', async () => {
     const createRes = await request.post('/cooldown').send({
       duration: 3600,
       kits: [TEST_KIT],

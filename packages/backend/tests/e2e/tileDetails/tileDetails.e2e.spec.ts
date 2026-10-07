@@ -10,7 +10,7 @@ describe('tile details API', () => {
     await request.post('/kits').send({ name: TEST_KIT });
   });
 
-  it('upserts a tile and reads back the same data by kit', async () => {
+  it('should upserts a tile and reads back the same data by kit', async () => {
     const timestamp = Date.now();
 
     const putRes = await request.put(tilePath(TEST_KIT, TEST_TILE)).send({ timestamp, state: 5, status: 'rendered' });
@@ -33,7 +33,7 @@ describe('tile details API', () => {
     );
   });
 
-  it('reflects the write in GET /kits (maxState/maxUpdatedAt raised)', async () => {
+  it('should reflects the write in GET /kits (maxState/maxUpdatedAt raised)', async () => {
     const timestamp = Date.now();
 
     await request.put(tilePath(TEST_KIT, TEST_TILE)).send({ timestamp, state: 9, status: 'rendered' });
@@ -46,20 +46,20 @@ describe('tile details API', () => {
     expect(Number(kit?.maxUpdatedAt)).toBeGreaterThanOrEqual(timestamp);
   });
 
-  it('is retrievable through the multi-kit GET /detail/{z}/{x}/{y} route as well', async () => {
+  it('should is retrievable through the multi-kit GET /detail/{z}/{x}/{y} route as well', async () => {
     const res = await request.get(`/detail/${TEST_TILE.z}/${TEST_TILE.x}/${TEST_TILE.y}`).query({ kits: [TEST_KIT] });
 
     expect(res.status).toBe(StatusCodes.OK);
     expect(res.body).toEqual(expect.arrayContaining([expect.objectContaining({ kit: TEST_KIT, z: TEST_TILE.z, x: TEST_TILE.x, y: TEST_TILE.y })]));
   });
 
-  it('returns 404 for a tile that was never written', async () => {
+  it('should returns 404 for a tile that was never written', async () => {
     const res = await request.get(tilePath(TEST_KIT, UNTOUCHED_TEST_TILE));
 
     expect(res.status).toBe(StatusCodes.NOT_FOUND);
   });
 
-  it('returns 404 when writing to a kit that does not exist', async () => {
+  it('should returns 404 when writing to a kit that does not exist', async () => {
     const res = await request.put(tilePath('doesnotexistkit', TEST_TILE)).send({ timestamp: Date.now() });
 
     expect(res.status).toBe(StatusCodes.NOT_FOUND);
