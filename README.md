@@ -108,3 +108,11 @@ docker run -d --name detiler-redis -p 6379:6379 redis/redis-stack-server:7.2.0-v
 cd packages/backend && npm run start
 cd packages/frontend && npx vite
 ```
+
+
+## Push
+
+```
+sudo snap install yq
+./build_and_push.sh <ACR_URL> v2.0.0-rc1 /home/yosef1/Desktop/Work/vector-helms
+```
