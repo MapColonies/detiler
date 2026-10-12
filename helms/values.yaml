@@ -1,0 +1,218 @@
+environment: &environment development
+global:
+  cloudProvider: {}
+  environment: {}
+  mclabels:
+    environment: *environment
+mclabels:
+  owner: vector
+  partOf: detiler
+  component: backend
+cloudProvider:
+  flavor: openshift
+  dockerRegistryUrl: &dockerRegistryUrl my-registry-url.io
+  imagePullSecretName: &pullSecret 'my-registry-secret'
+backend:
+  enabled: true
+  environment: *environment
+  replicaCount: 1
+  revisionHistoryLimit: 5
+  nodePort: 30030
+  mclabels:
+    owner: vector
+    partOf: detiler
+    component: backend
+    logScraping: true
+    prometheus:
+      enabled: false
+  cloudProvider:
+    dockerRegistryUrl: *dockerRegistryUrl
+    imagePullSecretName: *pullSecret
+    flavor: openshift
+  image:
+    repository: detiler-backend
+    pullPolicy: IfNotPresent
+    # tag: 'latest'
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 120
+    timeoutSeconds: 5
+    failureThreshold: 6
+    path: /liveness
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+    failureThreshold: 6
+    path: /liveness
+  podAnnotations: {}
+  extraVolumes: []
+  extraVolumeMounts: []
+  extraEnvVars: []
+  command: []
+  args: []
+  sidecars: []
+  caSecretName: ''
+  caPath: '/usr/local/share/ca-certificates'
+  caKey: 'ca.crt'
+  env:
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+    logLevel: info
+    logPrettyPrintEnabled: false
+    responseCompressionEnabled: true
+    requestPayloadLimit: 1mb
+    tracing:
+      enabled: false
+      url: http://localhost:55681/v1/trace
+      ratio: 1
+    metrics:
+      enabled: false
+      url: http://localhost:55681/v1/metrics
+  redisConfig:
+    host: localhost
+    username: ""
+    password: ""
+    database: 0
+    port: 6379
+    keyPrefix: "detiler:"
+    sslAuth:
+      enabled: false
+      secretName: secret-name
+      certFileName: postgresql.crt
+      keyFileName: postgresql.key
+      caFileName: root.crt
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  route:
+    enabled: true
+    path: /
+    # host:
+    timeout:
+      enabled: false
+      duration: 60s
+    rewriteTarget: ''
+    tls:
+      enabled: true
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+      useCerts: false
+      certificate: ''
+      key: ''
+      caCertificate: ''
+  ingress:
+    enabled: false
+    path: /
+    host: localhost
+    cors:
+      enabled: true
+      origin: '*'
+frontend:
+  enabled: true
+  environment: *environment
+  replicaCount: 1
+  revisionHistoryLimit: 5
+  nodePort: 30030
+  mclabels:
+    owner: vector
+    partOf: detiler
+    component: frontend
+    logScraping: true
+    prometheus:
+      enabled: false
+  cloudProvider:
+    dockerRegistryUrl: *dockerRegistryUrl
+    imagePullSecretName: *pullSecret
+    flavor: openshift
+  image:
+    repository: detiler-frontend
+    pullPolicy: IfNotPresent
+    # tag: 'latest'
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+    failureThreshold: 6
+    path: /liveness
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+    failureThreshold: 6
+    path: /liveness
+  podAnnotations: {}
+  extraVolumes: []
+  extraVolumeMounts: []
+  extraEnvVars: []
+  command: []
+  args: []
+  sidecars: []
+  caSecretName: ''
+  caPath: '/usr/local/share/ca-certificates'
+  caKey: 'ca.crt'
+  env:
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+    logLevel: info
+    logPrettyPrintEnabled: false
+    app:
+      basemapEnabled: true
+      basemapUrl: https://tiles-int.mapcolonies.net/api/raster/v1/wmts/VIVID_IRAN-Orthophoto/WorldCRS84/{z}/{x}/{y}.jpeg
+      baseMapXApiKey: ""
+      basemapTileSize: 256
+      basemapTileOffset: 0
+      basemapDesaturate: 0
+      tilesPerPage: 5
+      dataAlphaChannel: 75
+      kits:
+        fetchInterval: 60000
+      tiles:
+        batchSize: 1000
+        fetchTimeout: 5000
+        fetchInterval: 5000
+    detilerClient:
+      url: http://detiler.com
+      timeout: 60000
+      retryStrategy:
+        enabled: false
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  route:
+    enabled: true
+    path: /
+    host: some-host
+    timeout:
+      enabled: false
+      duration: 60s
+    rewriteTarget: ''
+    tls:
+      enabled: true
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+      useCerts: false
+      certificate: ''
+      key: ''
+      caCertificate: ''
+  ingress:
+    enabled: false
+    path: /
+    host: 'localhost'
+    cors:
+      enabled: true
+      origin: '*'
