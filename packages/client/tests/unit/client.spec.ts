@@ -241,9 +241,25 @@ describe('Client', () => {
   });
 
   describe('#getTilesDetails', () => {
-    it('should get tiles details according to params', async function () {
+    it('should get tiles details filtered by the given kits', async function () {
       const details = { a: 1 };
       const params: TileParams & { kits?: string[] } = { kits: ['kit1', 'kit2'], z: 1, x: 1, y: 1 };
+      nock(MOCK_DETILER_URL).get(`/detail/${params.z}/${params.x}/${params.y}`).query({ kits: params.kits }).reply(httpStatusCodes.OK, details);
+      const getSpy = vi.spyOn(detiler['axios'], 'get');
+
+      const response = await detiler.getTilesDetails(params);
+
+      expect(response).toMatchObject(details);
+      expect(getSpy).toHaveBeenCalledTimes(1);
+      expect(getSpy).toHaveBeenCalledWith(
+        `${MOCK_DETILER_URL}/detail/${params.z}/${params.x}/${params.y}`,
+        expect.objectContaining({ params: { kits: params.kits } })
+      );
+    });
+
+    it('should get tiles details for all kits when kits is not provided', async function () {
+      const details = { a: 1 };
+      const params: TileParams & { kits?: string[] } = { z: 1, x: 1, y: 1 };
       nock(MOCK_DETILER_URL).get(`/detail/${params.z}/${params.x}/${params.y}`).reply(httpStatusCodes.OK, details);
       const getSpy = vi.spyOn(detiler['axios'], 'get');
 
@@ -255,7 +271,10 @@ describe('Client', () => {
 
     it('should throw an error if the http get request has errored', async function () {
       const params: TileParams & { kits?: string[] } = { kits: ['kit1', 'kit2'], z: 1, x: 1, y: 1 };
-      nock(MOCK_DETILER_URL).get(`/detail/${params.z}/${params.x}/${params.y}`).reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
+      nock(MOCK_DETILER_URL)
+        .get(`/detail/${params.z}/${params.x}/${params.y}`)
+        .query({ kits: params.kits })
+        .reply(httpStatusCodes.INTERNAL_SERVER_ERROR);
       const getSpy = vi.spyOn(detiler['axios'], 'get');
 
       await expect(detiler.getTilesDetails(params)).rejects.toThrow(AxiosError);
