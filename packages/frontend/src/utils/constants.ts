@@ -5,8 +5,9 @@ export const MILLISECONDS_IN_SECOND = 1000;
 
 export const MIN_LONGITUDE = -179.99999;
 export const MAX_LONGITUDE = 180;
-export const MIN_LATITUDE = -85.05112877980659;
-export const MAX_LATITUDE = 85.05112877980659;
+// the true CRS84 pole bounds - was web mercator's max latitude (85.05112877980659) before the move to CRS84
+export const MIN_LATITUDE = -90;
+export const MAX_LATITUDE = 90;
 
 export const INITIAL_VIEW_STATE = {
   longitude: 32,
@@ -31,7 +32,6 @@ export const DEFAULT_MIN_STATE = -1;
 export const DEFAULT_MAX_STATE = 1;
 
 export const MAX_KIT_STATE_KEY = 'maxState';
-export const CLIENT_ABORTED_ERROR_CODE = 'ECONNABORTED';
 
 export const DEFAULT_KITS_FETCH_INTERVAL = 60000;
 

@@ -60,6 +60,10 @@ Enforced by commitlint via a husky `commit-msg` hook ([commitlint.config.js](com
 
 ## Architecture
 
+### Frontend config injection
+
+Env vars are read at Vite buildtime (`envPrefix: 'CONFIG'`, `envDir: '../config'` in `vite.config.ts`, parsed in `src/config/index.ts`). The committed [config/.env.production](packages/frontend/config/.env.production) contains only `*_PLACEHOLDER` values; the production Docker image's [env.sh](packages/frontend/env.sh) `sed`-replaces those placeholders in the built JS at container start. For local development, `npx vite` needs a real `packages/frontend/config/.env.development` with actual values (`CONFIG_DETILER_CLIENT_URL`, etc.) — it is not provided by default.
+
 ### Client package
 
 `@map-colonies/detiler-client` (`packages/client/src/client/index.ts`) is a thin axios wrapper (`getKits`, `queryTilesDetails`/`queryTilesDetailsAsyncGenerator` with cursor pagination, `getTileDetails`, `setTileDetails`, `queryCooldownsAsyncGenerator`) with optional `axios-retry` configuration. It talks to the backend's routes directly at the root (`/kits`, `/detail`, `/cooldown` — there's no `/api` prefix; `openapiConfig.basePath` in the backend config is only for the Swagger UI, not the actual API routes).

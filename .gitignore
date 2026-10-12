@@ -79,6 +79,9 @@ typings/
 .env.test
 config.json
 
+# vite env overrides - for secrets that shouldn't land in the tracked .env.development/.env.production
+packages/frontend/config/*.local
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 
