@@ -12,6 +12,7 @@ node_modules
 *.html
 coverage
 helm
+helms
 reports
 jest.config*.js
 lerna.json
