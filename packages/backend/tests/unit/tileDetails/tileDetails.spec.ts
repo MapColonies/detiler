@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */ // redis commands and args do not follow convention
-import { KitMetadata, TileDetailsPayload, TileParams, TileParamsWithKit, UNSPECIFIED_STATE } from '@map-colonies/detiler-common';
-import jsLogger from '@map-colonies/js-logger';
+import { beforeAll, beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
+import type { KitMetadata, TileDetailsPayload, TileParams, TileParamsWithKit } from '@map-colonies/detiler-common';
+import { UNSPECIFIED_STATE } from '@map-colonies/detiler-common';
+import { jsLogger } from '@map-colonies/js-logger';
 import { createClient, WatchError } from 'redis';
 import {
   REDIS_KITS_HASH_PREFIX,
@@ -12,30 +14,30 @@ import {
 import { bboxToWktPolygon, UpsertStatus } from '../../../src/common/util';
 import { DEFAULT_LIMIT, DEFAULT_PAGE_SIZE } from '../../../src/redis';
 import { KitNotFoundError, TileDetailsNotFoundError } from '../../../src/tileDetails/models/errors';
-import { TileDetailsManager, TilesDetailsQueryParams } from '../../../src/tileDetails/models/tileDetailsManager';
+import type { TilesDetailsQueryParams } from '../../../src/tileDetails/models/tileDetailsManager';
+import { TileDetailsManager } from '../../../src/tileDetails/models/tileDetailsManager';
 import { LOAD_FIELDS, NEWLY_INSERTED_TILE_COUNTERS } from '../../../src/tileDetails/models/util';
 
-const mGetMock = jest.fn();
-const searchMock = jest.fn();
-const hGetMock = jest.fn();
-const mSetMock = jest.fn();
-const setMock = jest.fn();
-const numIncrByMock = jest.fn();
-const arrAppendMock = jest.fn();
+const mGetMock = vi.fn();
+const searchMock = vi.fn();
+const hGetMock = vi.fn();
+const mSetMock = vi.fn();
+const setMock = vi.fn();
+const numIncrByMock = vi.fn();
+const arrAppendMock = vi.fn();
 
-const executeIsolatedMock = jest.fn();
-const watchMock = jest.fn();
-const existsMock = jest.fn();
-const multiMock = jest.fn();
-const execMock = jest.fn();
-const aggregateWithCursorMock = jest.fn();
-const cursorReadMock = jest.fn();
+const executeIsolatedMock = vi.fn();
+const watchMock = vi.fn();
+const existsMock = vi.fn();
+const multiMock = vi.fn();
+const execMock = vi.fn();
+const aggregateWithCursorMock = vi.fn();
+const cursorReadMock = vi.fn();
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-jest.mock('redis', () => ({
-  ...jest.requireActual('redis'),
-  ...jest.requireActual('@redis/client/dist/lib/errors'),
-  createClient: jest.fn().mockImplementation(() => ({
+vi.mock('redis', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  ...(await vi.importActual<object>('@redis/client/dist/lib/errors')),
+  createClient: vi.fn().mockImplementation(() => ({
     hGet: hGetMock,
     executeIsolated: executeIsolatedMock,
     watch: watchMock,
@@ -63,15 +65,15 @@ type RedisClient = ReturnType<typeof createClient>;
 
 describe('TileDetailsManager', () => {
   let manager: TileDetailsManager;
-  let mockedRedis: jest.Mocked<RedisClient>;
+  let mockedRedis: Mocked<RedisClient>;
 
-  beforeAll(() => {
-    mockedRedis = createClient() as jest.Mocked<RedisClient>;
-    manager = new TileDetailsManager(jsLogger({ enabled: false }), mockedRedis);
+  beforeAll(async () => {
+    mockedRedis = createClient() as Mocked<RedisClient>;
+    manager = new TileDetailsManager(await jsLogger({ enabled: false }), mockedRedis);
   });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('#queryTilesDetails', () => {
