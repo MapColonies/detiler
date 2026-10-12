@@ -46,7 +46,7 @@ export const config: IConfig = (function (): IConfig {
   });
 
   const retryStrategy =
-    parseValue('boolean', viteConfig.CONFIG_DETILER_CLIENT_ENABLE_RETRY_STRATEGY) ?? false
+    (parseValue('boolean', viteConfig.CONFIG_DETILER_CLIENT_ENABLE_RETRY_STRATEGY) ?? false)
       ? {
           delay: parseValue('number', viteConfig.CONFIG_DETILER_CLIENT_RETRY_STRATEGY_DELAY),
           isExponential: parseValue('boolean', viteConfig.CONFIG_DETILER_CLIENT_RETRY_STRATEGY_IS_EXPONENTIAL),

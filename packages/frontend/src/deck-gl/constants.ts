@@ -1,5 +1,5 @@
 import { COORDINATE_SYSTEM } from '@deck.gl/core';
-import { GeoJsonLayerProps } from '@deck.gl/layers/src/geojson-layer/geojson-layer';
+import { GeoJsonLayerProps } from '@deck.gl/layers';
 import { DataFilterExtension, DataFilterExtensionProps } from '@deck.gl/extensions';
 import { Feature } from '@turf/helpers';
 import { RGBA_MAX, RGBA_MIN } from '../utils/style';

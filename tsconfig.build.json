@@ -3,6 +3,7 @@
   "compilerOptions": {
     "sourceMap": true,
     "noEmit": false,
+    "noUncheckedIndexedAccess": false,
     "skipLibCheck": true
   },
   "include": ["src"],

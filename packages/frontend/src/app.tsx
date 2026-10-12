@@ -1,11 +1,10 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Map } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
-import { MapViewState, WebMercatorViewport, FlyToInterpolator } from '@deck.gl/core';
+import { MapViewState, WebMercatorViewport, FlyToInterpolator, ViewStateChangeParameters, PickingInfo } from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer } from '@deck.gl/layers';
-import { ViewStateChangeParameters } from '@deck.gl/core/src/controllers/controller';
-import { PickingInfo } from '@deck.gl/core/src/lib/picking/pick-info';
 import { Feature, Geometry } from 'geojson';
 import { Cooldown, KitMetadata, TileDetails, TileParams, TileQueryParams } from '@map-colonies/detiler-common';
 import { setIntervalAsync, clearIntervalAsync } from 'set-interval-async';
@@ -211,7 +210,7 @@ export const App: React.FC = () => {
     void kitsFetch();
 
     const timer = setIntervalAsync(kitsFetch, appConfig.kits.fetchInterval ?? DEFAULT_KITS_FETCH_INTERVAL);
-    return () => {
+    return (): void => {
       void clearIntervalAsync(timer).then(() => logger.info(`kits-fetch-timer cleared`));
     };
   }, []);
@@ -243,6 +242,7 @@ export const App: React.FC = () => {
 
       try {
         await pTimeout(fetchData(abortController), { milliseconds: timeoutMs, signal: abortController.signal });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         appHelper.lastDetilerQueryParams = undefined;
         appHelper.shouldFetch = true;
@@ -252,7 +252,7 @@ export const App: React.FC = () => {
     // init timer
     const dataFetchTimer = setIntervalAsync(fetchDataFn, appConfig.tiles.fetchInterval ?? DEFAULT_TILES_FETCH_INTERVAL);
 
-    return () => {
+    return (): void => {
       // aborts any previous intervals with previous dependencies
       logger.info({ msg: 'aborting previous data fetches' });
       abortController.abort();
@@ -353,7 +353,7 @@ export const App: React.FC = () => {
       const index = prev.findIndex((f) => f.id === cooldown.id);
 
       if (index === NOT_FOUND_INDEX) {
-        const geometry = WktToGeojson(cooldown.geoshape!);
+        const geometry = WktToGeojson(cooldown.geoshape);
         const feature = { ...geometryToFeature(geometry as Geometry), id: cooldown.id };
         return [...prev, feature];
       } else {
@@ -378,7 +378,8 @@ export const App: React.FC = () => {
       const value = tile.properties.score;
       return colorFactory(value, selectedColorScale.value);
     },
-    onHover: (info) => setHoverInfo(info as PickingInfo),
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+    onHover: (info) => setHoverInfo(info),
     onClick: async (info: PickingInfo<Feature<Geometry | null, Partial<TileDetails>>>): Promise<void> => {
       if (info.object === undefined) {
         return;

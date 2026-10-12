@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 import React, { useState } from 'react';
 import { Backdrop, Box, Modal, Fade, Button, Typography, TextField, Stack } from '@mui/material';
 import { TILEGRID_WORLD_CRS84, validateLonlat, tileToBoundingBox, validateTile } from '@map-colonies/tile-calc';
@@ -57,6 +59,7 @@ export const GoToModal: React.FC<GoToModalProps> = ({ isOpen, onClose, onGoToCli
 
       onGoToClicked(lon, lat, zValue - ZOOM_OFFEST);
       onClose();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       enqueueSnackbar(INVALID_TILE_MESSAGE, { variant: 'error' });
     }
@@ -75,6 +78,7 @@ export const GoToModal: React.FC<GoToModalProps> = ({ isOpen, onClose, onGoToCli
 
       onGoToClicked(lon, lat);
       onClose();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       enqueueSnackbar(INVALID_COORDINATES_MESSAGE, { variant: 'error' });
     }

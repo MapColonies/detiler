@@ -5,11 +5,12 @@ ARG package=frontend
 WORKDIR /tmp/buildApp
 
 COPY ./packages/${package}/package.json ./
+COPY .husky/ .husky/
 
 RUN npm install
 
 COPY ./packages/${package} ./
-COPY ./packages/${package}/tsconfig.json ./tsconfig.build.json
+COPY ./packages/${package}/tsconfig.build.json ./
 
 RUN npm run build
 

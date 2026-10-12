@@ -1,4 +1,4 @@
-import { Logger } from '@map-colonies/js-logger';
+import type { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import { SearchOptions } from 'redis';
 import { BoundingBox } from '@map-colonies/tile-calc';
@@ -15,12 +15,15 @@ import {
   REDIS_SEARCH_DIALECT,
   REDIS_WILDCARD,
 } from '../../common/constants';
-import { RedisClient } from '../../redis';
+import type { RedisClient } from '../../redis';
 import { HALF_GLOBE_BBOX } from './constants';
 
 @injectable()
 export class CooldownManager {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(SERVICES.REDIS) private readonly redis: RedisClient) {}
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.REDIS) private readonly redis: RedisClient
+  ) {}
 
   public async queryCooldowns(params: CooldownQueryParams & Required<Pick<CooldownQueryParams, 'from' | 'size'>>): Promise<Cooldown[]> {
     this.logger.info('quering cooldowns', params);

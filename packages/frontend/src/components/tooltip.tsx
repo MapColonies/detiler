@@ -1,6 +1,7 @@
+// eslint-disable-next-line @typescript-eslint/naming-convention
 import React from 'react';
 import './css/styles.css';
-import { PickingInfo } from '@deck.gl/core/src/lib/picking/pick-info';
+import { PickingInfo } from '@deck.gl/core';
 import { Feature } from '@turf/helpers';
 import { Divider, List, ListItem, ListItemText } from '@mui/material';
 import { CalculatedDetail, Detail, presentifyValue, TIMESTAMP_DETAIL } from '../utils/metric';

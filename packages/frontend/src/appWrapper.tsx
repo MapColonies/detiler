@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/naming-convention
 import React from 'react';
 import { SnackbarProvider } from 'notistack';
 import { POPUP_MAX_AMOUNT, POPUP_AUTO_CLOSE_MS } from './utils/constants';

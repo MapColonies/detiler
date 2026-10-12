@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers */
 import * as d3 from 'd3';
 import { config } from '../config';
 import { INITIAL_MIN_MAX, MinMax } from './metric';

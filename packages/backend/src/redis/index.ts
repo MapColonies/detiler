@@ -4,21 +4,22 @@ import { HealthCheck } from '@godaddy/terminus';
 import { createClient, RedisClientOptions } from 'redis';
 import { DependencyContainer, FactoryFunction } from 'tsyringe';
 import { SERVICES } from '../common/constants';
-import { RedisConfig, IConfig } from '../common/interfaces';
+import { RedisConfig } from '../common/interfaces';
+import { ConfigType } from '../common/config';
 import { promiseTimeout } from '../common/util';
 
 const DEFAULT_LIMIT_FROM = 0;
 
 const createConnectionOptions = (redisConfig: RedisConfig): Partial<RedisClientOptions> => {
-  const { host, port, enableSslAuth, sslPaths, ...clientOptions } = redisConfig;
+  const { host, port, tls, ...clientOptions } = redisConfig;
   clientOptions.socket = { host, port };
-  if (enableSslAuth) {
+  if (tls.enabled) {
     clientOptions.socket = {
       ...clientOptions.socket,
       tls: true,
-      key: sslPaths.key !== '' ? readFileSync(sslPaths.key) : undefined,
-      cert: sslPaths.cert !== '' ? readFileSync(sslPaths.cert) : undefined,
-      ca: sslPaths.ca !== '' ? readFileSync(sslPaths.ca) : undefined,
+      key: tls.key !== '' ? readFileSync(tls.key) : undefined,
+      cert: tls.cert !== '' ? readFileSync(tls.cert) : undefined,
+      ca: tls.ca !== '' ? readFileSync(tls.ca) : undefined,
     };
   }
 
@@ -41,8 +42,8 @@ export interface AggregateReply {
 
 export const redisClientFactory: FactoryFunction<RedisClient> = (container: DependencyContainer): RedisClient => {
   const logger = container.resolve<ILogger>(SERVICES.LOGGER);
-  const config = container.resolve<IConfig>(SERVICES.CONFIG);
-  const dbConfig = config.get<RedisConfig>('redis');
+  const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+  const dbConfig = config.get('redis');
   const connectionOptions = createConnectionOptions(dbConfig);
 
   const redisClient = createClient(connectionOptions)

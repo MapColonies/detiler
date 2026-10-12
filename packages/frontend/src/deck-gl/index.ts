@@ -1,11 +1,10 @@
 import { Feature } from 'geojson';
 import { differenceWith } from 'lodash';
-import { insertDummyFeature, removeDummyFeature } from '../utils/helpers';
+import { insertDummyFeature, removeDummyFeature, appHelper } from '../utils/helpers';
 import { Stats } from '../utils/stats';
 import { findNumericMinMax, Metric, updateMinMax } from '../utils/metric';
 import { normalizeValue } from '../utils/style';
 import { MAX_ZOOM_LEVEL } from '../utils/constants';
-import { appHelper } from '../utils/helpers';
 
 type ComparatorFunc<T> = (nextData: T, prevData: T) => boolean;
 

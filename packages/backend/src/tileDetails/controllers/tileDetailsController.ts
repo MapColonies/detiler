@@ -1,5 +1,5 @@
 import { TileDetails, TileDetailsPayload, TileQueryParams, TileQueryResponse } from '@map-colonies/detiler-common';
-import { Logger } from '@map-colonies/js-logger';
+import type { Logger } from '@map-colonies/js-logger';
 import { BoundingBox, TILEGRID_WEB_MERCATOR, validateTileGridBoundingBox } from '@map-colonies/tile-calc';
 import { RequestHandler } from 'express';
 import httpStatus, { StatusCodes } from 'http-status-codes';
