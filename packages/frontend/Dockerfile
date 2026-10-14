@@ -1,4 +1,4 @@
-FROM node:20 as build
+FROM node:24 as build
 
 ARG package=frontend
 
@@ -6,7 +6,10 @@ WORKDIR /tmp/buildApp
 
 COPY ./packages/${package}/package.json ./
 
-RUN npm install
+# only package.json is copied in at this point (no lockfile), so npm resolves peer deps from scratch here;
+# --legacy-peer-deps works around the maplibre-gl fork/react-map-gl peer range conflict that a full
+# workspace install (which uses the committed root package-lock.json) doesn't hit
+RUN npm install --legacy-peer-deps
 
 COPY ./packages/${package} ./
 COPY ./packages/${package}/tsconfig.json ./tsconfig.build.json

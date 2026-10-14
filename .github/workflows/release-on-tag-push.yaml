@@ -10,16 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code for CHANGELOG.md
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Get package info
         id: package
         uses: codex-team/action-nodejs-package-info@v1
 
       - name: Generate postman collection for service
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Set File name
         uses: myci-actions/export-env-var@1

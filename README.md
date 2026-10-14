@@ -112,3 +112,24 @@ integration tests are missing due to `node-redis` library structure, [see open i
 ```
 npx lerna run test
 ```
+
+
+```
+nvm use
+docker run -d --name detiler-redis -p 6379:6379 redis/redis-stack-server:7.2.0-v10
+cd packages/backend && npm run start
+cd packages/frontend && npx vite
+```
+
+
+## Push
+
+```
+sudo snap install yq
+./build_and_push.sh <ACR_URL> v2.0.0-rc1 <path-to-your-local-vector-helms-checkout>
+```
+
+Then `oc login` to the target OpenShift cluster and, from that `vector-helms` checkout, run:
+```
+make detiler
+```
