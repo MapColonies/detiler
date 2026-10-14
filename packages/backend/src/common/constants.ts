@@ -13,6 +13,7 @@ export const SERVICES: Record<string, symbol> = {
   TRACER: Symbol('Tracer'),
   METRICS: Symbol('Metrics'),
   REDIS: Symbol('Redis'),
+  REDIS_KEY_PREFIX: Symbol('RedisKeyPrefix'),
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 

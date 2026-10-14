@@ -11,7 +11,7 @@ import { promiseTimeout } from '../common/util';
 const DEFAULT_LIMIT_FROM = 0;
 
 const createConnectionOptions = (redisConfig: RedisConfig): Partial<RedisClientOptions> => {
-  const { host, port, enableSslAuth, sslPaths, ...clientOptions } = redisConfig;
+  const { host, port, enableSslAuth, sslPaths, keyPrefix, ...clientOptions } = redisConfig;
   clientOptions.socket = { host, port };
   if (enableSslAuth) {
     clientOptions.socket = {

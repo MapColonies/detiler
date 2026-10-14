@@ -59,6 +59,7 @@
     "database": {
       "__name": "REDIS_DATABASE",
       "__format": "number"
-    }
+    },
+    "keyPrefix": "REDIS_KEY_PREFIX"
   }
 }
