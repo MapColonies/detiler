@@ -126,10 +126,10 @@ cd packages/frontend && npx vite
 
 ```
 sudo snap install yq
-./build_and_push.sh <ACR_URL> v2.0.0-rc1 /home/yosef1/Desktop/Work/vector-helms
+./build_and_push.sh <ACR_URL> v2.0.0-rc1 <path-to-your-local-vector-helms-checkout>
 ```
 
-do oc login to azure cluster and from /home/yosef1/Desktop/Work/vector-helms run
+Then `oc login` to the target OpenShift cluster and, from that `vector-helms` checkout, run:
 ```
 make detiler
 ```
