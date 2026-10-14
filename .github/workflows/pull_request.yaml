@@ -62,7 +62,7 @@ jobs:
         run: npm ci
 
       - name: Build Lerna
-        run: npx lerna run build
+        run: npx lerna run build --scope '{@map-colonies/detiler-common,@map-colonies/detiler-client,detiler-backend}'
 
       - name: OpenAPI Lint Checks
         uses: nwestfall/openapi-action@v1.0.2
@@ -101,7 +101,7 @@ jobs:
         run: npm ci
 
       - name: Build Lerna
-        run: npx lerna run build
+        run: npx lerna run build --scope '{@map-colonies/detiler-common,@map-colonies/detiler-client,detiler-backend}'
 
       - name: Run tests
         run: npx lerna run test
