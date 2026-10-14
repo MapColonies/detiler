@@ -2,7 +2,15 @@ import { createHash } from 'node:crypto';
 import type { TileParams, TileParamsWithKit } from '@map-colonies/detiler-common';
 import type { BoundingBox, LonLat } from '@map-colonies/tile-calc';
 import type { TileRequestParams } from '../tileDetails/controllers/tileDetailsController';
-import { COORDINATES_FRACTION_DIGITS, TILE_DETAILS_KEY_PREFIX } from './constants';
+import {
+  COORDINATES_FRACTION_DIGITS,
+  TILE_DETAILS_KEY_PREFIX,
+  REDIS_KITS_HASH_PREFIX,
+  REDIS_KITS_SET,
+  COOLDOWN_KEY_PREFIX,
+  REDIS_TILE_INDEX_NAME,
+  REDIS_COOLDOWN_INDEX_NAME,
+} from './constants';
 import { TimeoutError } from './errors';
 
 export enum UpsertStatus {
@@ -47,7 +55,18 @@ export const bboxToWktPolygon = (bbox: BoundingBox): string => {
 export const stringifyCoordinates = (coordinates: LonLat): string =>
   `${coordinates.lon.toFixed(COORDINATES_FRACTION_DIGITS)}, ${coordinates.lat.toFixed(COORDINATES_FRACTION_DIGITS)}`;
 
-export const keyfy = (params: TileParamsWithKit): string => `${TILE_DETAILS_KEY_PREFIX}:${params.kit}:${params.z}/${params.x}/${params.y}`;
+export const keyfy = (params: TileParamsWithKit, keyPrefix: string): string =>
+  `${keyPrefix}${TILE_DETAILS_KEY_PREFIX}:${params.kit}:${params.z}/${params.x}/${params.y}`;
+
+export const kitHashKey = (name: string, keyPrefix: string): string => `${keyPrefix}${REDIS_KITS_HASH_PREFIX}:${name}`;
+
+export const kitsSetKey = (keyPrefix: string): string => `${keyPrefix}${REDIS_KITS_SET}`;
+
+export const cooldownKey = (hash: string, keyPrefix: string): string => `${keyPrefix}${COOLDOWN_KEY_PREFIX}:${hash}`;
+
+export const tileIndexName = (keyPrefix: string): string => `${keyPrefix}${REDIS_TILE_INDEX_NAME}`;
+
+export const cooldownIndexName = (keyPrefix: string): string => `${keyPrefix}${REDIS_COOLDOWN_INDEX_NAME}`;
 
 export const hashValue = (value: unknown): string => {
   const hash = createHash('sha256');

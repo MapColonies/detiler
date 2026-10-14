@@ -1,7 +1,7 @@
 import React from 'react';
 import './css/styles.css';
 import { PickingInfo } from '@deck.gl/core/src/lib/picking/pick-info';
-import { Feature } from '@turf/helpers';
+import { Feature } from 'geojson';
 import { Divider, List, ListItem, ListItemText } from '@mui/material';
 import { CalculatedDetail, Detail, presentifyValue, TIMESTAMP_DETAIL } from '../utils/metric';
 

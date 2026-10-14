@@ -5,7 +5,9 @@ import { createClient } from 'redis';
 import { REDIS_KITS_HASH_PREFIX, REDIS_KITS_SET } from '../../../../src/common/constants';
 import { KitAlreadyExistsError } from '../../../../src/kit/models/errors';
 import type { Kit } from '../../../../src/kit/models/kit';
-import { KitManager } from '../../../../src/kit/models/kitManager';
+import { KitManager, UPDATE_MAX_VALUES_SCRIPT } from '../../../../src/kit/models/kitManager';
+
+const keyPrefix = '';
 
 vi.mock('redis', async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -15,6 +17,7 @@ vi.mock('redis', async (importOriginal) => ({
     hSet: vi.fn(),
     sMembers: vi.fn(),
     sAdd: vi.fn(),
+    eval: vi.fn(),
   })),
 }));
 
@@ -26,7 +29,7 @@ describe('KitManager', () => {
 
   beforeAll(async () => {
     mockedRedis = createClient({}) as Mocked<RedisClient>;
-    kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis);
+    kitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, keyPrefix);
   });
 
   beforeEach(() => {
@@ -77,6 +80,46 @@ describe('KitManager', () => {
       expect(mockedRedis.hGet).toHaveBeenCalledTimes(1);
       expect(mockedRedis.hGet).toHaveBeenCalledWith(`${REDIS_KITS_HASH_PREFIX}:${newKit.name}`, 'name');
       expect(mockedRedis.hSet).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('#updateMaxValues', () => {
+    it('should atomically evaluate the max-update script against the kit hash key', async () => {
+      const kitName = 'kit1';
+      const state = 666;
+      const updatedAt = 1711907506;
+
+      await kitManager.updateMaxValues(kitName, state, updatedAt);
+
+      expect(mockedRedis.eval).toHaveBeenCalledTimes(1);
+      expect(mockedRedis.eval).toHaveBeenCalledWith(UPDATE_MAX_VALUES_SCRIPT, {
+        keys: [`${REDIS_KITS_HASH_PREFIX}:${kitName}`],
+        arguments: [state.toString(), updatedAt.toString()],
+      });
+    });
+  });
+
+  describe('with a configured redis key prefix', () => {
+    const prefix = 'env1:';
+    let prefixedKitManager: KitManager;
+
+    beforeAll(async () => {
+      prefixedKitManager = new KitManager(await jsLogger({ enabled: false }), mockedRedis, prefix);
+    });
+
+    it('should prefix the kits set and kit hash keys', async () => {
+      const newKit: Kit = { name: 'kit1' };
+      mockedRedis.hGet.mockResolvedValue(null);
+
+      await prefixedKitManager.createKit(newKit);
+
+      expect(mockedRedis.hGet).toHaveBeenCalledWith(`${prefix}${REDIS_KITS_HASH_PREFIX}:${newKit.name}`, 'name');
+      expect(mockedRedis.sAdd).toHaveBeenCalledWith(`${prefix}${REDIS_KITS_SET}`, newKit.name);
+      expect(mockedRedis.hSet).toHaveBeenCalledWith(`${prefix}${REDIS_KITS_HASH_PREFIX}:${newKit.name}`, {
+        ...newKit,
+        maxUpdatedAt: 0,
+        maxState: 0,
+      });
     });
   });
 });
