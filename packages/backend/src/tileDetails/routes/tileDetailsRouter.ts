@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { FactoryFunction } from 'tsyringe';
+import type { FactoryFunction } from 'tsyringe';
 import { TileDetailController } from '../controllers/tileDetailsController';
 
 export const TILE_DETAILS_ROUTER_SYMBOL = Symbol('tileDetailsRouterFactory');

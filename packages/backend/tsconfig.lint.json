@@ -1,3 +1,13 @@
 {
-  "extends": "../../tsconfig.lint.json"
+  "extends": "../../tsconfig.lint.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "baseUrl": ".",
+    "paths": {
+      "@src/*": ["src/*"],
+      "@common/*": ["src/common/*"],
+      "@tests/*": ["tests/*"]
+    }
+  }
 }
